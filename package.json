@@ -1,0 +1,24 @@
+{
+  "name": "mMAD",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": "8.9.1",
+    "npm": "5.6.0"
+  },
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "angular": "^1.6.8",
+    "angular-route": "^1.6.8",
+    "body-parser": "^1.18.2",
+    "bootstrap": "^3.3.7",
+    "dotenv": "^4.0.0",
+    "ejs": "^2.5.7",
+    "express": "^4.16.2",
+    "jquery": "^3.2.1",
+    "morgan": "^1.9.0",
+    "serve-favicon": "^2.4.5"
+  }
+}

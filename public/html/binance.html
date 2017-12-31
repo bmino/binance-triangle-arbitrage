@@ -1,0 +1,52 @@
+<div class="partial-binance">
+    <label>
+        Initial Investment (USD)
+        <input type="number" ng-model="CONFIG.INVESTMENT">
+        <input type="range" min="100" max="500" step="1" ng-model="CONFIG.INVESTMENT">
+    </label>
+
+    <br>
+
+    <label>
+        Minimum Profit
+        <input type="number" ng-model="CONFIG.PROFIT.MIN">
+        <input type="range" min="0" max="10" step="0.05" ng-model="CONFIG.PROFIT.MIN">
+    </label>
+
+    <div>Found {{symbols.length}} symbols</div>
+    <div>Found {{results.length}} positions</div>
+
+    <button type="button" class="btn btn-default"
+            ng-click="findArbitrage()"
+            ng-disabled="findingArbitrage">Find Arbitrage {{findingArbitrage ? '...' : ''}}</button>
+
+    <br>
+    <br>
+
+    <div class="details" ng-hide="!trade">
+        <div class="title">{{trade.symbol.a}} > {{trade.symbol.b}} > {{trade.symbol.c}} > {{trade.symbol.a}}</div>
+        <div>Start with {{trade.quantity.start.total | number : 4}} {{trade.symbol.a}}</div>
+        <div>{{trade.ab.method}} {{trade.quantity.ab.market | number : 4}} ({{trade.quantity.ab.dust | number : 4}}) <a ng-href="{{generateLink(trade.symbol.a, trade.symbol.b)}}" target="_blank">{{trade.ab.ticker}}</a> @ {{trade.ab.rate.market | number : CONFIG.DECIMALS}} to get {{trade.quantity.b | number : 4}} {{trade.symbol.b}}</div>
+        <div>{{trade.bc.method}} {{trade.quantity.bc.market | number : 4}} ({{trade.quantity.bc.dust | number : 4}}) <a ng-href="{{generateLink(trade.symbol.b, trade.symbol.c)}}" target="_blank">{{trade.bc.ticker}}</a> @ {{trade.bc.rate.market | number : CONFIG.DECIMALS}} to get {{trade.quantity.c | number : 4}} {{trade.symbol.c}}</div>
+        <div>{{trade.ca.method}} {{trade.quantity.ca.market | number : 4}} ({{trade.quantity.ca.dust | number : 4}}) <a ng-href="{{generateLink(trade.symbol.c, trade.symbol.a)}}" target="_blank">{{trade.ca.ticker}}</a> @ {{trade.ca.rate.market | number : CONFIG.DECIMALS}} to get {{trade.quantity.a | number : 4}} {{trade.symbol.a}}</div>
+    </div>
+
+    <br>
+    <br>
+
+    <table class="table table-striped" ng-show="results && results.length > 0">
+        <tr>
+            <th>Symbols</th>
+            <th>Percent Profit</th>
+            <th>Details</th>
+        </tr>
+        <tr ng-repeat="result in results">
+            <td ng-bind-template="{{result.symbol.a}}&#44; {{result.symbol.b}}&#44; {{result.symbol.c}}"></td>
+            <td ng-bind="result.percent"></td>
+            <td>
+                <button type="button" class="btn btn-default" ng-click="setTrade(result)">Show</button>
+            </td>
+        </tr>
+    </table>
+
+</div>

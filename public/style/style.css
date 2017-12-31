@@ -1,0 +1,35 @@
+html {
+	overflow-y: scroll;
+}
+
+body {
+	padding: 27px 15px;
+}
+
+body div.wrapper {
+	margin-left: auto;
+	margin-right: auto;
+	max-width: 1000px;
+}
+
+a, a:link, a:active, a:visited {
+	color: #00B7FF;
+	cursor: pointer;
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: none;
+}
+
+
+footer {
+	margin-top: 55px;
+	width: 100%;
+	text-align: center;
+	font-size: 12px;
+}
+
+[ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
+	display: none !important;
+}

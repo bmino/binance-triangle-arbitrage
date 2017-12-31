@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>mMAD Systems</title>
+
+    <!-- Bootstrap CSS -->
+    <link rel='stylesheet' href='/node_modules/bootstrap/dist/css/bootstrap.min.css'>
+
+    <!-- CSS Styling -->
+    <link rel='stylesheet' href='/style/style.css' />
+</head>
+<body ng-app="mMADApp" ng-cloak>
+    <div class="wrapper">
+
+        <!-- Injected with Partials -->
+        <div ng-view></div>
+
+        <footer>
+            <a href="https://github.com/bmino/mMAD" target="_blank">Version <%- version %></a>
+        </footer>
+
+    </div><!-- /.wrapper -->
+
+
+    <!-- JQuery -->
+    <script src="/node_modules/jquery/dist/jquery.min.js"></script>
+
+    <!-- Bootstrap: Essential JS -->
+    <script src='/node_modules/bootstrap/dist/js/bootstrap.min.js'></script>
+
+    <!-- Angular: Essential Libraries -->
+    <script src='/node_modules/angular/angular.min.js'></script>
+    <script src='/node_modules/angular-route/angular-route.min.js'></script>
+
+    <!-- Angular: Major App Structure -->
+    <script src='/js/app.modules.js'></script>
+    <script src='/js/app.routes.js'></script>
+
+    <!-- Angular: Filters -->
+
+    <!-- Angular: Services -->
+    <script src='/js/service/binance.service.js'></script>
+
+    <!-- Angular: Directives -->
+
+    <!-- Angular: Controllers -->
+    <script src='/js/controller/binance.controller.js'></script>
+
+
+</body>
+</html>
