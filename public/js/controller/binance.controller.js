@@ -2,35 +2,49 @@ angular
     .module('controllers')
     .controller('binanceController', BinanceController);
 
-BinanceController.$inject = ['$scope', 'binanceService'];
+BinanceController.$inject = ['$scope', '$interval', 'binanceService'];
 
-function BinanceController($scope, binanceService) {
+function BinanceController($scope, $interval, binanceService) {
 
     $scope.CONFIG = {
         DECIMALS: 8,
-        INVESTMENT: 100,
+        BASE_SYMBOL: [],
+        INVESTMENT: {
+            MAX: 500
+        },
         PROFIT: {
-            MIN: 1.00
+            MIN: 3.00
         }
+    };
+
+    $scope.LOADING = {
+        API: false,
+        ARBITRAGE: false
     };
 
     $scope.symbols = [];
     $scope.priceMap = {};
+    $scope.timeSincePriceUpdate = null;
     $scope.results = [];
 
     $scope.trade = null;
 
     function init() {
+        $scope.LOADING.API = true;
         binanceService.getSymbols()
             .then(function(symbols) {
                 $scope.symbols = symbols;
             })
-            .catch(console.error);
+            .catch(console.error)
+            .finally(function() {
+                $scope.LOADING.API = false;
+            });
+        maintainTimeSinceLastPriceCheck();
     }
 
     $scope.findArbitrage = function() {
         if ($scope.symbols.length === 0) return;
-        $scope.findingArbitrage = true;
+        $scope.LOADING.ARBITRAGE = true;
 
         binanceService.refreshPriceMap()
             .then(function(priceMap) {
@@ -41,9 +55,9 @@ function BinanceController($scope, binanceService) {
                 angular.forEach($scope.symbols, function(symbol1) {
                     angular.forEach($scope.symbols, function(symbol2) {
                         angular.forEach($scope.symbols, function(symbol3) {
-                            result = binanceService.relationships(symbol1, symbol2, symbol3, $scope.CONFIG.INVESTMENT);
+                            result = binanceService.relationships(symbol1, symbol2, symbol3);
                             if (!result) return;
-                            if (result.percent < $scope.CONFIG.PROFIT.MIN) return;
+                            if (result.percent <= 0) return;
                             results.push(result);
                         });
                     });
@@ -56,18 +70,36 @@ function BinanceController($scope, binanceService) {
             })
             .catch(console.error)
             .finally(function() {
-                $scope.findingArbitrage = false;
+                $scope.LOADING.ARBITRAGE = false;
             });
-    };
-
-    $scope.generateLink = function(a, b) {
-        if ($scope.priceMap[a+b]) return binanceService.URL.replace('{a}', a).replace('{b}', b);
-        else return binanceService.URL.replace('{a}', b).replace('{b}', a);
     };
 
     $scope.setTrade = function(result) {
         $scope.trade = result;
     };
+
+    $scope.refreshTrade = function(result) {
+        binanceService.refreshPriceMap()
+            .then(function() {
+                return binanceService.relationships(result.symbol.a, result.symbol.b, result.symbol.c);
+            })
+            .then(function(newResult) {
+                result = {};
+                $scope.trade = newResult;
+            })
+            .catch(function(error) {
+                throw error;
+            });
+    };
+
+    function maintainTimeSinceLastPriceCheck() {
+        var tick = function() {
+            if (!$scope.priceMap.LAST_UPDATED) return;
+            $scope.timeSincePriceUpdate = new Date() - $scope.priceMap.LAST_UPDATED;
+        };
+        tick();
+        $interval(tick, 1000);
+    }
     
     init();
 

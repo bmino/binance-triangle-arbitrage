@@ -1,0 +1,11 @@
+.trade-details {
+    width: 500px;
+    border: 1px solid black;
+    border-radius: 5px;
+    padding: 10px;
+}
+
+.trade-details .title {
+    text-align: center;
+    border-bottom: 1px solid black;
+}

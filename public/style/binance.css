@@ -1,0 +1,28 @@
+.section-top {
+    min-height: 275px;
+}
+
+.config-container {
+    float: left;
+    width: 300px;
+    padding: 10px;
+    border: 1px solid black;
+    border-radius: 5px;
+}
+
+.config-container .config-box {
+    margin-bottom: 10px;
+}
+
+.config-container .config-box input[type="range"] {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.config-container > button {
+    margin-top: 20px;
+}
+
+trade-details {
+    float: right;
+}

@@ -1,34 +1,61 @@
 <div class="partial-binance">
-    <label>
-        Initial Investment (USD)
-        <input type="number" ng-model="CONFIG.INVESTMENT">
-        <input type="range" min="100" max="500" step="1" ng-model="CONFIG.INVESTMENT">
-    </label>
 
-    <br>
+    <div class="section-top">
+        <div class="config-container">
+            <div class="config-box">
+                <label>Base Symbol</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="SYM" ng-model="BASE_SYMBOL">
+                    <span class="input-group-btn">
+                        <button class="btn btn-default" type="button" ng-click="BASE_SYMBOL = ''">
+                            <span class="glyphicon glyphicon-remove"></span>
+                        </button>
+                    </span>
+                </div>
+            </div>
 
-    <label>
-        Minimum Profit
-        <input type="number" ng-model="CONFIG.PROFIT.MIN">
-        <input type="range" min="0" max="10" step="0.05" ng-model="CONFIG.PROFIT.MIN">
-    </label>
+            <div class="config-box">
+                <label>Max Investment</label>
+                <div class="input-group">
+                    <span class="input-group-addon">$</span>
+                    <input type="number" class="form-control" ng-model="CONFIG.INVESTMENT.MAX">
+                    <span class="input-group-btn">
+                        <button class="btn btn-default" type="button" ng-click="CONFIG.INVESTMENT.MAX = 9999">
+                            <span class="glyphicon glyphicon-remove"></span>
+                        </button>
+                    </span>
+                </div>
+                <input type="range" min="100" max="9999" step="10" ng-model="CONFIG.INVESTMENT.MAX">
+            </div>
 
-    <div>Found {{symbols.length}} symbols</div>
-    <div>Found {{results.length}} positions</div>
+            <div class="config-box">
+                <label>Minimum Profit</label>
+                <div class="input-group">
+                    <input type="number" class="form-control" ng-model="CONFIG.PROFIT.MIN">
+                    <span class="input-group-btn">
+                    <button class="btn btn-default" type="button" ng-click="CONFIG.PROFIT.MIN = 0"><span class="glyphicon glyphicon-remove"></span></button>
+                </span>
+                </div>
+                <input type="range" min="0" max="10" step="0.25" ng-model="CONFIG.PROFIT.MIN">
+            </div>
 
-    <button type="button" class="btn btn-default"
-            ng-click="findArbitrage()"
-            ng-disabled="findingArbitrage">Find Arbitrage {{findingArbitrage ? '...' : ''}}</button>
+            <button type="button"
+                    class="form-control btn btn-default"
+                    ng-click="findArbitrage()"
+                    ng-disabled="LOADING.API || LOADING.ARBITRAGE">
+                {{LOADING.API ? 'Loading Api ...' :
+                LOADING.ARBITRAGE ? 'Finding Arbitrage ...' : 'Find Arbitrage'
+                }}
+            </button>
+            <span>{{timeSincePriceUpdate | date : "m:ss ' since last update'"}}</span>
+        </div>
 
-    <br>
-    <br>
+        <trade-details ng-if="trade"
+                       trade="trade"
+                       refresh="refreshTrade(trade)"
+                       max-investment="CONFIG.INVESTMENT.MAX"></trade-details>
 
-    <div class="details" ng-hide="!trade">
-        <div class="title">{{trade.symbol.a}} > {{trade.symbol.b}} > {{trade.symbol.c}} > {{trade.symbol.a}}</div>
-        <div>Start with {{trade.quantity.start.total | number : 4}} {{trade.symbol.a}}</div>
-        <div>{{trade.ab.method}} {{trade.quantity.ab.market | number : 4}} ({{trade.quantity.ab.dust | number : 4}}) <a ng-href="{{generateLink(trade.symbol.a, trade.symbol.b)}}" target="_blank">{{trade.ab.ticker}}</a> @ {{trade.ab.rate.market | number : CONFIG.DECIMALS}} to get {{trade.quantity.b | number : 4}} {{trade.symbol.b}}</div>
-        <div>{{trade.bc.method}} {{trade.quantity.bc.market | number : 4}} ({{trade.quantity.bc.dust | number : 4}}) <a ng-href="{{generateLink(trade.symbol.b, trade.symbol.c)}}" target="_blank">{{trade.bc.ticker}}</a> @ {{trade.bc.rate.market | number : CONFIG.DECIMALS}} to get {{trade.quantity.c | number : 4}} {{trade.symbol.c}}</div>
-        <div>{{trade.ca.method}} {{trade.quantity.ca.market | number : 4}} ({{trade.quantity.ca.dust | number : 4}}) <a ng-href="{{generateLink(trade.symbol.c, trade.symbol.a)}}" target="_blank">{{trade.ca.ticker}}</a> @ {{trade.ca.rate.market | number : CONFIG.DECIMALS}} to get {{trade.quantity.a | number : 4}} {{trade.symbol.a}}</div>
+        <div style="clear:both;"></div>
     </div>
 
     <br>
@@ -37,12 +64,12 @@
     <table class="table table-striped" ng-show="results && results.length > 0">
         <tr>
             <th>Symbols</th>
-            <th>Percent Profit</th>
+            <th>Dustless Margin</th>
             <th>Details</th>
         </tr>
-        <tr ng-repeat="result in results">
+        <tr ng-repeat="result in results | filter : {symbol: {a: BASE_SYMBOL}}">
             <td ng-bind-template="{{result.symbol.a}}&#44; {{result.symbol.b}}&#44; {{result.symbol.c}}"></td>
-            <td ng-bind="result.percent"></td>
+            <td ng-bind="result.percent | number : 4"></td>
             <td>
                 <button type="button" class="btn btn-default" ng-click="setTrade(result)">Show</button>
             </td>
