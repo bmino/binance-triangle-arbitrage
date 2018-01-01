@@ -40,19 +40,18 @@ function BinanceService($http, $q) {
         return symbolsDeferred.promise;
     };
 
+    service.getPriceMapLastUpdatedTime = function() {
+        return priceMap.LAST_UPDATED;
+    };
+
     service.refreshPriceMap = function() {
-        return $http({
-            type: 'GET',
-            url: 'https://api.binance.com/api/v1/ticker/allPrices'
-        })
+        return $http.get('https://api.binance.com/api/v1/ticker/allPrices')
             .then(function(response) {
-                var prices = [];
                 angular.forEach(response.data, function(symbolObj) {
-                    prices[symbolObj.symbol] = symbolObj.price;
+                    priceMap[symbolObj.symbol] = symbolObj.price;
                 });
-                priceMap = prices;
                 priceMap.LAST_UPDATED = new Date();
-                return prices;
+                return priceMap;
             })
             .catch(function(response) {
                 throw response;

@@ -47,12 +47,8 @@ function Trade(binanceService) {
 
         function init() {
             scope.investment = 100;
-
-            scope.$watch('[investment, trade]', function () {
-                calculate();
-            });
-
-            scope.optimize();
+            scope.$watch('investment', calculate);
+            scope.$watch('trade', scope.optimize);
         }
 
 
@@ -107,6 +103,7 @@ function Trade(binanceService) {
             }
 
             scope.percent = (scope.calculated.a - scope.calculated.start.total) / scope.calculated.start.total * 100;
+            if (!scope.percent) scope.percent = 0;
 
             return scope.percent;
         }
@@ -118,9 +115,9 @@ function Trade(binanceService) {
         scope.optimize = function() {
             var best = {
                 investment: 0,
-                percent: 0
+                percent: -100
             };
-            for (var dollars=0; dollars<scope.maxInvestment; dollars++) {
+            for (var dollars=1; dollars<scope.maxInvestment; dollars++) {
                 var percent = calculate(dollars);
                 if (percent > best.percent) {
                     best.investment = dollars;
@@ -128,7 +125,6 @@ function Trade(binanceService) {
                 }
             }
             scope.investment = best.investment;
-            calculate(best.investment);
         };
 
         init();

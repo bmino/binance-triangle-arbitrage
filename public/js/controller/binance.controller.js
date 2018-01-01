@@ -8,7 +8,7 @@ function BinanceController($scope, $interval, binanceService) {
 
     $scope.CONFIG = {
         DECIMALS: 8,
-        BASE_SYMBOL: [],
+        BASE_SYMBOL: '',
         INVESTMENT: {
             MAX: 500
         },
@@ -23,11 +23,9 @@ function BinanceController($scope, $interval, binanceService) {
     };
 
     $scope.symbols = [];
-    $scope.priceMap = {};
     $scope.timeSincePriceUpdate = null;
-    $scope.results = [];
-
-    $scope.trade = null;
+    $scope.trades = [];
+    $scope.currentTrade = null;
 
     function init() {
         $scope.LOADING.API = true;
@@ -47,26 +45,9 @@ function BinanceController($scope, $interval, binanceService) {
         $scope.LOADING.ARBITRAGE = true;
 
         binanceService.refreshPriceMap()
-            .then(function(priceMap) {
-                $scope.priceMap = priceMap;
-
-                var result = {};
-                var results = [];
-                angular.forEach($scope.symbols, function(symbol1) {
-                    angular.forEach($scope.symbols, function(symbol2) {
-                        angular.forEach($scope.symbols, function(symbol3) {
-                            result = binanceService.relationships(symbol1, symbol2, symbol3);
-                            if (!result) return;
-                            if (result.percent <= 0) return;
-                            results.push(result);
-                        });
-                    });
-                });
-                $scope.results = results.sort(function(a,b) {
-                    if (a.percent < b.percent) return 1;
-                    if (a.percent > b.percent) return -1;
-                    return 0;
-                });
+            .then(function() {
+                $scope.trades = analyzeSymbolsForArbitrage($scope.symbols)
+                    .sort(sortByPercent);
             })
             .catch(console.error)
             .finally(function() {
@@ -74,19 +55,31 @@ function BinanceController($scope, $interval, binanceService) {
             });
     };
 
-    $scope.setTrade = function(result) {
-        $scope.trade = result;
+    function analyzeSymbolsForArbitrage(symbols) {
+        var results = [];
+        angular.forEach(symbols, function(symbol1) {
+            angular.forEach(symbols, function(symbol2) {
+                angular.forEach(symbols, function(symbol3) {
+                    var result = binanceService.relationships(symbol1, symbol2, symbol3);
+                    if (!result) return;
+                    if (result.percent <= 0) return;
+                    results.push(result);
+                });
+            });
+        });
+        return results;
+    }
+
+    $scope.setCurrentTrade = function(trade) {
+        $scope.currentTrade = trade;
     };
 
-    $scope.refreshTrade = function(result) {
+    $scope.refreshTrade = function(trade) {
         binanceService.refreshPriceMap()
             .then(function() {
-                return binanceService.relationships(result.symbol.a, result.symbol.b, result.symbol.c);
+                return binanceService.relationships(trade.symbol.a, trade.symbol.b, trade.symbol.c);
             })
-            .then(function(newResult) {
-                result = {};
-                $scope.trade = newResult;
-            })
+            .then($scope.setCurrentTrade)
             .catch(function(error) {
                 throw error;
             });
@@ -94,11 +87,18 @@ function BinanceController($scope, $interval, binanceService) {
 
     function maintainTimeSinceLastPriceCheck() {
         var tick = function() {
-            if (!$scope.priceMap.LAST_UPDATED) return;
-            $scope.timeSincePriceUpdate = new Date() - $scope.priceMap.LAST_UPDATED;
+            var lastUpdatedTime = binanceService.getPriceMapLastUpdatedTime();
+            if (!lastUpdatedTime) return;
+            $scope.timeSincePriceUpdate = new Date() - lastUpdatedTime;
         };
         tick();
         $interval(tick, 1000);
+    }
+
+    function sortByPercent(a, b) {
+        if (a.percent < b.percent) return 1;
+        if (a.percent > b.percent) return -1;
+        return 0;
     }
     
     init();

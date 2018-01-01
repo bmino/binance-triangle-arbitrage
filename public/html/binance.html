@@ -18,14 +18,14 @@
                 <label>Max Investment</label>
                 <div class="input-group">
                     <span class="input-group-addon">$</span>
-                    <input type="number" class="form-control" ng-model="CONFIG.INVESTMENT.MAX">
+                    <input type="number" class="form-control" ng-model="CONFIG.INVESTMENT.MAX" ng-model-options="{ debounce: 500 }">
                     <span class="input-group-btn">
                         <button class="btn btn-default" type="button" ng-click="CONFIG.INVESTMENT.MAX = 9999">
                             <span class="glyphicon glyphicon-remove"></span>
                         </button>
                     </span>
                 </div>
-                <input type="range" min="100" max="9999" step="10" ng-model="CONFIG.INVESTMENT.MAX">
+                <input type="range" min="100" max="9999" step="1" ng-model="CONFIG.INVESTMENT.MAX">
             </div>
 
             <div class="config-box">
@@ -50,8 +50,8 @@
             <span>{{timeSincePriceUpdate | date : "m:ss ' since last update'"}}</span>
         </div>
 
-        <trade-details ng-if="trade"
-                       trade="trade"
+        <trade-details ng-if="currentTrade"
+                       trade="currentTrade"
                        refresh="refreshTrade(trade)"
                        max-investment="CONFIG.INVESTMENT.MAX"></trade-details>
 
@@ -61,17 +61,17 @@
     <br>
     <br>
 
-    <table class="table table-striped" ng-show="results && results.length > 0">
+    <table class="table table-striped">
         <tr>
             <th>Symbols</th>
             <th>Dustless Margin</th>
             <th>Details</th>
         </tr>
-        <tr ng-repeat="result in results | filter : {symbol: {a: BASE_SYMBOL}}">
-            <td ng-bind-template="{{result.symbol.a}}&#44; {{result.symbol.b}}&#44; {{result.symbol.c}}"></td>
-            <td ng-bind="result.percent | number : 4"></td>
+        <tr ng-repeat="trade in trades | filter : {symbol: {a: BASE_SYMBOL}} | minPercent: CONFIG.PROFIT.MIN">
+            <td ng-bind-template="{{trade.symbol.a}}&#44; {{trade.symbol.b}}&#44; {{trade.symbol.c}}"></td>
+            <td ng-bind="trade.percent | number : 4"></td>
             <td>
-                <button type="button" class="btn btn-default" ng-click="setTrade(result)">Show</button>
+                <button type="button" class="btn btn-default" ng-click="setCurrentTrade(trade)">Show</button>
             </td>
         </tr>
     </table>
