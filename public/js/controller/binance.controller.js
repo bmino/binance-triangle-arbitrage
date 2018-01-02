@@ -14,6 +14,10 @@ function BinanceController($scope, $interval, binanceService) {
         },
         PROFIT: {
             MIN: 3.00
+        },
+        API: {
+            KEY: '',
+            SECRET: ''
         }
     };
 
@@ -83,6 +87,13 @@ function BinanceController($scope, $interval, binanceService) {
             .catch(function(error) {
                 throw error;
             });
+    };
+
+    $scope.testTrade = function() {
+        var side = 'BUY';
+        var quantity = 1;
+        var ticker = 'BNBBTC';
+        binanceService.performMarketOrder(side, quantity, ticker, $scope.CONFIG.API.KEY, $scope.CONFIG.API.SECRET);
     };
 
     function maintainTimeSinceLastPriceCheck() {

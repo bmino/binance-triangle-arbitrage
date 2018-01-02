@@ -2,9 +2,9 @@ angular
     .module('services')
     .service('binanceService', BinanceService);
 
-BinanceService.$inject = ['$http', '$q'];
+BinanceService.$inject = ['$http', '$q', 'signingService'];
 
-function BinanceService($http, $q) {
+function BinanceService($http, $q, signingService) {
 
     var service = this;
 
@@ -131,6 +131,35 @@ function BinanceService($http, $q) {
     service.generateLink = function(a, b) {
         if (priceMap[a+b]) return service.URL.replace('{a}', a).replace('{b}', b);
         else return service.URL.replace('{a}', b).replace('{b}', a);
+    };
+
+
+    service.performMarketOrder = function(side, quantity, ticker, apiKey, secretKey) {
+
+        var data = {
+            side: side,
+            symbol: ticker,
+            quantity: quantity,
+            timestamp: new Date().getTime()
+        };
+        data.signature = signingService.encrypt(data, secretKey);
+
+        return $http({
+            method: 'POST',
+            url: 'https://api.binance.com/api/v3/order/test',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-MBX-APIKEY': apiKey
+            },
+            data: data
+        })
+            .then(function(response) {
+                // Testing
+                console.log(response);
+            })
+            .catch(function(response) {
+                throw response;
+            });
     };
 
     init();
