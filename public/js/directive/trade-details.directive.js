@@ -68,7 +68,8 @@ function Trade(binanceService) {
                 scope.calculated.b = scope.calculated.ab.market;
             } else {
                 scope.calculated.ab.total = scope.calculated.start.total;
-                scope.calculated.ab.market = scope.calculated.ab.total;
+                scope.calculated.ab.dust = binanceService.calculateDust(scope.trade.ab.ticker, scope.calculated.ab.total);
+                scope.calculated.ab.market = scope.calculated.ab.total - scope.calculated.ab.dust;
 
                 scope.calculated.start.market = scope.calculated.ab.market;
                 scope.calculated.ab.dust = 0;
