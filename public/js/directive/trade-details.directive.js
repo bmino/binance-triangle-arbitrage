@@ -12,7 +12,8 @@ function Trade(binanceService) {
         scope: {
             trade: '=',
             refresh: '&',
-            maxInvestment: '='
+            maxInvestment: '=',
+            minProfit: '='
         },
         link: link
     };
@@ -108,6 +109,30 @@ function Trade(binanceService) {
 
             return scope.percent;
         }
+
+        scope.execute = function(trade) {
+            var startTime = null;
+            scope.refresh({trade: trade})
+                .then(function() {
+                    scope.optimize();
+                    startTime = new Date();
+                    if (scope.percent < scope.minProfit) throw scope.percent + ' is too low to execute trade.';
+                    return binanceService.performMarketOrder(scope.trade.ab.method.toUpperCase(), scope.calculated.ab.market, scope.trade.ab.ticker)
+                        .then(function(response) {
+                            return binanceService.performMarketOrder(scope.trade.bc.method.toUpperCase(), scope.calculated.bc.market, scope.trade.bc.ticker);
+                        })
+                        .then(function(response) {
+                            return binanceService.performMarketOrder(scope.trade.ca.method.toUpperCase(), scope.calculated.ca.market, scope.trade.ca.ticker);
+                        });
+                })
+                .then(function() {
+                    console.log('DONE!');
+                })
+                .catch(console.error)
+                .finally(function() {
+                    scope.executionTime = new Date() - startTime;
+                });
+        };
 
         scope.generateLink = function(a, b) {
             return binanceService.generateLink(a, b);

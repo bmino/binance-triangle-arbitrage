@@ -19,6 +19,9 @@
         <div ng-class="{'text-danger': percent <= 0, 'text-success': percent > 0}">Profit: {{percent}}%</div>
 
         <button type="button" class="btn btn-default" ng-click="refresh({trade: trade})">Refresh</button>
+        <button type="button" class="btn btn-default" ng-click="execute(trade, calculated)">Test Execute</button>
+
+        <span>Executed trade in {{executionTime}} milliseconds</span>
 
     </div>
 

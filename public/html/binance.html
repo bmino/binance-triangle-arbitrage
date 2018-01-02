@@ -4,20 +4,6 @@
         <div class="config-container">
 
             <div class="config-box">
-                <label>API Key</label>
-                <input type="text" class="form-control" ng-model="CONFIG.API.KEY">
-            </div>
-
-            <div class="config-box">
-                <label>API Secret</label>
-                <input type="password" class="form-control" ng-model="CONFIG.API.SECRET">
-            </div>
-
-            <div class="config-box">
-                <button type="button" class="form-control" ng-click="testTrade()">Test Trade</button>
-            </div>
-
-            <div class="config-box">
                 <label>Base Symbol</label>
                 <div class="input-group">
                     <input type="text" class="form-control" placeholder="SYM" ng-model="BASE_SYMBOL">
@@ -68,7 +54,8 @@
         <trade-details ng-if="currentTrade"
                        trade="currentTrade"
                        refresh="refreshTrade(trade)"
-                       max-investment="CONFIG.INVESTMENT.MAX"></trade-details>
+                       max-investment="CONFIG.INVESTMENT.MAX"
+                       min-profit="CONFIG.PROFIT.MIN"></trade-details>
 
         <div style="clear:both;"></div>
     </div>

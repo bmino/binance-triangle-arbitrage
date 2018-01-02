@@ -14,10 +14,6 @@ function BinanceController($scope, $interval, binanceService) {
         },
         PROFIT: {
             MIN: 3.00
-        },
-        API: {
-            KEY: '',
-            SECRET: ''
         }
     };
 
@@ -79,7 +75,7 @@ function BinanceController($scope, $interval, binanceService) {
     };
 
     $scope.refreshTrade = function(trade) {
-        binanceService.refreshPriceMap()
+        return binanceService.refreshPriceMap()
             .then(function() {
                 return binanceService.relationships(trade.symbol.a, trade.symbol.b, trade.symbol.c);
             })
@@ -89,11 +85,20 @@ function BinanceController($scope, $interval, binanceService) {
             });
     };
 
-    $scope.testTrade = function() {
-        var side = 'BUY';
-        var quantity = 1;
-        var ticker = 'BNBBTC';
-        binanceService.performMarketOrder(side, quantity, ticker, $scope.CONFIG.API.KEY, $scope.CONFIG.API.SECRET);
+    $scope.execute = function(trade, calculated) {
+        binanceService.performMarketOrder(trade.ab.method, calculated.ab.market, trade.ab.ticker)
+            .then(function() {
+                return binanceService.performMarketOrder(trade.bc.method, calculated.bc.market, trade.bc.ticker);
+            })
+            .then(function() {
+                return binanceService.performMarketOrder(trade.ca.method, calculated.ca.market, trade.ca.ticker);
+            })
+            .then(function() {
+                console.log('Completed');
+            })
+            .catch(function(error) {
+                throw error;
+            });
     };
 
     function maintainTimeSinceLastPriceCheck() {

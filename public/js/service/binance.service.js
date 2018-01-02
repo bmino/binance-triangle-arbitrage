@@ -11,6 +11,10 @@ function BinanceService($http, $q, signingService) {
     service.URL = 'https://binance.com/tradeDetail.html?symbol={a}_{b}';
     service.TRANSACTION_FEE = 0.05;
     service.INITIAL_INVESTMENT = 100;
+    service.API = {
+        KEY: '',
+        SECRET: ''
+    };
 
     var symbolsDeferred = $q.defer();
     var tickers = {};
@@ -134,33 +138,41 @@ function BinanceService($http, $q, signingService) {
     };
 
 
-    service.performMarketOrder = function(side, quantity, ticker, apiKey, secretKey) {
+    service.performMarketOrder = function(side, quantity, symbol) {
+        if (!service.API.KEY || !service.API.SECRET) throw 'Key and Secret not detected.';
 
-        var data = {
-            side: side,
-            symbol: ticker,
-            quantity: quantity,
-            timestamp: new Date().getTime()
-        };
-        data.signature = signingService.encrypt(data, secretKey);
+        var TIME_OFFSET = 1000;
+
+        var queryString =   'symbol='+ symbol +
+                            '&side='+ side.toUpperCase() +
+                            '&type='+ 'MARKET' +
+                            '&quantity='+ quantity.toString() +
+                            '&timestamp='+ (new Date().getTime() - TIME_OFFSET).toString();
+
+
+        queryString += '&signature=' + signingService.encrypt(queryString, service.API.SECRET);
+
+
+        console.log(side+'ing ' + quantity + ' ' + symbol + ' at market');
 
         return $http({
             method: 'POST',
-            url: 'https://api.binance.com/api/v3/order/test',
+            url: 'https://api.binance.com/api/v3/order/test?'+ queryString,
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
-                'X-MBX-APIKEY': apiKey
-            },
-            data: data
+                'X-MBX-APIKEY': service.API.KEY
+            }
         })
             .then(function(response) {
-                // Testing
-                console.log(response);
+                return response;
             })
             .catch(function(response) {
-                throw response;
+                console.error(response.data);
+                return $q.reject(response.data.msg);
             });
     };
+
+
 
     init();
 
