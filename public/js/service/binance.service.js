@@ -26,7 +26,7 @@ function BinanceService($http, $q, signingService) {
                 var symbols = [];
                 angular.forEach(response.data.symbols, function(symbolObj) {
                     symbols.push(symbolObj.baseAsset);
-                    symbolObj.dustQty = symbolObj.filters[1].minQty;
+                    symbolObj.dustQty = parseFloat(symbolObj.filters[1].minQty);
                     tickers[symbolObj.symbol] = symbolObj;
                 });
                 symbols = symbols.filter(function(item, pos) {
@@ -126,10 +126,17 @@ function BinanceService($http, $q, signingService) {
         return null;
     };
 
-    service.calculateDust = function(tickerName, amount) {
-        var multiplier = Math.pow(10, 30);
+    service.calculateDustless = function(tickerName, amount) {
         var dustQty = tickers[tickerName].dustQty;
-        return (amount * multiplier) % (dustQty * multiplier) / multiplier;
+        var decimals = dustQty === 1 ? 0 : dustQty.toString().indexOf('1') - 1;
+        var decimalIndex = amount.toString().indexOf('.');
+        if (decimalIndex === -1) {
+            // Integer
+            return amount;
+        } else {
+            // Float
+            return parseFloat(amount.toString().slice(0, decimalIndex + decimals + 1));
+        }
     };
 
     service.generateLink = function(a, b) {
