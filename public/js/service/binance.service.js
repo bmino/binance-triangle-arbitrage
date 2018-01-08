@@ -127,7 +127,7 @@ function BinanceService($http, $q, signingService) {
     };
 
     service.calculateDust = function(tickerName, amount) {
-        var multiplier = 1000000;
+        var multiplier = Math.pow(10, 30);
         var dustQty = tickers[tickerName].dustQty;
         return (amount * multiplier) % (dustQty * multiplier) / multiplier;
     };
