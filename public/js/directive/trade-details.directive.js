@@ -49,7 +49,10 @@ function Trade(binanceService) {
         function init() {
             scope.investment = 100;
             scope.$watch('investment', calculate);
-            scope.$watch('trade', scope.optimize);
+            scope.$watch('trade', function() {
+                scope.executionTime = null;
+                scope.optimize();
+            });
         }
 
 
@@ -112,6 +115,7 @@ function Trade(binanceService) {
 
         scope.execute = function(trade) {
             var startTime = null;
+            scope.executionTime = null;
             scope.refresh({trade: trade})
                 .then(function() {
                     scope.optimize();
