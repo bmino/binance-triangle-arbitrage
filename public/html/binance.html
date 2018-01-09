@@ -32,7 +32,7 @@
             <div class="config-box">
                 <label>Minimum Profit</label>
                 <div class="input-group">
-                    <input type="number" class="form-control" ng-model="CONFIG.PROFIT.MIN">
+                    <input type="number" class="form-control" ng-model="CONFIG.PROFIT.MIN" ng-model-options="{ debounce: 500 }">
                     <span class="input-group-btn">
                     <button class="btn btn-default" type="button" ng-click="CONFIG.PROFIT.MIN = 0"><span class="glyphicon glyphicon-remove"></span></button>
                 </span>
