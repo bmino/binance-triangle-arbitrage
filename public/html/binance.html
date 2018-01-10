@@ -6,9 +6,9 @@
             <div class="config-box">
                 <label>Base Symbol</label>
                 <div class="input-group">
-                    <input type="text" class="form-control" placeholder="SYM" ng-model="BASE_SYMBOL">
+                    <input type="text" class="form-control" placeholder="SYM" ng-model="CONFIG.BASE_SYMBOL">
                     <span class="input-group-btn">
-                        <button class="btn btn-default" type="button" ng-click="BASE_SYMBOL = ''">
+                        <button class="btn btn-default" type="button" ng-click="CONFIG.BASE_SYMBOL = ''">
                             <span class="glyphicon glyphicon-remove"></span>
                         </button>
                     </span>
@@ -69,7 +69,7 @@
             <th>Dustless Margin</th>
             <th>Details</th>
         </tr>
-        <tr ng-repeat="trade in trades | filter : {symbol: {a: BASE_SYMBOL}} | minPercent: CONFIG.PROFIT.MIN">
+        <tr ng-repeat="trade in trades | filter : {symbol: {a: CONFIG.BASE_SYMBOL}} | minPercent: CONFIG.PROFIT.MIN">
             <td ng-bind-template="{{trade.symbol.a}}&#44; {{trade.symbol.b}}&#44; {{trade.symbol.c}}"></td>
             <td ng-bind="trade.percent | number : 4"></td>
             <td>
