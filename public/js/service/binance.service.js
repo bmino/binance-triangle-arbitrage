@@ -171,7 +171,7 @@ function BinanceService($http, $q, signingService, bridgeService) {
 
         return $http({
             method: 'POST',
-            url: 'https://api.binance.com/api/v3/order/test?'+ queryString,
+            url: 'https://api.binance.com/api/v3/order?'+ queryString,
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'X-MBX-APIKEY': service.API.KEY
