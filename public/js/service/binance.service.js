@@ -2,9 +2,9 @@ angular
     .module('services')
     .service('binanceService', BinanceService);
 
-BinanceService.$inject = ['$http', '$q', 'signingService'];
+BinanceService.$inject = ['$http', '$q', 'signingService', 'bridgeService'];
 
-function BinanceService($http, $q, signingService) {
+function BinanceService($http, $q, signingService, bridgeService) {
 
     var service = this;
 
@@ -21,6 +21,13 @@ function BinanceService($http, $q, signingService) {
     var priceMap = {};
 
     function init() {
+        bridgeService.getApiVariables()
+            .then(function(bridge) {
+                service.API.KEY = bridge.BINANCE.KEY;
+                service.API.SECRET = bridge.BINANCE.SECRET;
+            })
+            .catch(console.error);
+
         $http.get('https://api.binance.com/api/v1/exchangeInfo')
             .then(function(response) {
                 var symbols = [];

@@ -27,6 +27,7 @@ app.use('/node_modules', express.static(path.join(__dirname, 'node_modules')));
 
 
 app.use('/',								require('./routes/EjsViewController'));
+app.use('/bridge/',							require('./routes/EnvironmentBridgeController'));
 
 
 // catch 404 and forward to error handler
