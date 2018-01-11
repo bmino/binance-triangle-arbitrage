@@ -18,7 +18,7 @@
         <div>{{trade.ca.method}} {{calculated.ca.market | number : 6}} ({{calculated.ca.dust | number : 6}}) <a ng-href="{{generateLink(trade.symbol.c, trade.symbol.a)}}" target="_blank">{{trade.ca.ticker}}</a> @ {{trade.ca.rate.market | number : 6}} to get {{calculated.a | number : 6}} {{trade.symbol.a}}</div>
         <div ng-class="{'text-danger': percent <= 0, 'text-success': percent > 0}">Profit: {{percent}}%</div>
 
-        <button type="button" class="btn btn-default" ng-click="refresh({trade: trade})">Refresh</button>
+        <button type="button" class="btn btn-default" ng-click="refresh()">Refresh</button>
         <button type="button" class="btn btn-default" ng-click="execute(trade, calculated)">Test Execute</button>
 
         <span ng-show="executionTime">Executed trade in {{executionTime}} milliseconds</span>

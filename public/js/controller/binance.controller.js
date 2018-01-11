@@ -55,33 +55,26 @@ function BinanceController($scope, $interval, binanceService) {
     };
 
     function analyzeSymbolsForArbitrage(symbols) {
-        var results = [];
+        var trades = [];
         angular.forEach(symbols, function(symbol1) {
             angular.forEach(symbols, function(symbol2) {
                 angular.forEach(symbols, function(symbol3) {
-                    var result = binanceService.relationships(symbol1, symbol2, symbol3);
-                    if (!result) return;
-                    if (result.percent <= 0) return;
-                    results.push(result);
+                    var relationship = binanceService.relationships(symbol1, symbol2, symbol3);
+                    if (!relationship || relationship.percent <= 0) return;
+                    relationship.symbol = {
+                        a: symbol1,
+                        b: symbol2,
+                        c: symbol3
+                    };
+                    trades.push(relationship);
                 });
             });
         });
-        return results;
+        return trades;
     }
 
     $scope.setCurrentTrade = function(trade) {
         $scope.currentTrade = trade;
-    };
-
-    $scope.refreshTrade = function(trade) {
-        return binanceService.refreshPriceMap()
-            .then(function() {
-                return binanceService.relationships(trade.symbol.a, trade.symbol.b, trade.symbol.c);
-            })
-            .then($scope.setCurrentTrade)
-            .catch(function(error) {
-                throw error;
-            });
     };
 
     $scope.execute = function(trade, calculated) {

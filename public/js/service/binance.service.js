@@ -19,6 +19,7 @@ function BinanceService($http, $q, signingService, bridgeService) {
     var symbolsDeferred = $q.defer();
     var tickers = {};
     var priceMap = {};
+    var volumeMap = {};
 
     function init() {
         bridgeService.getApiVariables()
@@ -41,10 +42,7 @@ function BinanceService($http, $q, signingService, bridgeService) {
                 });
                 symbolsDeferred.resolve(symbols);
             })
-            .catch(function(response) {
-                symbolsDeferred.reject('Error fetching symbols');
-                throw response;
-            });
+            .catch(andThrow);
     }
 
     service.getSymbols = function() {
@@ -64,9 +62,29 @@ function BinanceService($http, $q, signingService, bridgeService) {
                 priceMap.LAST_UPDATED = new Date();
                 return priceMap;
             })
-            .catch(function(response) {
-                throw response;
-            });
+            .catch(andThrow);
+    };
+
+    service.getHourlyVolume = function(symbol) {
+        if (volumeMap[symbol]) return $q.resolve(volumeMap[symbol]);
+
+        return service.getKLine(symbol, '1h')
+            .then(function(kline) {
+                return volumeMap[symbol] = kline[0][5];
+            })
+            .catch(andThrow);
+    };
+
+    service.getKLine = function(symbol, interval) {
+        return $http.get('https://api.binance.com/api/v1/klines', {params: {
+                symbol: symbol,
+                interval: interval,
+                limit: 1
+            }})
+            .then(function(response) {
+                return response.data;
+            })
+            .catch(andThrow);
     };
 
     service.relationships = function(a, b, c) {
@@ -80,17 +98,11 @@ function BinanceService($http, $q, signingService, bridgeService) {
         if (!ca) return;
 
         return {
-            a: a,
-            b: b,
-            c: c,
+            id: a + b + c,
+            found: service.getPriceMapLastUpdatedTime(),
             ab: ab,
             bc: bc,
             ca: ca,
-            symbol: {
-                a: a,
-                b: b,
-                c: c
-            },
             percent: ((ab.rate.convert * bc.rate.convert * ca.rate.convert) - 1) * 100
         };
     };
@@ -185,6 +197,10 @@ function BinanceService($http, $q, signingService, bridgeService) {
                 return $q.reject(response.data.msg);
             });
     };
+
+    function andThrow(throwable) {
+        throw throwable;
+    }
 
 
 
