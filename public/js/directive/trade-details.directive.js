@@ -167,6 +167,10 @@ function Trade(binanceService) {
             return binanceService.generateLink(a, b);
         };
 
+        scope.apiKeyPresent = function() {
+            return binanceService.API.KEY && binanceService.API.SECRET;
+        };
+
         scope.optimize = function() {
             var best = {
                 investment: 0,
