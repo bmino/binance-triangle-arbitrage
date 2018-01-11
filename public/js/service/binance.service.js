@@ -56,10 +56,10 @@ function BinanceService($http, $q, signingService, bridgeService) {
     };
 
     service.refreshPriceMap = function() {
-        return $http.get('https://api.binance.com/api/v1/ticker/allPrices')
+        return $http.get('https://api.binance.com/api/v3/ticker/price')
             .then(function(response) {
-                angular.forEach(response.data, function(symbolObj) {
-                    priceMap[symbolObj.symbol] = symbolObj.price;
+                angular.forEach(response.data, function(tick) {
+                    priceMap[tick.symbol] = tick.price;
                 });
                 priceMap.LAST_UPDATED = new Date();
                 return priceMap;
