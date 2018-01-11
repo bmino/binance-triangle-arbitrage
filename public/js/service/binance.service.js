@@ -68,18 +68,19 @@ function BinanceService($http, $q, signingService, bridgeService) {
     service.getHourlyVolume = function(symbol) {
         if (volumeMap[symbol]) return $q.resolve(volumeMap[symbol]);
 
-        return service.getKLine(symbol, '1h')
+        console.log('Fetching hourly volume for ' + symbol);
+        return service.getKLine(symbol, '1h', 2)
             .then(function(kline) {
                 return volumeMap[symbol] = kline[0][5];
             })
             .catch(andThrow);
     };
 
-    service.getKLine = function(symbol, interval) {
+    service.getKLine = function(symbol, interval, limit) {
         return $http.get('https://api.binance.com/api/v1/klines', {params: {
                 symbol: symbol,
                 interval: interval,
-                limit: 1
+                limit: limit
             }})
             .then(function(response) {
                 return response.data;

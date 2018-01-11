@@ -13,9 +13,9 @@
 
     <div class="details">
         <div>Start with {{calculated.start.market | number : 6}} {{trade.symbol.a}}</div>
-        <div>{{trade.ab.method}} {{calculated.ab.market | number : 6}} ({{calculated.ab.dust | number : 6}}) <a ng-href="{{generateLink(trade.symbol.a, trade.symbol.b)}}" target="_blank">{{trade.ab.ticker}}</a> @ {{trade.ab.rate.market | number : 6}} to get {{calculated.b | number : 6}} {{trade.symbol.b}}</div>
-        <div>{{trade.bc.method}} {{calculated.bc.market | number : 6}} ({{calculated.bc.dust | number : 6}}) <a ng-href="{{generateLink(trade.symbol.b, trade.symbol.c)}}" target="_blank">{{trade.bc.ticker}}</a> @ {{trade.bc.rate.market | number : 6}} to get {{calculated.c | number : 6}} {{trade.symbol.c}}</div>
-        <div>{{trade.ca.method}} {{calculated.ca.market | number : 6}} ({{calculated.ca.dust | number : 6}}) <a ng-href="{{generateLink(trade.symbol.c, trade.symbol.a)}}" target="_blank">{{trade.ca.ticker}}</a> @ {{trade.ca.rate.market | number : 6}} to get {{calculated.a | number : 6}} {{trade.symbol.a}}</div>
+        <div>{{trade.ab.method}} {{calculated.ab.market | number : 6}} / ({{calculated.ab.market / trade.ab.volume * 100 | number : 2}}%) ({{calculated.ab.dust | number : 6}}) <a ng-href="{{generateLink(trade.symbol.a, trade.symbol.b)}}" target="_blank">{{trade.ab.ticker}}</a> @ {{trade.ab.rate.market | number : 6}} to get {{calculated.b | number : 6}} {{trade.symbol.b}}</div>
+        <div>{{trade.bc.method}} {{calculated.bc.market | number : 6}} / ({{calculated.bc.market / trade.bc.volume * 100 | number : 2}}%) ({{calculated.bc.dust | number : 6}}) <a ng-href="{{generateLink(trade.symbol.b, trade.symbol.c)}}" target="_blank">{{trade.bc.ticker}}</a> @ {{trade.bc.rate.market | number : 6}} to get {{calculated.c | number : 6}} {{trade.symbol.c}}</div>
+        <div>{{trade.ca.method}} {{calculated.ca.market | number : 6}} / ({{calculated.ca.market / trade.ca.volume * 100 | number : 2}}%) ({{calculated.ca.dust | number : 6}}) <a ng-href="{{generateLink(trade.symbol.c, trade.symbol.a)}}" target="_blank">{{trade.ca.ticker}}</a> @ {{trade.ca.rate.market | number : 6}} to get {{calculated.a | number : 6}} {{trade.symbol.a}}</div>
         <div ng-class="{'text-danger': percent <= 0, 'text-success': percent > 0}">Profit: {{percent}}%</div>
 
         <button type="button" class="btn btn-default" ng-click="refresh()">Refresh</button>

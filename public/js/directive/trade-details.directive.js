@@ -48,8 +48,8 @@ function Trade(binanceService) {
         function init() {
             scope.investment = 100;
             scope.$watch('trade.id', function() {
-                console.log('New trade detected');
                 scope.executionTime = null;
+                updateVolumes();
                 scope.optimize();
             });
         }
@@ -112,10 +112,11 @@ function Trade(binanceService) {
         };
 
         scope.refresh = function() {
-            binanceService.refreshPriceMap()
+            return binanceService.refreshPriceMap()
                 .then(function() {
                     var rel = binanceService.relationships(scope.trade.symbol.a, scope.trade.symbol.b, scope.trade.symbol.c);
                     angular.extend(scope.trade, rel);
+                    updateVolumes();
                     scope.optimize();
                 })
                 .catch(console.error)
@@ -123,6 +124,20 @@ function Trade(binanceService) {
                     console.log('Done refreshing');
                 });
         };
+
+        function updateVolumes() {
+            Promise.all([
+                binanceService.getHourlyVolume(scope.trade.ab.ticker),
+                binanceService.getHourlyVolume(scope.trade.bc.ticker),
+                binanceService.getHourlyVolume(scope.trade.ca.ticker)
+            ])
+                .then(function(volumes) {
+                    scope.trade.ab.volume = volumes[0];
+                    scope.trade.bc.volume = volumes[1];
+                    scope.trade.ca.volume = volumes[2];
+                })
+                .catch(console.error);
+        }
 
         scope.execute = function() {
             var startTime = null;
