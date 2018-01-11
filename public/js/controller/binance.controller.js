@@ -7,7 +7,6 @@ BinanceController.$inject = ['$scope', '$interval', 'binanceService'];
 function BinanceController($scope, $interval, binanceService) {
 
     $scope.CONFIG = {
-        DECIMALS: 8,
         BASE_SYMBOL: '',
         INVESTMENT: {
             MAX: 500

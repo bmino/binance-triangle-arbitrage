@@ -57,7 +57,6 @@ function Trade(binanceService) {
 
 
         function calculate(investment) {
-            if (investment === undefined) investment = scope.investment;
 
             scope.calculated.start.total = investment / binanceService.convertRate(scope.trade.a, 'USDT');
 
