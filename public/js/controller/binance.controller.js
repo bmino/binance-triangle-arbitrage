@@ -77,22 +77,6 @@ function BinanceController($scope, $interval, binanceService) {
         $scope.currentTrade = trade;
     };
 
-    $scope.execute = function(trade, calculated) {
-        binanceService.performMarketOrder(trade.ab.method, calculated.ab.market, trade.ab.ticker)
-            .then(function() {
-                return binanceService.performMarketOrder(trade.bc.method, calculated.bc.market, trade.bc.ticker);
-            })
-            .then(function() {
-                return binanceService.performMarketOrder(trade.ca.method, calculated.ca.market, trade.ca.ticker);
-            })
-            .then(function() {
-                console.log('Completed');
-            })
-            .catch(function(error) {
-                throw error;
-            });
-    };
-
     function maintainTimeSinceLastPriceCheck() {
         var tick = function() {
             var lastUpdatedTime = binanceService.getPriceMapLastUpdatedTime();
