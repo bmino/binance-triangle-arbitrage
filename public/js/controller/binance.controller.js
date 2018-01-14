@@ -11,41 +11,34 @@ function BinanceController($scope, $interval, binanceService) {
         INVESTMENT: {
             MAX: 500
         },
+        VOLUME: {
+            MAX: 1
+        },
         PROFIT: {
             MIN: 3.00
         }
     };
 
     $scope.LOADING = {
-        API: false,
+        API: binanceService.LOADING,
         ARBITRAGE: false
     };
 
-    $scope.symbols = [];
     $scope.timeSincePriceUpdate = null;
     $scope.trades = [];
     $scope.currentTrade = null;
 
     function init() {
-        $scope.LOADING.API = true;
-        binanceService.getSymbols()
-            .then(function(symbols) {
-                $scope.symbols = symbols;
-            })
-            .catch(console.error)
-            .finally(function() {
-                $scope.LOADING.API = false;
-            });
         maintainTimeSinceLastPriceCheck();
     }
 
     $scope.findArbitrage = function() {
-        if ($scope.symbols.length === 0) return;
+        if (binanceService.getSymbols().length === 0) return;
         $scope.LOADING.ARBITRAGE = true;
 
         binanceService.refreshPriceMap()
             .then(function() {
-                $scope.trades = analyzeSymbolsForArbitrage($scope.symbols)
+                $scope.trades = analyzeSymbolsForArbitrage(binanceService.getSymbols())
                     .sort(sortByPercent);
             })
             .catch(console.error)

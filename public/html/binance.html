@@ -20,18 +20,23 @@
                 <div class="input-group">
                     <span class="input-group-addon">$</span>
                     <input type="number" class="form-control" ng-model="CONFIG.INVESTMENT.MAX" ng-model-options="{ debounce: 1000 }">
-                    <span class="input-group-btn">
-                        <button class="btn btn-default" type="button" ng-click="CONFIG.INVESTMENT.MAX = 9999">
-                            <span class="glyphicon glyphicon-remove"></span>
-                        </button>
-                    </span>
                 </div>
-                <input type="range" min="100" max="9999" step="1" ng-model="CONFIG.INVESTMENT.MAX">
+                <input type="range" min="100" max="2000" step="1" ng-model="CONFIG.INVESTMENT.MAX">
+            </div>
+
+            <div class="config-box">
+                <label>Max Hourly Volume</label>
+                <div class="input-group">
+                    <span class="input-group-addon">%</span>
+                    <input type="number" class="form-control" ng-model="CONFIG.VOLUME.MAX" ng-model-options="{ debounce: 1000 }">
+                </div>
+                <input type="range" min="0" max="5" step="0.1" ng-model="CONFIG.VOLUME.MAX">
             </div>
 
             <div class="config-box">
                 <label>Minimum Profit</label>
                 <div class="input-group">
+                    <span class="input-group-addon">%</span>
                     <input type="number" class="form-control" ng-model="CONFIG.PROFIT.MIN" ng-model-options="{ debounce: 1000 }">
                     <span class="input-group-btn">
                     <button class="btn btn-default" type="button" ng-click="CONFIG.PROFIT.MIN = 0"><span class="glyphicon glyphicon-remove"></span></button>
@@ -43,8 +48,8 @@
             <button type="button"
                     class="form-control btn btn-default"
                     ng-click="findArbitrage()"
-                    ng-disabled="LOADING.API || LOADING.ARBITRAGE">
-                {{LOADING.API ? 'Loading Api ...' :
+                    ng-disabled="LOADING.API.INITIAL || LOADING.ARBITRAGE">
+                {{LOADING.API.INITIAL ? 'Loading Api ...' :
                 LOADING.ARBITRAGE ? 'Finding Arbitrage ...' : 'Find Arbitrage'
                 }}
             </button>
@@ -54,6 +59,7 @@
         <trade-details ng-if="currentTrade"
                        trade="currentTrade"
                        max-investment="CONFIG.INVESTMENT.MAX"
+                       max-volume="CONFIG.VOLUME.MAX"
                        min-profit="CONFIG.PROFIT.MIN"></trade-details>
 
         <div style="clear:both;"></div>

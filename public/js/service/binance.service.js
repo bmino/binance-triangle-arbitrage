@@ -15,45 +15,97 @@ function BinanceService($http, $q, signingService, bridgeService) {
         KEY: '',
         SECRET: ''
     };
+    service.LOADING = {
+        INITIAL: true,
+        CREDENTIALS: false,
+        TICKERS: false,
+        PRICES: false,
+        VOLUME: false
+    };
+    service.TIME_OFFSET = 3000;
 
-    var symbolsDeferred = $q.defer();
+    var symbols = [];
     var tickers = {};
     var priceMap = {};
     var volumeMap = {};
 
     function init() {
-        bridgeService.getApiVariables()
-            .then(function(bridge) {
-                service.API.KEY = bridge.BINANCE.KEY;
-                service.API.SECRET = bridge.BINANCE.SECRET;
-            })
-            .catch(console.error);
+        service.LOADING.INITIAL = true;
 
-        $http.get('https://api.binance.com/api/v1/exchangeInfo')
-            .then(function(response) {
-                var symbols = [];
-                angular.forEach(response.data.symbols, function(symbolObj) {
-                    symbols.push(symbolObj.baseAsset);
-                    symbolObj.dustQty = parseFloat(symbolObj.filters[1].minQty);
-                    tickers[symbolObj.symbol] = symbolObj;
-                });
-                symbols = symbols.filter(function(item, pos) {
-                    return symbols.indexOf(item) === pos;
-                });
-                symbolsDeferred.resolve(symbols);
-            })
-            .catch(andThrow);
+        Promise.all([
+            service.refreshApiCredentials(),
+            service.refreshSymbolsAndTickers(),
+            service.refreshVolumeMap()
+        ])
+            .catch(andThrow)
+            .finally(function() {
+                service.LOADING.INITIAL = false;
+            });
     }
 
     service.getSymbols = function() {
-        return symbolsDeferred.promise;
+        return symbols;
+    };
+
+    service.get24HourVolume = function(ticker) {
+        return volumeMap[ticker];
     };
 
     service.getPriceMapLastUpdatedTime = function() {
         return priceMap.LAST_UPDATED;
     };
 
+    service.refreshApiCredentials = function() {
+        service.LOADING.CREDENTIALS = true;
+        console.log('Refreshing api credentials');
+        return bridgeService.getApiVariables()
+            .then(function(bridge) {
+                service.API.KEY = bridge.BINANCE.KEY;
+                service.API.SECRET = bridge.BINANCE.SECRET;
+            })
+            .catch(andThrow)
+            .finally(function() {
+                service.LOADING.CREDENTIALS = false;
+            });
+    };
+
+    service.refreshVolumeMap = function() {
+        service.LOADING.VOLUME = true;
+        console.log('Refreshing volume map');
+        return $http.get('https://api.binance.com/api/v1/ticker/24hr')
+            .then(function(response) {
+                console.log('Refreshed 24hr history for ' + response.data.length + ' tickers');
+                response.data.map(function(history) {
+                    volumeMap[history.symbol] = parseInt(history.volume);
+                });
+            })
+            .catch(andThrow)
+            .finally(function() {
+                service.LOADING.VOLUME = false;
+            });
+    };
+
+    service.refreshSymbolsAndTickers = function() {
+        service.LOADING.TICKERS = true;
+        console.log('Refreshing symbols and tickers');
+        return $http.get('https://api.binance.com/api/v1/exchangeInfo')
+            .then(function(response) {
+                var duplicateSymbols = [];
+                response.data.symbols.map(function(symbolObj) {
+                    duplicateSymbols.push(symbolObj.baseAsset);
+                    symbolObj.dustQty = parseFloat(symbolObj.filters[1].minQty);
+                    tickers[symbolObj.symbol] = symbolObj;
+                });
+                symbols = duplicateSymbols.filter(removeDuplicates);
+            })
+            .catch(andThrow)
+            .finally(function() {
+                service.LOADING.TICKERS = false;
+            });
+    };
+
     service.refreshPriceMap = function() {
+        service.LOADING.PRICES = true;
         return $http.get('https://api.binance.com/api/v3/ticker/price')
             .then(function(response) {
                 angular.forEach(response.data, function(tick) {
@@ -62,30 +114,10 @@ function BinanceService($http, $q, signingService, bridgeService) {
                 priceMap.LAST_UPDATED = new Date();
                 return priceMap;
             })
-            .catch(andThrow);
-    };
-
-    service.getHourlyVolume = function(symbol) {
-        if (volumeMap[symbol]) return $q.resolve(volumeMap[symbol]);
-
-        console.log('Fetching hourly volume for ' + symbol);
-        return service.getKLine(symbol, '1h', 2)
-            .then(function(kline) {
-                return volumeMap[symbol] = kline[0][5];
-            })
-            .catch(andThrow);
-    };
-
-    service.getKLine = function(symbol, interval, limit) {
-        return $http.get('https://api.binance.com/api/v1/klines', {params: {
-                symbol: symbol,
-                interval: interval,
-                limit: limit
-            }})
-            .then(function(response) {
-                return response.data;
-            })
-            .catch(andThrow);
+            .catch(andThrow)
+            .finally(function() {
+                service.LOADING.PRICES = false;
+            });
     };
 
     service.relationships = function(a, b, c) {
@@ -130,6 +162,7 @@ function BinanceService($http, $q, signingService, bridgeService) {
         if (priceMap[a+b]) return {
             method: 'Sell',
             ticker: a+b,
+            volume: volumeMap[a+b],
             rate: {
                 market: priceMap[a + b],
                 convert: priceMap[a + b]
@@ -138,6 +171,7 @@ function BinanceService($http, $q, signingService, bridgeService) {
         if (priceMap[b+a]) return {
             method: 'Buy',
             ticker: b+a,
+            volume: volumeMap[b+a],
             rate: {
                 market: priceMap[b + a],
                 convert: ( 1 / priceMap[b + a])
@@ -168,13 +202,11 @@ function BinanceService($http, $q, signingService, bridgeService) {
     service.performMarketOrder = function(side, quantity, symbol) {
         if (!service.API.KEY || !service.API.SECRET) throw 'Key and Secret not detected.';
 
-        var TIME_OFFSET = 1000;
-
         var queryString =   'symbol='+ symbol +
                             '&side='+ side.toUpperCase() +
                             '&type='+ 'MARKET' +
                             '&quantity='+ quantity.toString() +
-                            '&timestamp='+ (new Date().getTime() - TIME_OFFSET).toString();
+                            '&timestamp='+ (new Date().getTime() - service.TIME_OFFSET).toString();
 
 
         queryString += '&signature=' + signingService.encrypt(queryString, service.API.SECRET);
@@ -191,13 +223,17 @@ function BinanceService($http, $q, signingService, bridgeService) {
             }
         })
             .then(function(response) {
-                return response;
+                return response.data;
             })
             .catch(function(response) {
                 console.error(response.data);
                 return $q.reject(response.data.msg);
             });
     };
+
+    function removeDuplicates(item, pos, self) {
+        return self.indexOf(item) === pos;
+    }
 
     function andThrow(throwable) {
         throw throwable;
