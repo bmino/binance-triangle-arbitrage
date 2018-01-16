@@ -166,6 +166,46 @@ function BinanceService($http, $q, signingService, bridgeService) {
         return NaN;
     };
 
+    service.orderBookConversion = function(amountFrom, symbolFrom, symbolTo, orderBook) {
+        var amountTo = 0;
+        var rate, quantity;
+
+        if (priceMap[symbolFrom + symbolTo]) {
+            for (var i=0; i<orderBook.bids.length; i++) {
+                rate = parseFloat(orderBook.bids[i][0]);
+                quantity = parseFloat(orderBook.bids[i][1]);
+                if (quantity < amountFrom) {
+                    amountFrom -= quantity;
+                    amountTo += quantity * rate;
+                } else {
+                    // Last fill
+                    amountTo += amountFrom * rate;
+                    amountFrom = 0;
+                    //console.log('Converted ' + amountFrom.toFixed(3) + ' ' + symbolFrom + ' exactly to ' + amountTo + ' ' + symbolTo);
+                    return amountTo;
+                }
+            }
+        } else {
+            for (var j=0; j<orderBook.asks.length; j++) {
+                rate = parseFloat(orderBook.asks[j][0]);
+                quantity = parseFloat(orderBook.asks[j][1]);
+                var exchangeableAmount = quantity * rate;
+                if (exchangeableAmount < amountFrom) {
+                    amountFrom -= quantity * rate;
+                    amountTo += quantity;
+                } else {
+                    // Last fill
+                    amountTo += amountFrom / rate;
+                    amountFrom = 0;
+                    //console.log('Converted ' + amountFrom.toFixed(3) + ' ' + symbolFrom + ' exactly to ' + amountTo + ' ' + symbolTo);
+                    return amountTo;
+                }
+            }
+        }
+
+        throw 'Could not fill order with given order book depth';
+    };
+
     service.relationship = function(a, b) {
         if (priceMap[a+b]) return {
             method: 'Sell',
@@ -265,6 +305,22 @@ function BinanceService($http, $q, signingService, bridgeService) {
             })
             .finally(function() {
                 service.QUERIES.REQUEST += 20;
+            });
+    };
+
+    service.getOrderBook = function(ticker) {
+        if (!service.API.KEY || !service.API.SECRET) throw 'Key and Secret not detected.';
+
+        return $http.get('https://api.binance.com/api/v1/depth?limit=100&symbol='+ ticker)
+            .then(function(response) {
+                return response.data;
+            })
+            .catch(function(response) {
+                console.error(response.data);
+                return $q.reject(response.data.msg);
+            })
+            .finally(function() {
+                service.QUERIES.REQUEST++;
             });
     };
 

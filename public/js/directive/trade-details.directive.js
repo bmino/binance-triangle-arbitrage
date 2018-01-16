@@ -29,17 +29,20 @@ function Trade(binanceService) {
             ab: {
                 total: 0,
                 market: 0,
-                dust: 0
+                dust: 0,
+                orderBook: null
             },
             bc: {
                 total: 0,
                 market: 0,
-                dust: 0
+                dust: 0,
+                orderBook: null
             },
             ca: {
                 total: 0,
                 market: 0,
-                dust: 0
+                dust: 0,
+                orderBook: null
             },
             a: 0,
             b: 0,
@@ -62,17 +65,16 @@ function Trade(binanceService) {
             });
         }
 
+        scope.calculate = function(investmentUSDT) {
 
-        scope.calculate = function(investment) {
-
-            scope.calculated.start.total = investment / binanceService.convertRate(scope.trade.symbol.a, 'USDT');
+            scope.calculated.start.total = investmentUSDT * binanceService.convertRate('USDT', scope.trade.symbol.a);
 
             if (scope.trade.ab.method === 'Buy') {
-                scope.calculated.ab.total = scope.calculated.start.total * binanceService.convertRate(scope.trade.symbol.a, scope.trade.symbol.b);
+                scope.calculated.ab.total = binanceService.orderBookConversion(scope.calculated.start.total, scope.trade.symbol.a, scope.trade.symbol.b, scope.calculated.ab.orderBook);
                 scope.calculated.ab.market = binanceService.calculateDustless(scope.trade.ab.ticker, scope.calculated.ab.total);
                 scope.calculated.ab.dust = scope.calculated.ab.total - scope.calculated.ab.market;
 
-                scope.calculated.start.market = scope.calculated.ab.market * binanceService.convertRate(scope.trade.symbol.b, scope.trade.symbol.a);
+                scope.calculated.start.market = binanceService.orderBookConversion(scope.calculated.ab.market, scope.trade.symbol.b, scope.trade.symbol.a, scope.calculated.ab.orderBook);
                 scope.calculated.ab.dust = 0;
 
                 scope.calculated.b = scope.calculated.ab.market;
@@ -84,13 +86,13 @@ function Trade(binanceService) {
                 scope.calculated.start.market = scope.calculated.ab.market;
                 scope.calculated.ab.dust = 0;
 
-                scope.calculated.b = scope.calculated.ab.market * binanceService.convertRate(scope.trade.symbol.a, scope.trade.symbol.b);
+                scope.calculated.b = binanceService.orderBookConversion(scope.calculated.ab.market, scope.trade.symbol.a, scope.trade.symbol.b, scope.calculated.ab.orderBook);
             }
             scope.calculated.ab.volume = scope.calculated.ab.market / (scope.trade.ab.volume / 24);
 
 
             if (scope.trade.bc.method === 'Buy') {
-                scope.calculated.bc.total = scope.calculated.b * binanceService.convertRate(scope.trade.symbol.b, scope.trade.symbol.c);
+                scope.calculated.bc.total = binanceService.orderBookConversion(scope.calculated.b, scope.trade.symbol.b, scope.trade.symbol.c, scope.calculated.bc.orderBook);
                 scope.calculated.bc.market = binanceService.calculateDustless(scope.trade.bc.ticker, scope.calculated.bc.total);
                 scope.calculated.bc.dust = scope.calculated.bc.total - scope.calculated.bc.market;
                 scope.calculated.c = scope.calculated.bc.market;
@@ -98,13 +100,13 @@ function Trade(binanceService) {
                 scope.calculated.bc.total = scope.calculated.b;
                 scope.calculated.bc.market = binanceService.calculateDustless(scope.trade.bc.ticker, scope.calculated.bc.total);
                 scope.calculated.bc.dust = scope.calculated.bc.total - scope.calculated.bc.market;
-                scope.calculated.c = scope.calculated.bc.market * binanceService.convertRate(scope.trade.symbol.b, scope.trade.symbol.c);
+                scope.calculated.c = binanceService.orderBookConversion(scope.calculated.bc.market, scope.trade.symbol.b, scope.trade.symbol.c, scope.calculated.bc.orderBook);
             }
             scope.calculated.bc.volume = scope.calculated.bc.market / (scope.trade.bc.volume / 24);
 
 
             if (scope.trade.ca.method === 'Buy') {
-                scope.calculated.ca.total = scope.calculated.c * binanceService.convertRate(scope.trade.symbol.c, scope.trade.symbol.a);
+                scope.calculated.ca.total = binanceService.orderBookConversion(scope.calculated.c, scope.trade.symbol.c, scope.trade.symbol.a, scope.calculated.ca.orderBook);
                 scope.calculated.ca.market = binanceService.calculateDustless(scope.trade.ca.ticker, scope.calculated.ca.total);
                 scope.calculated.ca.dust = scope.calculated.ca.total - scope.calculated.ca.market;
                 scope.calculated.a = scope.calculated.ca.market;
@@ -112,7 +114,7 @@ function Trade(binanceService) {
                 scope.calculated.ca.total = scope.calculated.c;
                 scope.calculated.ca.market = binanceService.calculateDustless(scope.trade.ca.ticker, scope.calculated.ca.total);
                 scope.calculated.ca.dust = scope.calculated.ca.total - scope.calculated.ca.market;
-                scope.calculated.a = scope.calculated.ca.market * binanceService.convertRate(scope.trade.symbol.c, scope.trade.symbol.a);
+                scope.calculated.a = binanceService.orderBookConversion(scope.calculated.ca.market, scope.trade.symbol.c, scope.trade.symbol.a, scope.calculated.ca.orderBook);
             }
             scope.calculated.ca.volume = scope.calculated.ca.market / (scope.trade.ca.volume / 24);
 
@@ -127,20 +129,10 @@ function Trade(binanceService) {
             };
         };
 
-        scope.refresh = function() {
-            return binanceService.refreshPriceMap()
-                .then(function() {
-                    var rel = binanceService.relationships(scope.trade.symbol.a, scope.trade.symbol.b, scope.trade.symbol.c);
-                    angular.extend(scope.trade, rel);
-                    return scope.optimize();
-                })
-                .catch(console.error);
-        };
-
         scope.execute = function() {
             var startTime = null;
             scope.executionTime = null;
-            scope.refresh()
+            scope.optimize()
                 .then(function(metrics) {
                     startTime = new Date();
                     if (metrics.percent < scope.minProfit) throw 'Percent ' + metrics.percent.toFixed(2) + '% is too low to execute trade.';
@@ -151,11 +143,11 @@ function Trade(binanceService) {
                         })
                         .then(function(execution) {
                             return performTradeAndVerify(scope.trade.ca.method, scope.calculated.ca.market, scope.trade.ca.ticker);
-                })
+                        })
                         .then(function(execution) {
-                    scope.executionTime = new Date() - startTime;
+                            scope.executionTime = new Date() - startTime;
                             console.log('DONE!');
-                });
+                        });
                 })
                 .then(binanceService.accountInformation)
                 .then(updateBalancesAndCalculateDifference)
@@ -226,16 +218,28 @@ function Trade(binanceService) {
                 percent: -100,
                 volume: 100
             };
-            for (var dollars=1; dollars<scope.maxInvestment; dollars++) {
-                var calculation = scope.calculate(dollars);
-                if (calculation.percent > best.percent) {
-                    best.investment = dollars;
-                    best.percent = calculation.percent;
-                    best.volume = calculation.volume;
-                }
-            }
-            scope.investment = best.investment;
-            return scope.calculate(scope.investment);
+
+            return Promise.all([
+                binanceService.getOrderBook(scope.trade.ab.ticker),
+                binanceService.getOrderBook(scope.trade.bc.ticker),
+                binanceService.getOrderBook(scope.trade.ca.ticker)
+            ])
+                .then(function(orderBooks) {
+                    scope.calculated.ab.orderBook = orderBooks[0];
+                    scope.calculated.bc.orderBook = orderBooks[1];
+                    scope.calculated.ca.orderBook = orderBooks[2];
+
+                    for (var dollars=1; dollars<scope.maxInvestment; dollars++) {
+                        var calculation = scope.calculate(dollars);
+                        if (calculation.percent > best.percent) {
+                            best.investment = dollars;
+                            best.percent = calculation.percent;
+                            best.volume = calculation.volume;
+                        }
+                    }
+                    return scope.calculate(scope.investment = best.investment);
+                })
+                .catch(console.error);
         };
 
         init();
