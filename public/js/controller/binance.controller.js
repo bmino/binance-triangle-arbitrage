@@ -9,13 +9,13 @@ function BinanceController($scope, $interval, binanceService) {
     $scope.CONFIG = {
         BASE_SYMBOL: '',
         INVESTMENT: {
-            MAX: 500
+            MAX: 150
         },
         VOLUME: {
-            MAX: 1
+            MAX: 0.75
         },
         PROFIT: {
-            MIN: 3.00
+            MIN: 2.00
         }
     };
 
