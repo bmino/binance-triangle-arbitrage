@@ -76,7 +76,7 @@
             <th>Dustless Margin</th>
             <th>Details</th>
         </tr>
-        <tr ng-repeat="trade in trades | filter : {symbol: {a: CONFIG.BASE_SYMBOL}} | minPercent: CONFIG.PROFIT.MIN">
+        <tr ng-repeat="trade in trades | filter: {symbol: {a: CONFIG.BASE_SYMBOL}} | orderBy: '-percent'" ng-if="trade.percent >= CONFIG.PROFIT.MIN">
             <td ng-bind-template="{{trade.symbol.a}}&#44; {{trade.symbol.b}}&#44; {{trade.symbol.c}}"></td>
             <td ng-bind="trade.percent | number : 4"></td>
             <td>
