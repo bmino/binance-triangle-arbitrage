@@ -53,6 +53,8 @@
                 LOADING.ARBITRAGE ? 'Finding Arbitrage ...' : 'Find Arbitrage'
                 }}
             </button>
+            <span>{{RATE_LIMIT.TYPE.REQUEST}} weighted requests.</span>
+            <span>{{RATE_LIMIT.TYPE.ORDER}} orders.</span>
             <span>{{timeSincePriceUpdate | date : "m:ss ' since last update'"}}</span>
         </div>
 

@@ -22,6 +22,10 @@ function BinanceService($http, $q, signingService, bridgeService) {
         PRICES: false,
         VOLUME: false
     };
+    service.QUERIES = {
+        ORDER: 0,
+        REQUEST: 0
+    };
     service.TIME_OFFSET = 3000;
 
     var symbols = [];
@@ -76,11 +80,12 @@ function BinanceService($http, $q, signingService, bridgeService) {
             .then(function(response) {
                 console.log('Refreshed 24hr history for ' + response.data.length + ' tickers');
                 response.data.map(function(history) {
-                    volumeMap[history.symbol] = parseInt(history.volume);
+                    volumeMap[history.symbol] = parseFloat(history.volume);
                 });
             })
             .catch(andThrow)
             .finally(function() {
+                service.QUERIES.REQUEST += Object.keys(volumeMap).length;
                 service.LOADING.VOLUME = false;
             });
     };
@@ -100,6 +105,7 @@ function BinanceService($http, $q, signingService, bridgeService) {
             })
             .catch(andThrow)
             .finally(function() {
+                service.QUERIES.REQUEST++;
                 service.LOADING.TICKERS = false;
             });
     };
@@ -116,6 +122,7 @@ function BinanceService($http, $q, signingService, bridgeService) {
             })
             .catch(andThrow)
             .finally(function() {
+                service.QUERIES.REQUEST++;
                 service.LOADING.PRICES = false;
             });
     };
@@ -155,7 +162,8 @@ function BinanceService($http, $q, signingService, bridgeService) {
             }
         }
 
-        throw 'Could not get '+ symbolTo + ' price for ' + symbolFrom;
+        console.error('Could not get '+ symbolTo + ' price for ' + symbolFrom);
+        return NaN;
     };
 
     service.relationship = function(a, b) {
@@ -228,6 +236,35 @@ function BinanceService($http, $q, signingService, bridgeService) {
             .catch(function(response) {
                 console.error(response.data);
                 return $q.reject(response.data.msg);
+            })
+            .finally(function() {
+                service.QUERIES.ORDER++;
+            });
+    };
+
+    service.accountInformation = function() {
+        if (!service.API.KEY || !service.API.SECRET) throw 'Key and Secret not detected.';
+
+        var queryString = 'timestamp='+ (new Date().getTime() - service.TIME_OFFSET).toString();
+        queryString += '&signature=' + signingService.encrypt(queryString, service.API.SECRET);
+
+        return $http({
+            method: 'GET',
+            url: 'https://api.binance.com/api/v3/account?'+ queryString,
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-MBX-APIKEY': service.API.KEY
+            }
+        })
+            .then(function(response) {
+                return response.data;
+            })
+            .catch(function(response) {
+                console.error(response.data);
+                return $q.reject(response.data.msg);
+            })
+            .finally(function() {
+                service.QUERIES.REQUEST += 20;
             });
     };
 

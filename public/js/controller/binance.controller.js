@@ -23,6 +23,9 @@ function BinanceController($scope, $interval, binanceService) {
         API: binanceService.LOADING,
         ARBITRAGE: false
     };
+    $scope.RATE_LIMIT = {
+        TYPE: binanceService.QUERIES
+    };
 
     $scope.timeSincePriceUpdate = null;
     $scope.trades = [];
