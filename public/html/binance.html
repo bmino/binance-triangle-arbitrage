@@ -21,7 +21,7 @@
                     <span class="input-group-addon">$</span>
                     <input type="number" class="form-control" ng-model="CONFIG.INVESTMENT.MAX" ng-model-options="{ debounce: 1000 }">
                 </div>
-                <input type="range" min="25" max="1000" step="1" ng-model="CONFIG.INVESTMENT.MAX">
+                <input type="range" min="5" max="2000" step="1" ng-model="CONFIG.INVESTMENT.MAX">
             </div>
 
             <div class="config-box">
@@ -33,18 +33,6 @@
                 <input type="range" min="0" max="5" step="0.1" ng-model="CONFIG.VOLUME.MAX">
             </div>
 
-            <div class="config-box">
-                <label>Minimum Profit</label>
-                <div class="input-group">
-                    <span class="input-group-addon">%</span>
-                    <input type="number" class="form-control" ng-model="CONFIG.PROFIT.MIN" ng-model-options="{ debounce: 1000 }">
-                    <span class="input-group-btn">
-                    <button class="btn btn-default" type="button" ng-click="CONFIG.PROFIT.MIN = 0"><span class="glyphicon glyphicon-remove"></span></button>
-                </span>
-                </div>
-                <input type="range" min="0" max="10" step="0.25" ng-model="CONFIG.PROFIT.MIN">
-            </div>
-
             <button type="button"
                     class="form-control btn btn-default"
                     ng-click="findArbitrage()"
@@ -53,9 +41,9 @@
                 LOADING.ARBITRAGE ? 'Finding Arbitrage ...' : 'Find Arbitrage'
                 }}
             </button>
+
             <span>{{RATE_LIMIT.TYPE.REQUEST}} weighted requests.</span>
             <span>{{RATE_LIMIT.TYPE.ORDER}} orders.</span>
-            <span>{{timeSincePriceUpdate | date : "m:ss ' since last update'"}}</span>
         </div>
 
         <trade-details ng-if="currentTrade"
@@ -73,12 +61,14 @@
     <table class="table table-striped">
         <tr>
             <th>Symbols</th>
-            <th>Dustless Margin</th>
+            <th>Market Margin</th>
+            <th>OrderBook Margin</th>
             <th>Details</th>
         </tr>
-        <tr ng-repeat="trade in trades | filter: {symbol: {a: CONFIG.BASE_SYMBOL}} | orderBy: '-percent'" ng-if="trade.percent >= CONFIG.PROFIT.MIN">
+        <tr ng-repeat="trade in trades | filter: {symbol: {a: CONFIG.BASE_SYMBOL}} | orderBy: '-margin'">
             <td ng-bind-template="{{trade.symbol.a}}&#44; {{trade.symbol.b}}&#44; {{trade.symbol.c}}"></td>
             <td ng-bind="trade.percent | number : 4"></td>
+            <td ng-bind="trade.margin | number : 4" ng-class="{'text-success': trade.margin > 0}"></td>
             <td>
                 <button type="button" class="btn btn-default" ng-click="setCurrentTrade(trade)">Show</button>
             </td>

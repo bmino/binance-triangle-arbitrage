@@ -9,13 +9,13 @@ function BinanceController($scope, $interval, binanceService) {
     $scope.CONFIG = {
         BASE_SYMBOL: '',
         INVESTMENT: {
-            MAX: 150
+            MAX: 500
         },
         VOLUME: {
-            MAX: 0.75
+            MAX: 1.00
         },
         PROFIT: {
-            MIN: 2.00
+            MIN: 0.75
         }
     };
 
@@ -32,7 +32,7 @@ function BinanceController($scope, $interval, binanceService) {
     $scope.currentTrade = null;
 
     function init() {
-        maintainTimeSinceLastPriceCheck();
+        trackRequests();
     }
 
     $scope.findArbitrage = function() {
@@ -40,9 +40,10 @@ function BinanceController($scope, $interval, binanceService) {
         $scope.LOADING.ARBITRAGE = true;
 
         binanceService.refreshPriceMap()
+            .then(binanceService.refreshOrderBooks)
             .then(function() {
-                $scope.trades = analyzeSymbolsForArbitrage(binanceService.getSymbols())
-                    .sort(sortByPercent);
+                var symbols = binanceService.getSymbols();
+                $scope.trades = analyzeSymbolsForArbitrage(symbols).sort(sortByPercent);
             })
             .catch(console.error)
             .finally(function() {
@@ -51,21 +52,20 @@ function BinanceController($scope, $interval, binanceService) {
     };
 
     function analyzeSymbolsForArbitrage(symbols) {
+        $scope.LOADING.OPTIMIZATION = true;
         var trades = [];
         angular.forEach(symbols, function(symbol1) {
             angular.forEach(symbols, function(symbol2) {
                 angular.forEach(symbols, function(symbol3) {
                     var relationship = binanceService.relationships(symbol1, symbol2, symbol3);
-                    if (!relationship || relationship.percent <= 0) return;
-                    relationship.symbol = {
-                        a: symbol1,
-                        b: symbol2,
-                        c: symbol3
-                    };
+                    if (!relationship) return;
+                    var calculated = binanceService.optimizeAndCalculate(relationship, $scope.CONFIG.INVESTMENT.MAX);
+                    relationship.margin = calculated.percent;
                     trades.push(relationship);
                 });
             });
         });
+        $scope.LOADING.OPTIMIZATION = false;
         return trades;
     }
 
@@ -73,11 +73,9 @@ function BinanceController($scope, $interval, binanceService) {
         $scope.currentTrade = trade;
     };
 
-    function maintainTimeSinceLastPriceCheck() {
+    function trackRequests() {
         var tick = function() {
-            var lastUpdatedTime = binanceService.getPriceMapLastUpdatedTime();
-            if (!lastUpdatedTime) return;
-            $scope.timeSincePriceUpdate = new Date() - lastUpdatedTime;
+            // TODO: calculate remaining requests per minute
         };
         tick();
         $interval(tick, 1000);

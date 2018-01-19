@@ -20,7 +20,8 @@ function BinanceService($http, $q, signingService, bridgeService) {
         CREDENTIALS: false,
         TICKERS: false,
         PRICES: false,
-        VOLUME: false
+        VOLUME: false,
+        BOOKS: false
     };
     service.QUERIES = {
         ORDER: 0,
@@ -32,6 +33,7 @@ function BinanceService($http, $q, signingService, bridgeService) {
     var tickers = {};
     var priceMap = {};
     var volumeMap = {};
+    var orderBookMap = {};
 
     function init() {
         service.LOADING.INITIAL = true;
@@ -49,10 +51,6 @@ function BinanceService($http, $q, signingService, bridgeService) {
 
     service.getSymbols = function() {
         return symbols;
-    };
-
-    service.get24HourVolume = function(ticker) {
-        return volumeMap[ticker];
     };
 
     service.getPriceMapLastUpdatedTime = function() {
@@ -114,8 +112,8 @@ function BinanceService($http, $q, signingService, bridgeService) {
         service.LOADING.PRICES = true;
         return $http.get('https://api.binance.com/api/v3/ticker/price')
             .then(function(response) {
-                angular.forEach(response.data, function(tick) {
-                    priceMap[tick.symbol] = tick.price;
+                response.data.forEach(function(tick) {
+                    priceMap[tick.symbol] = parseFloat(tick.price);
                 });
                 priceMap.LAST_UPDATED = new Date();
                 return priceMap;
@@ -124,6 +122,39 @@ function BinanceService($http, $q, signingService, bridgeService) {
             .finally(function() {
                 service.QUERIES.REQUEST++;
                 service.LOADING.PRICES = false;
+            });
+    };
+
+    service.refreshOrderBooks = function() {
+        service.LOADING.BOOKS = true;
+        var promises = [];
+        Object.keys(tickers).forEach(function(ticker) {
+            promises.push(service.refreshOrderBook(ticker));
+        });
+        return Promise.all(promises)
+            .catch(console.error)
+            .finally(function() {
+                service.LOADING.BOOKS = false;
+            });
+    };
+
+    service.refreshOrderBook = function(ticker) {
+        if (!service.API.KEY || !service.API.SECRET) throw 'Key and Secret not detected.';
+
+        return $http.get('https://api.binance.com/api/v1/depth?limit=100&symbol='+ ticker)
+            .then(function(response) {
+                return orderBookMap[ticker] = {
+                    updated: new Date(),
+                    bids: response.data.bids,
+                    asks: response.data.asks
+                };
+            })
+            .catch(function(response) {
+                console.error(response.data);
+                return $q.reject(response.data.msg);
+            })
+            .finally(function() {
+                service.QUERIES.REQUEST++;
             });
     };
 
@@ -143,7 +174,12 @@ function BinanceService($http, $q, signingService, bridgeService) {
             ab: ab,
             bc: bc,
             ca: ca,
-            percent: ((ab.rate.convert * bc.rate.convert * ca.rate.convert) - 1) * 100
+            percent: ((ab.rate.convert * bc.rate.convert * ca.rate.convert) - 1) * 100,
+            symbol: {
+                a: a,
+                b: b,
+                c: c
+            }
         };
     };
 
@@ -308,20 +344,98 @@ function BinanceService($http, $q, signingService, bridgeService) {
             });
     };
 
-    service.getOrderBook = function(ticker) {
-        if (!service.API.KEY || !service.API.SECRET) throw 'Key and Secret not detected.';
+    service.calculate = function(investmentUSDT, trade) {
 
-        return $http.get('https://api.binance.com/api/v1/depth?limit=100&symbol='+ ticker)
-            .then(function(response) {
-                return response.data;
-            })
-            .catch(function(response) {
-                console.error(response.data);
-                return $q.reject(response.data.msg);
-            })
-            .finally(function() {
-                service.QUERIES.REQUEST++;
-            });
+        var calculated = {
+            start: {
+                initialUSDT: investmentUSDT,
+                total: investmentUSDT * service.convertRate('USDT', trade.symbol.a),
+                market: 0,
+                dust: 0
+            },
+            ab: {
+                total: 0,
+                market: 0,
+                dust: 0
+            },
+            bc: {
+                total: 0,
+                market: 0,
+                dust: 0
+            },
+            ca: {
+                total: 0,
+                market: 0,
+                dust: 0
+            },
+            a: 0,
+            b: 0,
+            c: 0
+        };
+
+        if (trade.ab.method === 'Buy') {
+            calculated.ab.total = service.orderBookConversion(calculated.start.total, trade.symbol.a, trade.symbol.b, orderBookMap[trade.ab.ticker]);
+            calculated.ab.market = service.calculateDustless(trade.ab.ticker, calculated.ab.total);
+            calculated.b = calculated.ab.market;
+            calculated.start.market = service.orderBookConversion(calculated.ab.market, trade.symbol.b, trade.symbol.a, orderBookMap[trade.ab.ticker]);
+        } else {
+            calculated.ab.total = calculated.start.total;
+            calculated.ab.market = service.calculateDustless(trade.ab.ticker, calculated.ab.total);
+            calculated.b = service.orderBookConversion(calculated.ab.market, trade.symbol.a, trade.symbol.b, orderBookMap[trade.ab.ticker]);
+            calculated.start.market = calculated.ab.market;
+        }
+        calculated.ab.dust = 0;
+        calculated.ab.volume = calculated.ab.market / (trade.ab.volume / 24);
+
+
+        if (trade.bc.method === 'Buy') {
+            calculated.bc.total = service.orderBookConversion(calculated.b, trade.symbol.b, trade.symbol.c, orderBookMap[trade.bc.ticker]);
+            calculated.bc.market = service.calculateDustless(trade.bc.ticker, calculated.bc.total);
+            calculated.c = calculated.bc.market;
+        } else {
+            calculated.bc.total = calculated.b;
+            calculated.bc.market = service.calculateDustless(trade.bc.ticker, calculated.bc.total);
+            calculated.c = service.orderBookConversion(calculated.bc.market, trade.symbol.b, trade.symbol.c, orderBookMap[trade.bc.ticker]);
+        }
+        calculated.bc.dust = calculated.bc.total - calculated.bc.market;
+        calculated.bc.volume = calculated.bc.market / (trade.bc.volume / 24);
+
+
+        if (trade.ca.method === 'Buy') {
+            calculated.ca.total = service.orderBookConversion(calculated.c, trade.symbol.c, trade.symbol.a, orderBookMap[trade.ca.ticker]);
+            calculated.ca.market = service.calculateDustless(trade.ca.ticker, calculated.ca.total);
+            calculated.a = calculated.ca.market;
+        } else {
+            calculated.ca.total = calculated.c;
+            calculated.ca.market = service.calculateDustless(trade.ca.ticker, calculated.ca.total);
+            calculated.a = service.orderBookConversion(calculated.ca.market, trade.symbol.c, trade.symbol.a, orderBookMap[trade.ca.ticker]);
+        }
+        calculated.ca.dust = calculated.ca.total - calculated.ca.market;
+        calculated.ca.volume = calculated.ca.market / (trade.ca.volume / 24);
+
+        calculated.volume = Math.max(calculated.ab.volume, calculated.bc.volume, calculated.ca.volume) * 100;
+
+        calculated.percent = (calculated.a - calculated.start.total) / calculated.start.total * 100;
+        if (!calculated.percent) calculated.percent = 0;
+
+        return calculated;
+    };
+
+    service.optimizeAndCalculate = function(trade, maxInvestment) {
+        var best = {
+            investment: 0,
+            percent: -100,
+            volume: 100
+        };
+        for (var dollars=1; dollars<maxInvestment; dollars++) {
+            var calculation = service.calculate(dollars, trade);
+            if (calculation.percent > best.percent) {
+                best.investment = dollars;
+                best.percent = calculation.percent;
+                best.volume = calculation.volume;
+            }
+        }
+        return service.calculate(best.investment, trade);
     };
 
     function removeDuplicates(item, pos, self) {
