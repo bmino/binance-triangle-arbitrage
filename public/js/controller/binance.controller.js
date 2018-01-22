@@ -27,7 +27,7 @@ function BinanceController($scope, $interval, binanceService) {
         TYPE: binanceService.QUERIES
     };
 
-    $scope.timeSincePriceUpdate = null;
+    $scope.percentRequestWeightRemaining = 100;
     $scope.trades = [];
     $scope.currentTrade = null;
 
@@ -75,10 +75,10 @@ function BinanceController($scope, $interval, binanceService) {
 
     function trackRequests() {
         var tick = function() {
-            // TODO: calculate remaining requests per minute
+            $scope.percentRequestWeightRemaining = $scope.RATE_LIMIT.TYPE.REQUEST.REMAINING() / $scope.RATE_LIMIT.TYPE.REQUEST.MINUTE_LIMIT * 100;
         };
         tick();
-        $interval(tick, 1000);
+        $interval(tick, 500);
     }
 
     function sortByPercent(a, b) {

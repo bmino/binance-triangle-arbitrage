@@ -42,8 +42,13 @@
                 }}
             </button>
 
-            <span>{{RATE_LIMIT.TYPE.REQUEST}} weighted requests.</span>
-            <span>{{RATE_LIMIT.TYPE.ORDER}} orders.</span>
+            <div class="progress">
+                <div class="progress-bar" role="progressbar"
+                     ng-style="{'width': percentRequestWeightRemaining + '%'}">
+                    <span>{{RATE_LIMIT.TYPE.REQUEST.REMAINING()}} / {{RATE_LIMIT.TYPE.REQUEST.MINUTE_LIMIT}}</span>
+                </div>
+            </div>
+
         </div>
 
         <trade-details ng-if="currentTrade"

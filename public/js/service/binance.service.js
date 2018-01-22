@@ -19,13 +19,22 @@ function BinanceService($http, $q, signingService, bridgeService) {
         INITIAL: true,
         CREDENTIALS: false,
         TICKERS: false,
+        SYMBOLS: false,
+        RATE_LIMITS: false,
         PRICES: false,
         VOLUME: false,
         BOOKS: false
     };
     service.QUERIES = {
-        ORDER: 0,
-        REQUEST: 0
+        ORDER: {
+            HISTORY: [],
+            SECOND_LIMIT: 10
+        },
+        REQUEST: {
+            HISTORY: [],
+            MINUTE_LIMIT: 1200,
+            REMAINING: allowedRequestWeight
+        }
     };
     service.TIME_OFFSET = 3000;
 
@@ -40,7 +49,7 @@ function BinanceService($http, $q, signingService, bridgeService) {
 
         Promise.all([
             service.refreshApiCredentials(),
-            service.refreshSymbolsAndTickers(),
+            service.refreshExchangeInfo(),
             service.refreshVolumeMap()
         ])
             .catch(andThrow)
@@ -83,16 +92,20 @@ function BinanceService($http, $q, signingService, bridgeService) {
             })
             .catch(andThrow)
             .finally(function() {
-                service.QUERIES.REQUEST += Object.keys(volumeMap).length;
+                updateRequestWeight(Object.keys(volumeMap).length);
                 service.LOADING.VOLUME = false;
             });
     };
 
-    service.refreshSymbolsAndTickers = function() {
+    service.refreshExchangeInfo = function() {
         service.LOADING.TICKERS = true;
+        service.LOADING.SYMBOLS = true;
+        service.LOADING.RATE_LIMITS = true;
         console.log('Refreshing symbols and tickers');
         return $http.get('https://api.binance.com/api/v1/exchangeInfo')
             .then(function(response) {
+                service.QUERIES.REQUEST.MINUTE_LIMIT = parseInt(response.data.rateLimits[0].limit);
+                service.QUERIES.ORDER.SECOND_LIMIT = parseInt(response.data.rateLimits[1].limit);
                 var duplicateSymbols = [];
                 response.data.symbols.map(function(symbolObj) {
                     duplicateSymbols.push(symbolObj.baseAsset);
@@ -103,8 +116,10 @@ function BinanceService($http, $q, signingService, bridgeService) {
             })
             .catch(andThrow)
             .finally(function() {
-                service.QUERIES.REQUEST++;
+                updateRequestWeight(1);
                 service.LOADING.TICKERS = false;
+                service.LOADING.SYMBOLS = false;
+                service.LOADING.RATE_LIMITS = false;
             });
     };
 
@@ -120,7 +135,7 @@ function BinanceService($http, $q, signingService, bridgeService) {
             })
             .catch(andThrow)
             .finally(function() {
-                service.QUERIES.REQUEST++;
+                updateRequestWeight(1);
                 service.LOADING.PRICES = false;
             });
     };
@@ -154,7 +169,7 @@ function BinanceService($http, $q, signingService, bridgeService) {
                 return $q.reject(response.data.msg);
             })
             .finally(function() {
-                service.QUERIES.REQUEST++;
+                updateRequestWeight(1);
             });
     };
 
@@ -314,7 +329,7 @@ function BinanceService($http, $q, signingService, bridgeService) {
                 return $q.reject(response.data.msg);
             })
             .finally(function() {
-                service.QUERIES.ORDER++;
+                updateOrderWeight(1);
             });
     };
 
@@ -340,7 +355,7 @@ function BinanceService($http, $q, signingService, bridgeService) {
                 return $q.reject(response.data.msg);
             })
             .finally(function() {
-                service.QUERIES.REQUEST += 20;
+                updateRequestWeight(20);
             });
     };
 
@@ -437,6 +452,33 @@ function BinanceService($http, $q, signingService, bridgeService) {
         }
         return service.calculate(best.investment, trade);
     };
+
+    function allowedRequestWeight() {
+        var now = new Date();
+        var oneMinutePrior = now.setMinutes(now.getMinutes() - 1);
+        var expended = service.QUERIES.REQUEST.HISTORY.map(function(request) {
+            return request.time >= oneMinutePrior ? request.weight : 0;
+        }).reduce(add, 0);
+        return service.QUERIES.REQUEST.MINUTE_LIMIT - expended;
+    }
+
+    function add(a,b) {
+        return a + b;
+    }
+
+    function updateRequestWeight(weight) {
+        service.QUERIES.REQUEST.HISTORY.push({
+            time: new Date(),
+            weight: weight
+        });
+    }
+
+    function updateOrderWeight(weight) {
+        service.QUERIES.ORDER.HISTORY.push({
+            time: new Date(),
+            weight: weight
+        });
+    }
 
     function removeDuplicates(item, pos, self) {
         return self.indexOf(item) === pos;
