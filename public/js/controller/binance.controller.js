@@ -39,11 +39,11 @@ function BinanceController($scope, $interval, binanceService) {
         if (binanceService.getSymbols().length === 0) return;
         $scope.LOADING.ARBITRAGE = true;
 
-        binanceService.refreshPriceMap()
-            .then(binanceService.refreshOrderBooks)
-            .then(function() {
-                var symbols = binanceService.getSymbols();
-                $scope.trades = analyzeSymbolsForArbitrage(symbols).sort(sortByPercent);
+        binanceService.refreshAllOrderBooks()
+            .then(binanceService.getSymbols)
+            .then(analyzeSymbolsForArbitrage)
+            .then(function(trades) {
+                return $scope.trades = trades;
             })
             .catch(console.error)
             .finally(function() {
@@ -52,21 +52,22 @@ function BinanceController($scope, $interval, binanceService) {
     };
 
     function analyzeSymbolsForArbitrage(symbols) {
-        $scope.LOADING.OPTIMIZATION = true;
-        var trades = [];
-        angular.forEach(symbols, function(symbol1) {
-            angular.forEach(symbols, function(symbol2) {
-                angular.forEach(symbols, function(symbol3) {
+        console.log('Optimizing...');
+        var relationships = [];
+        symbols.forEach(function(symbol1) {
+            symbols.forEach(function(symbol2) {
+                symbols.forEach(function(symbol3) {
                     var relationship = binanceService.relationships(symbol1, symbol2, symbol3);
-                    if (!relationship) return;
-                    var calculated = binanceService.optimizeAndCalculate(relationship, $scope.CONFIG.INVESTMENT.MAX);
-                    relationship.margin = calculated.percent;
-                    trades.push(relationship);
+                    if (relationship) {
+                        var calculated = binanceService.optimizeAndCalculate(relationship, $scope.CONFIG.INVESTMENT.MAX);
+                        relationship.margin = calculated.percent;
+                        relationships.push(relationship);
+                    }
                 });
             });
         });
-        $scope.LOADING.OPTIMIZATION = false;
-        return trades;
+        console.log('Done optimizing');
+        return relationships;
     }
 
     $scope.setCurrentTrade = function(trade) {
@@ -79,12 +80,6 @@ function BinanceController($scope, $interval, binanceService) {
         };
         tick();
         $interval(tick, 500);
-    }
-
-    function sortByPercent(a, b) {
-        if (a.percent < b.percent) return 1;
-        if (a.percent > b.percent) return -1;
-        return 0;
     }
     
     init();

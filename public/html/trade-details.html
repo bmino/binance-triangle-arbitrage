@@ -6,9 +6,9 @@
         Initial Investment (USD)
         <div class="input-group">
             <span class="input-group-addon">$</span>
-            <input type="number" class="form-control" ng-model="investment" ng-model-options="{ debounce: 1000 }" ng-change="calculated = calculate(investment, trade)">
+            <input type="number" class="form-control" ng-model="investment" ng-model-options="{ debounce: 1000 }" ng-change="calculateAndSet(investment, trade)">
         </div>
-        <input type="range" min="1" max="{{maxInvestment}}" step="1" ng-model="investment" ng-change="calculated = calculate(investment, trade)">
+        <input type="range" min="1" max="{{maxInvestment}}" step="1" ng-model="investment" ng-change="calculateAndSet(investment, trade)">
     </label>
 
     <div class="details" ng-hide="REFRESHING">

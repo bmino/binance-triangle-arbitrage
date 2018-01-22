@@ -50,6 +50,7 @@ function BinanceService($http, $q, signingService, bridgeService) {
         Promise.all([
             service.refreshApiCredentials(),
             service.refreshExchangeInfo(),
+            service.refreshPriceMap(),
             service.refreshVolumeMap()
         ])
             .catch(andThrow)
@@ -140,7 +141,7 @@ function BinanceService($http, $q, signingService, bridgeService) {
             });
     };
 
-    service.refreshOrderBooks = function() {
+    service.refreshAllOrderBooks = function() {
         service.LOADING.BOOKS = true;
         var promises = [];
         Object.keys(tickers).forEach(function(ticker) {
@@ -437,20 +438,14 @@ function BinanceService($http, $q, signingService, bridgeService) {
     };
 
     service.optimizeAndCalculate = function(trade, maxInvestment) {
-        var best = {
-            investment: 0,
-            percent: -100,
-            volume: 100
-        };
+        var bestCalculation = null;
         for (var dollars=1; dollars<maxInvestment; dollars++) {
             var calculation = service.calculate(dollars, trade);
-            if (calculation.percent > best.percent) {
-                best.investment = dollars;
-                best.percent = calculation.percent;
-                best.volume = calculation.volume;
+            if (!bestCalculation || calculation.percent > bestCalculation.percent) {
+                bestCalculation = calculation;
             }
         }
-        return service.calculate(best.investment, trade);
+        return bestCalculation;
     };
 
     function allowedRequestWeight() {

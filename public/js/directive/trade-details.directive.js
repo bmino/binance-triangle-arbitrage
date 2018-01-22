@@ -140,8 +140,8 @@ function Trade(binanceService) {
                 });
         };
 
-        scope.calculate = function(investmentUSDT, trade) {
-            return binanceService.calculate(investmentUSDT, trade);
+        scope.calculateAndSet = function(investmentUSDT, trade) {
+            scope.calculated = binanceService.calculate(investmentUSDT, trade);
         };
 
         init();
