@@ -93,7 +93,7 @@ function BinanceService($http, $q, signingService, bridgeService) {
             })
             .catch(andThrow)
             .finally(function() {
-                updateRequestWeight(Object.keys(volumeMap).length);
+                updateRequestWeight(Object.keys(volumeMap).length / 2);
                 service.LOADING.VOLUME = false;
             });
     };
@@ -356,7 +356,7 @@ function BinanceService($http, $q, signingService, bridgeService) {
                 return $q.reject(response.data.msg);
             })
             .finally(function() {
-                updateRequestWeight(20);
+                updateRequestWeight(5);
             });
     };
 
@@ -462,6 +462,7 @@ function BinanceService($http, $q, signingService, bridgeService) {
     }
 
     function updateRequestWeight(weight) {
+        weight = Math.ceil(weight);
         service.QUERIES.REQUEST.HISTORY.push({
             time: new Date(),
             weight: weight
@@ -469,6 +470,7 @@ function BinanceService($http, $q, signingService, bridgeService) {
     }
 
     function updateOrderWeight(weight) {
+        weight = Math.ceil(weight);
         service.QUERIES.ORDER.HISTORY.push({
             time: new Date(),
             weight: weight
