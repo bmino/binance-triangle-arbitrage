@@ -384,6 +384,8 @@ function BinanceService($http, $q, signingService, bridgeService) {
                 market: 0,
                 dust: 0
             },
+            symbol: trade.symbol,
+            time: new Date(Math.min(orderBookMap[trade.ab.ticker].updated.getTime(), orderBookMap[trade.bc.ticker].updated.getTime(), orderBookMap[trade.ca.ticker].updated.getTime())),
             a: 0,
             b: 0,
             c: 0

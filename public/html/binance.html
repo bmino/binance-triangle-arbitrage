@@ -30,7 +30,28 @@
                     <span class="input-group-addon">%</span>
                     <input type="number" class="form-control" ng-model="CONFIG.VOLUME.MAX" ng-model-options="{ debounce: 1000 }">
                 </div>
-                <input type="range" min="0" max="5" step="0.1" ng-model="CONFIG.VOLUME.MAX">
+                <input type="range" min="0" max="3" step="0.1" ng-model="CONFIG.VOLUME.MAX">
+            </div>
+
+            <div class="config-box">
+                <label>Minimum Profit</label>
+                <div class="input-group">
+                    <span class="input-group-addon">%</span>
+                    <input type="number" class="form-control" ng-model="CONFIG.PROFIT.MIN" ng-model-options="{ debounce: 1000 }">
+                </div>
+                <input type="range" min="0" max="3" step="0.05" ng-model="CONFIG.PROFIT.MIN">
+            </div>
+
+            <div class="config-box">
+                <label>Arbitrage Cycle Interval</label>
+                <div class="input-group">
+                    <input type="number" class="form-control" ng-model="CONFIG.CYCLE.INTERVAL">
+                    <span class="input-group-btn">
+                        <button class="btn btn-default" type="button" ng-click="CONFIG.CYCLE.HANDLE ? stopArbitrageCycle() : startArbitrageCycle()">
+                            <span ng-class="CONFIG.CYCLE.HANDLE ? 'glyphicon-remove' : 'glyphicon-refresh'" class="glyphicon"></span>
+                        </button>
+                    </span>
+                </div>
             </div>
 
             <button type="button"
@@ -66,16 +87,19 @@
     <table class="table table-striped">
         <tr>
             <th>Symbols</th>
-            <th>Market Margin</th>
-            <th>OrderBook Margin</th>
+            <th ng-click="CONFIG.TABLE.SORT = '-calculated.time'">Found</th>
+            <th ng-click="CONFIG.TABLE.SORT = 'calculated.volume'">Hourly Volume</th>
+            <th ng-click="CONFIG.TABLE.SORT = '-calculated.percent'">Profit</th>
             <th>Details</th>
         </tr>
-        <tr ng-repeat="trade in trades | filter: {symbol: {a: CONFIG.BASE_SYMBOL}} | orderBy: '-margin'">
+        <tr ng-repeat="trade in HISTORY | filter: {symbol: {a: CONFIG.BASE_SYMBOL}} | orderBy: CONFIG.TABLE.SORT">
             <td ng-bind-template="{{trade.symbol.a}}&#44; {{trade.symbol.b}}&#44; {{trade.symbol.c}}"></td>
-            <td ng-bind="trade.percent | number : 4"></td>
-            <td ng-bind="trade.margin | number : 4" ng-class="{'text-success': trade.margin > 0}"></td>
+            <td ng-bind="trade.calculated.time | date: 'shortTime'"></td>
+            <td ng-bind-template="{{trade.calculated.volume | number : 2}}%" ng-class="{'text-success': trade.calculated.volume < CONFIG.VOLUME.MAX}"></td>
+            <td ng-bind-template="{{trade.calculated.percent | number : 4}}%" ng-class="{'text-success': trade.calculated.percent > 0}"></td>
             <td>
                 <button type="button" class="btn btn-default" ng-click="setCurrentTrade(trade)">Show</button>
+                <button type="button" class="btn btn-default" ng-click="removeTrade(trade)"><span class="glyphicon glyphicon-remove"></span></button>
             </td>
         </tr>
     </table>

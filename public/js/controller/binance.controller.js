@@ -15,9 +15,19 @@ function BinanceController($scope, $interval, binanceService) {
             MAX: 1.00
         },
         PROFIT: {
-            MIN: 0.75
-        }
+            MIN: 0.15
+        },
+        CYCLE: {
+            INTERVAL: 30,
+            HANDLE: null
+        },
+        TABLE: {
+            SORT: '-calculated.percent'
+        },
+        showTable: true
     };
+
+    $scope.HISTORY = [];
 
     $scope.LOADING = {
         API: binanceService.LOADING,
@@ -30,6 +40,7 @@ function BinanceController($scope, $interval, binanceService) {
     $scope.percentRequestWeightRemaining = 100;
     $scope.trades = [];
     $scope.currentTrade = null;
+    var tickCycle = null;
 
     function init() {
         trackRequests();
@@ -43,6 +54,11 @@ function BinanceController($scope, $interval, binanceService) {
             .then(binanceService.getSymbols)
             .then(analyzeSymbolsForArbitrage)
             .then(function(trades) {
+                var positiveTrades = trades.filter(function(t) {
+                    return t.calculated.percent > 0.15;
+                });
+                console.log('Found ' + positiveTrades.length + '/' + trades.length + ' trades to be profitable (>0.15%)');
+                $scope.HISTORY = $scope.HISTORY.concat(positiveTrades);
                 return $scope.trades = trades;
             })
             .catch(console.error)
@@ -59,8 +75,7 @@ function BinanceController($scope, $interval, binanceService) {
                 symbols.forEach(function(symbol3) {
                     var relationship = binanceService.relationships(symbol1, symbol2, symbol3);
                     if (relationship) {
-                        var calculated = binanceService.optimizeAndCalculate(relationship, $scope.CONFIG.INVESTMENT.MAX);
-                        relationship.margin = calculated.percent;
+                        relationship.calculated = binanceService.optimizeAndCalculate(relationship, $scope.CONFIG.INVESTMENT.MAX);
                         relationships.push(relationship);
                     }
                 });
@@ -74,13 +89,32 @@ function BinanceController($scope, $interval, binanceService) {
         $scope.currentTrade = trade;
     };
 
+    $scope.removeTrade = function(trade) {
+        $scope.HISTORY.splice($scope.HISTORY.indexOf(trade), 1);
+    };
+
     function trackRequests() {
         var tick = function() {
             $scope.percentRequestWeightRemaining = $scope.RATE_LIMIT.TYPE.REQUEST.REMAINING() / $scope.RATE_LIMIT.TYPE.REQUEST.MINUTE_LIMIT * 100;
         };
-        tick();
-        $interval(tick, 500);
+        tickCycle = $interval(tick, 500);
     }
+
+    $scope.startArbitrageCycle = function() {
+        $scope.CONFIG.CYCLE.HANDLE = $interval($scope.findArbitrage, 1000 * $scope.CONFIG.CYCLE.INTERVAL);
+        $scope.findArbitrage();
+    };
+
+    $scope.stopArbitrageCycle = function() {
+        $interval.cancel($scope.CONFIG.CYCLE.HANDLE);
+        $scope.CONFIG.CYCLE.HANDLE = null;
+    };
+
+    $scope.$on('$destroy', function() {
+        $scope.stopArbitrageCycle();
+        $interval.cancel(tickCycle);
+        tickCycle = null;
+    });
     
     init();
 
