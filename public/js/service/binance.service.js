@@ -174,145 +174,16 @@ function BinanceService($http, $q, signingService, bridgeService) {
             });
     };
 
-    service.relationships = function(a, b, c) {
-        var ab = service.relationship(a, b);
-        if (!ab) return;
-
-        var bc = service.relationship(b, c);
-        if (!bc) return;
-
-        var ca = service.relationship(c, a);
-        if (!ca) return;
-
-        return {
-            id: a + b + c,
-            found: service.getPriceMapLastUpdatedTime(),
-            ab: ab,
-            bc: bc,
-            ca: ca,
-            percent: ((ab.rate.convert * bc.rate.convert * ca.rate.convert) - 1) * 100,
-            symbol: {
-                a: a,
-                b: b,
-                c: c
-            }
-        };
-    };
-
-
-    service.convertRate = function(symbolFrom, symbolTo) {
-        var direct = service.relationship(symbolFrom, symbolTo);
-        if (direct) return direct.rate.convert;
-
-        var mediums = ['BTC', 'ETH', 'BNB'];
-        for (var i=0; i<mediums.length; i++) {
-            var medium = mediums[i];
-            var am = service.relationship(symbolFrom, medium);
-            var mb = service.relationship(medium, symbolTo);
-            if (am && mb) {
-                return am.rate.convert * mb.rate.convert;
-            }
-        }
-
-        console.error('Could not get '+ symbolTo + ' price for ' + symbolFrom);
-        return NaN;
-    };
-
-    service.orderBookConversion = function(amountFrom, symbolFrom, symbolTo, orderBook) {
-        var amountTo = 0;
-        var rate, quantity;
-
-        if (priceMap[symbolFrom + symbolTo]) {
-            for (var i=0; i<orderBook.bids.length; i++) {
-                rate = parseFloat(orderBook.bids[i][0]);
-                quantity = parseFloat(orderBook.bids[i][1]);
-                if (quantity < amountFrom) {
-                    amountFrom -= quantity;
-                    amountTo += quantity * rate;
-                } else {
-                    // Last fill
-                    amountTo += amountFrom * rate;
-                    amountFrom = 0;
-                    //console.log('Converted ' + amountFrom.toFixed(3) + ' ' + symbolFrom + ' exactly to ' + amountTo + ' ' + symbolTo);
-                    return amountTo;
-                }
-            }
-        } else {
-            for (var j=0; j<orderBook.asks.length; j++) {
-                rate = parseFloat(orderBook.asks[j][0]);
-                quantity = parseFloat(orderBook.asks[j][1]);
-                var exchangeableAmount = quantity * rate;
-                if (exchangeableAmount < amountFrom) {
-                    amountFrom -= quantity * rate;
-                    amountTo += quantity;
-                } else {
-                    // Last fill
-                    amountTo += amountFrom / rate;
-                    amountFrom = 0;
-                    //console.log('Converted ' + amountFrom.toFixed(3) + ' ' + symbolFrom + ' exactly to ' + amountTo + ' ' + symbolTo);
-                    return amountTo;
-                }
-            }
-        }
-
-        throw 'Could not fill order with given order book depth';
-    };
-
-    service.relationship = function(a, b) {
-        if (priceMap[a+b]) return {
-            method: 'Sell',
-            ticker: a+b,
-            volume: volumeMap[a+b],
-            rate: {
-                market: priceMap[a + b],
-                convert: priceMap[a + b]
-            }
-        };
-        if (priceMap[b+a]) return {
-            method: 'Buy',
-            ticker: b+a,
-            volume: volumeMap[b+a],
-            rate: {
-                market: priceMap[b + a],
-                convert: ( 1 / priceMap[b + a])
-            }
-        };
-        return null;
-    };
-
-    service.calculateDustless = function(tickerName, amount) {
-        var dustQty = tickers[tickerName].dustQty;
-        var decimals = dustQty === 1 ? 0 : dustQty.toString().indexOf('1') - 1;
-        var decimalIndex = amount.toString().indexOf('.');
-        if (decimalIndex === -1) {
-            // Integer
-            return amount;
-        } else {
-            // Float
-            return parseFloat(amount.toString().slice(0, decimalIndex + decimals + 1));
-        }
-    };
-
-    service.generateLink = function(a, b) {
-        if (priceMap[a+b]) return service.URL.replace('{a}', a).replace('{b}', b);
-        else return service.URL.replace('{a}', b).replace('{b}', a);
-    };
-
-
     service.performMarketOrder = function(side, quantity, symbol) {
         if (!service.API.KEY || !service.API.SECRET) throw 'Key and Secret not detected.';
+        console.log(side+'ing ' + quantity + ' ' + symbol + ' at market');
 
         var queryString =   'symbol='+ symbol +
                             '&side='+ side.toUpperCase() +
                             '&type='+ 'MARKET' +
                             '&quantity='+ quantity.toString() +
                             '&timestamp='+ (new Date().getTime() - service.TIME_OFFSET).toString();
-
-
         queryString += '&signature=' + signingService.encrypt(queryString, service.API.SECRET);
-
-
-        console.log(side+'ing ' + quantity + ' ' + symbol + ' at market');
 
         return $http({
             method: 'POST',
@@ -360,12 +231,48 @@ function BinanceService($http, $q, signingService, bridgeService) {
             });
     };
 
-    service.calculate = function(investmentUSDT, trade) {
+    service.convertRate = function(symbolFrom, symbolTo) {
+        var direct = service.relationship(symbolFrom, symbolTo);
+        if (direct) return direct.rate.convert;
 
+        var mediums = ['BTC', 'ETH', 'BNB'];
+        for (var i=0; i<mediums.length; i++) {
+            var medium = mediums[i];
+            var am = service.relationship(symbolFrom, medium);
+            var mb = service.relationship(medium, symbolTo);
+            if (am && mb) {
+                return am.rate.convert * mb.rate.convert;
+            }
+        }
+
+        console.error('Could not get '+ symbolTo + ' price for ' + symbolFrom);
+        return NaN;
+    };
+
+    service.generateLink = function(a, b) {
+        if (priceMap[a+b]) return service.URL.replace('{a}', a).replace('{b}', b);
+        else return service.URL.replace('{a}', b).replace('{b}', a);
+    };
+
+    service.optimizeAndCalculate = function(trade, maxInvestment) {
+        var bestCalculation = null;
+        var USDT_to_A_rate = service.convertRate('USDT', trade.symbol.a);
+
+        for (var dollars=1; dollars<maxInvestment; dollars++) {
+            var investmentA = dollars * USDT_to_A_rate;
+            var calculation = calculate(dollars, investmentA, trade, orderBookMap, tickers);
+            if (!bestCalculation || calculation.percent > bestCalculation.percent) {
+                bestCalculation = calculation;
+            }
+        }
+        return bestCalculation;
+    };
+
+    function calculate(investmentUSDT, investmentA, trade, orderBookMap, tickers) {
         var calculated = {
             start: {
                 initialUSDT: investmentUSDT,
-                total: investmentUSDT * service.convertRate('USDT', trade.symbol.a),
+                total: investmentA,
                 market: 0,
                 dust: 0
             },
@@ -385,21 +292,21 @@ function BinanceService($http, $q, signingService, bridgeService) {
                 dust: 0
             },
             symbol: trade.symbol,
-            time: new Date(Math.min(orderBookMap[trade.ab.ticker].updated.getTime(), orderBookMap[trade.bc.ticker].updated.getTime(), orderBookMap[trade.ca.ticker].updated.getTime())),
+            time: new Date(Math.min(parseInt(orderBookMap[trade.ab.ticker].updated), parseInt(orderBookMap[trade.bc.ticker].updated), parseInt(orderBookMap[trade.ca.ticker].updated))),
             a: 0,
             b: 0,
             c: 0
         };
 
         if (trade.ab.method === 'Buy') {
-            calculated.ab.total = service.orderBookConversion(calculated.start.total, trade.symbol.a, trade.symbol.b, orderBookMap[trade.ab.ticker]);
-            calculated.ab.market = service.calculateDustless(trade.ab.ticker, calculated.ab.total);
+            calculated.ab.total = orderBookConversion(calculated.start.total, trade.symbol.a, trade.symbol.b, trade.ab.ticker, orderBookMap[trade.ab.ticker]);
+            calculated.ab.market = calculateDustless(trade.ab.ticker, calculated.ab.total, tickers);
             calculated.b = calculated.ab.market;
-            calculated.start.market = service.orderBookConversion(calculated.ab.market, trade.symbol.b, trade.symbol.a, orderBookMap[trade.ab.ticker]);
+            calculated.start.market = orderBookConversion(calculated.ab.market, trade.symbol.b, trade.symbol.a, trade.ab.ticker, orderBookMap[trade.ab.ticker]);
         } else {
             calculated.ab.total = calculated.start.total;
-            calculated.ab.market = service.calculateDustless(trade.ab.ticker, calculated.ab.total);
-            calculated.b = service.orderBookConversion(calculated.ab.market, trade.symbol.a, trade.symbol.b, orderBookMap[trade.ab.ticker]);
+            calculated.ab.market = calculateDustless(trade.ab.ticker, calculated.ab.total, tickers);
+            calculated.b = orderBookConversion(calculated.ab.market, trade.symbol.a, trade.symbol.b, trade.ab.ticker, orderBookMap[trade.ab.ticker]);
             calculated.start.market = calculated.ab.market;
         }
         calculated.ab.dust = 0;
@@ -407,26 +314,26 @@ function BinanceService($http, $q, signingService, bridgeService) {
 
 
         if (trade.bc.method === 'Buy') {
-            calculated.bc.total = service.orderBookConversion(calculated.b, trade.symbol.b, trade.symbol.c, orderBookMap[trade.bc.ticker]);
-            calculated.bc.market = service.calculateDustless(trade.bc.ticker, calculated.bc.total);
+            calculated.bc.total = orderBookConversion(calculated.b, trade.symbol.b, trade.symbol.c, trade.bc.ticker, orderBookMap[trade.bc.ticker]);
+            calculated.bc.market = calculateDustless(trade.bc.ticker, calculated.bc.total, tickers);
             calculated.c = calculated.bc.market;
         } else {
             calculated.bc.total = calculated.b;
-            calculated.bc.market = service.calculateDustless(trade.bc.ticker, calculated.bc.total);
-            calculated.c = service.orderBookConversion(calculated.bc.market, trade.symbol.b, trade.symbol.c, orderBookMap[trade.bc.ticker]);
+            calculated.bc.market = calculateDustless(trade.bc.ticker, calculated.bc.total, tickers);
+            calculated.c = orderBookConversion(calculated.bc.market, trade.symbol.b, trade.symbol.c, trade.bc.ticker, orderBookMap[trade.bc.ticker]);
         }
         calculated.bc.dust = calculated.bc.total - calculated.bc.market;
         calculated.bc.volume = calculated.bc.market / (trade.bc.volume / 24);
 
 
         if (trade.ca.method === 'Buy') {
-            calculated.ca.total = service.orderBookConversion(calculated.c, trade.symbol.c, trade.symbol.a, orderBookMap[trade.ca.ticker]);
-            calculated.ca.market = service.calculateDustless(trade.ca.ticker, calculated.ca.total);
+            calculated.ca.total = orderBookConversion(calculated.c, trade.symbol.c, trade.symbol.a, trade.ca.ticker, orderBookMap[trade.ca.ticker]);
+            calculated.ca.market = calculateDustless(trade.ca.ticker, calculated.ca.total, tickers);
             calculated.a = calculated.ca.market;
         } else {
             calculated.ca.total = calculated.c;
-            calculated.ca.market = service.calculateDustless(trade.ca.ticker, calculated.ca.total);
-            calculated.a = service.orderBookConversion(calculated.ca.market, trade.symbol.c, trade.symbol.a, orderBookMap[trade.ca.ticker]);
+            calculated.ca.market = calculateDustless(trade.ca.ticker, calculated.ca.total, tickers);
+            calculated.a = orderBookConversion(calculated.ca.market, trade.symbol.c, trade.symbol.a, trade.ca.ticker, orderBookMap[trade.ca.ticker]);
         }
         calculated.ca.dust = calculated.ca.total - calculated.ca.market;
         calculated.ca.volume = calculated.ca.market / (trade.ca.volume / 24);
@@ -437,17 +344,110 @@ function BinanceService($http, $q, signingService, bridgeService) {
         if (!calculated.percent) calculated.percent = 0;
 
         return calculated;
-    };
 
-    service.optimizeAndCalculate = function(trade, maxInvestment) {
-        var bestCalculation = null;
-        for (var dollars=1; dollars<maxInvestment; dollars++) {
-            var calculation = service.calculate(dollars, trade);
-            if (!bestCalculation || calculation.percent > bestCalculation.percent) {
-                bestCalculation = calculation;
+    }
+
+    function orderBookConversion(amountFrom, symbolFrom, symbolTo, ticker, orderBook) {
+        var amountTo = 0;
+        var rate, quantity;
+
+        if (ticker === symbolFrom + symbolTo) {
+            for (var i=0; i<orderBook.bids.length; i++) {
+                rate = parseFloat(orderBook.bids[i][0]);
+                quantity = parseFloat(orderBook.bids[i][1]);
+                if (quantity < amountFrom) {
+                    amountFrom -= quantity;
+                    amountTo += quantity * rate;
+                } else {
+                    // Last fill
+                    amountTo += amountFrom * rate;
+                    amountFrom = 0;
+                    //console.log('Converted ' + amountFrom.toFixed(3) + ' ' + symbolFrom + ' exactly to ' + amountTo + ' ' + symbolTo);
+                    return amountTo;
+                }
+            }
+        } else {
+            for (var j=0; j<orderBook.asks.length; j++) {
+                rate = parseFloat(orderBook.asks[j][0]);
+                quantity = parseFloat(orderBook.asks[j][1]);
+                var exchangeableAmount = quantity * rate;
+                if (exchangeableAmount < amountFrom) {
+                    amountFrom -= quantity * rate;
+                    amountTo += quantity;
+                } else {
+                    // Last fill
+                    amountTo += amountFrom / rate;
+                    amountFrom = 0;
+                    //console.log('Converted ' + amountFrom.toFixed(3) + ' ' + symbolFrom + ' exactly to ' + amountTo + ' ' + symbolTo);
+                    return amountTo;
+                }
             }
         }
-        return bestCalculation;
+
+        throw 'Could not fill order with given order book depth';
+    }
+
+    function calculateDustless(tickerName, amount, tickers) {
+        var dustQty = tickers[tickerName].dustQty;
+        var decimals = dustQty === 1 ? 0 : dustQty.toString().indexOf('1') - 1;
+        var decimalIndex = amount.toString().indexOf('.');
+        if (decimalIndex === -1) {
+            // Integer
+            return amount;
+        } else {
+            // Float
+            return parseFloat(amount.toString().slice(0, decimalIndex + decimals + 1));
+        }
+    }
+
+    service.relationships = function(a, b, c) {
+        var ab = service.relationship(a, b);
+        if (!ab) return;
+
+        var bc = service.relationship(b, c);
+        if (!bc) return;
+
+        var ca = service.relationship(c, a);
+        if (!ca) return;
+
+        return {
+            id: a + b + c,
+            found: service.getPriceMapLastUpdatedTime(),
+            ab: ab,
+            bc: bc,
+            ca: ca,
+            percent: ((ab.rate.convert * bc.rate.convert * ca.rate.convert) - 1) * 100,
+            symbol: {
+                a: a.toUpperCase(),
+                b: b.toUpperCase(),
+                c: c.toUpperCase()
+            }
+        };
+    };
+
+    service.relationship = function(a, b) {
+        a = a.toUpperCase();
+        b = b.toUpperCase();
+
+        if (priceMap[a+b]) return {
+            method: 'Sell',
+            ticker: a+b,
+            volume: volumeMap[a+b],
+            rate: {
+                market: priceMap[a + b],
+                convert: priceMap[a + b]
+            }
+        };
+        if (priceMap[b+a]) return {
+            method: 'Buy',
+            ticker: b+a,
+            volume: volumeMap[b+a],
+            rate: {
+                market: priceMap[b + a],
+                convert: ( 1 / priceMap[b + a])
+            }
+        };
+        return null;
     };
 
     function allowedRequestWeight() {

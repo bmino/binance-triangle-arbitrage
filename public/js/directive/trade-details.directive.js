@@ -129,7 +129,9 @@ function Trade(binanceService) {
                 binanceService.refreshOrderBook(trade.ca.ticker)
             ])
                 .then(function(orderBooks) {
-                    var calculated = binanceService.optimizeAndCalculate(trade, scope.maxInvestment);
+                    return binanceService.optimizeAndCalculate(trade, scope.maxInvestment);
+                })
+                .then(function(calculated) {
                     scope.investment = calculated.start.initialUSDT;
                     scope.calculated = calculated;
                     return calculated;

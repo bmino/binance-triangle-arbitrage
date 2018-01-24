@@ -7,7 +7,7 @@ BinanceController.$inject = ['$scope', '$interval', 'binanceService'];
 function BinanceController($scope, $interval, binanceService) {
 
     $scope.CONFIG = {
-        BASE_SYMBOL: '',
+        BASE_SYMBOL: 'BTC',
         INVESTMENT: {
             MAX: 500
         },
@@ -51,8 +51,10 @@ function BinanceController($scope, $interval, binanceService) {
         $scope.LOADING.ARBITRAGE = true;
 
         binanceService.refreshAllOrderBooks()
-            .then(binanceService.getSymbols)
-            .then(analyzeSymbolsForArbitrage)
+            .then(function() {
+                var symbols = binanceService.getSymbols();
+                return analyzeSymbolsForArbitrage(symbols, $scope.CONFIG.BASE_SYMBOL);
+            })
             .then(function(trades) {
                 var positiveTrades = trades.filter(function(t) {
                     return t.calculated.percent > 0.15;
@@ -67,10 +69,16 @@ function BinanceController($scope, $interval, binanceService) {
             });
     };
 
-    function analyzeSymbolsForArbitrage(symbols) {
+    function analyzeSymbolsForArbitrage(symbols, baseSymbols) {
         console.log('Optimizing...');
+        var before = new Date().getTime();
+
+        if (typeof baseSymbols === 'string') baseSymbols = [baseSymbols];
+        baseSymbols = baseSymbols.filter(function(s) {return s && s.length;});
+        if (baseSymbols.length === 0) baseSymbols = symbols;
+
         var relationships = [];
-        symbols.forEach(function(symbol1) {
+        baseSymbols.forEach(function(symbol1) {
             symbols.forEach(function(symbol2) {
                 symbols.forEach(function(symbol3) {
                     var relationship = binanceService.relationships(symbol1, symbol2, symbol3);
@@ -81,7 +89,7 @@ function BinanceController($scope, $interval, binanceService) {
                 });
             });
         });
-        console.log('Done optimizing');
+        console.log('Optimized in ' + ((new Date().getTime() - before) / 1000).toString() + ' seconds');
         return relationships;
     }
 
