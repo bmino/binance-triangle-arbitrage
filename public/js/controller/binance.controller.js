@@ -88,7 +88,7 @@ function BinanceController($scope, $interval, binanceService) {
                 symbols.forEach(function(symbol3) {
                     var relationship = binanceService.relationships(symbol1, symbol2, symbol3);
                     if (relationship) {
-                        relationship.calculated = binanceService.optimizeAndCalculate(relationship, $scope.CONFIG.INVESTMENT.MAX, $scope.CONFIG.INVESTMENT.MAX);
+                        relationship.calculated = binanceService.optimizeAndCalculate(relationship, $scope.CONFIG.INVESTMENT.MIN, $scope.CONFIG.INVESTMENT.MAX);
                         relationships.push(relationship);
                     }
                 });
