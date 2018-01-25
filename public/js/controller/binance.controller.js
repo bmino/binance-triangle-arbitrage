@@ -7,8 +7,9 @@ BinanceController.$inject = ['$scope', '$interval', 'binanceService'];
 function BinanceController($scope, $interval, binanceService) {
 
     $scope.CONFIG = {
-        BASE_SYMBOL: 'BTC',
+        BASE_SYMBOL: '',
         INVESTMENT: {
+            MIN: 50,
             MAX: 500
         },
         VOLUME: {
@@ -38,7 +39,6 @@ function BinanceController($scope, $interval, binanceService) {
     };
 
     $scope.percentRequestWeightRemaining = 100;
-    $scope.trades = [];
     $scope.currentTrade = null;
     var tickCycle = null;
 
@@ -56,12 +56,12 @@ function BinanceController($scope, $interval, binanceService) {
                 return analyzeSymbolsForArbitrage(symbols, $scope.CONFIG.BASE_SYMBOL);
             })
             .then(function(trades) {
-                var positiveTrades = trades.filter(function(t) {
-                    return t.calculated.percent > 0.15;
+                var profitFilteredTrades = trades.filter(function(t) {
+                    return t.calculated.percent > $scope.CONFIG.PROFIT.MIN;
                 });
-                console.log('Found ' + positiveTrades.length + '/' + trades.length + ' trades to be profitable (>0.15%)');
-                $scope.HISTORY = $scope.HISTORY.concat(positiveTrades);
-                return $scope.trades = trades;
+                console.log('Found ' + profitFilteredTrades.length + '/' + trades.length + ' trades with profit > ' + $scope.CONFIG.PROFIT.MIN + '%');
+                $scope.HISTORY = $scope.HISTORY.concat(profitFilteredTrades);
+                return trades;
             })
             .catch(console.error)
             .finally(function() {
@@ -83,7 +83,7 @@ function BinanceController($scope, $interval, binanceService) {
                 symbols.forEach(function(symbol3) {
                     var relationship = binanceService.relationships(symbol1, symbol2, symbol3);
                     if (relationship) {
-                        relationship.calculated = binanceService.optimizeAndCalculate(relationship, $scope.CONFIG.INVESTMENT.MAX);
+                        relationship.calculated = binanceService.optimizeAndCalculate(relationship, $scope.CONFIG.INVESTMENT.MAX, $scope.CONFIG.INVESTMENT.MAX);
                         relationships.push(relationship);
                     }
                 });

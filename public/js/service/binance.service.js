@@ -2,9 +2,9 @@ angular
     .module('services')
     .service('binanceService', BinanceService);
 
-BinanceService.$inject = ['$http', '$q', 'signingService', 'bridgeService'];
+BinanceService.$inject = ['$http', 'signingService', 'bridgeService'];
 
-function BinanceService($http, $q, signingService, bridgeService) {
+function BinanceService($http, signingService, bridgeService) {
 
     var service = this;
 
@@ -61,6 +61,14 @@ function BinanceService($http, $q, signingService, bridgeService) {
 
     service.getSymbols = function() {
         return symbols;
+    };
+
+    service.getTickers = function() {
+        return tickers;
+    };
+
+    service.getOrderBookMap = function() {
+        return orderBookMap;
     };
 
     service.getPriceMapLastUpdatedTime = function() {
@@ -159,7 +167,7 @@ function BinanceService($http, $q, signingService, bridgeService) {
         return $http.get('https://api.binance.com/api/v1/depth?limit=100&symbol='+ ticker)
             .then(function(response) {
                 return orderBookMap[ticker] = {
-                    updated: new Date(),
+                    time: new Date().getTime(),
                     bids: response.data.bids,
                     asks: response.data.asks
                 };
@@ -227,6 +235,75 @@ function BinanceService($http, $q, signingService, bridgeService) {
             });
     };
 
+    service.generateLink = function(a, b) {
+        if (priceMap[a+b]) return service.URL.replace('{a}', a).replace('{b}', b);
+        else return service.URL.replace('{a}', b).replace('{b}', a);
+    };
+
+    service.relationships = function(a, b, c) {
+        var ab = service.relationship(a, b);
+        if (!ab) return;
+
+        var bc = service.relationship(b, c);
+        if (!bc) return;
+
+        var ca = service.relationship(c, a);
+        if (!ca) return;
+
+        return {
+            id: a + b + c,
+            found: service.getPriceMapLastUpdatedTime(),
+            ab: ab,
+            bc: bc,
+            ca: ca,
+            percent: ((ab.rate.convert * bc.rate.convert * ca.rate.convert) - 1) * 100,
+            symbol: {
+                a: a.toUpperCase(),
+                b: b.toUpperCase(),
+                c: c.toUpperCase()
+            }
+        };
+    };
+
+    service.relationship = function(a, b) {
+        a = a.toUpperCase();
+        b = b.toUpperCase();
+
+        if (priceMap[a+b]) return {
+            method: 'Sell',
+            ticker: a+b,
+            volume: volumeMap[a+b],
+            rate: {
+                market: priceMap[a + b],
+                convert: priceMap[a + b]
+            }
+        };
+        if (priceMap[b+a]) return {
+            method: 'Buy',
+            ticker: b+a,
+            volume: volumeMap[b+a],
+            rate: {
+                market: priceMap[b + a],
+                convert: ( 1 / priceMap[b + a])
+            }
+        };
+        return null;
+    };
+
+    service.optimizeAndCalculate = function(trade, minInvestment, maxInvestment) {
+        var bestCalculation = null;
+        var USDT_to_A_rate = service.convertRate('USDT', trade.symbol.a);
+
+        for (var dollars=minInvestment; dollars<=maxInvestment; dollars++) {
+            var investmentA = dollars * USDT_to_A_rate;
+            var calculation = service.calculate(dollars, investmentA, trade, orderBookMap, tickers);
+            if (!bestCalculation || calculation.percent > bestCalculation.percent) {
+                bestCalculation = calculation;
+            }
+        }
+        return bestCalculation;
+    };
+
     service.convertRate = function(symbolFrom, symbolTo) {
         var direct = service.relationship(symbolFrom, symbolTo);
         if (direct) return direct.rate.convert;
@@ -245,26 +322,7 @@ function BinanceService($http, $q, signingService, bridgeService) {
         return NaN;
     };
 
-    service.generateLink = function(a, b) {
-        if (priceMap[a+b]) return service.URL.replace('{a}', a).replace('{b}', b);
-        else return service.URL.replace('{a}', b).replace('{b}', a);
-    };
-
-    service.optimizeAndCalculate = function(trade, maxInvestment) {
-        var bestCalculation = null;
-        var USDT_to_A_rate = service.convertRate('USDT', trade.symbol.a);
-
-        for (var dollars=1; dollars<maxInvestment; dollars++) {
-            var investmentA = dollars * USDT_to_A_rate;
-            var calculation = calculate(dollars, investmentA, trade, orderBookMap, tickers);
-            if (!bestCalculation || calculation.percent > bestCalculation.percent) {
-                bestCalculation = calculation;
-            }
-        }
-        return bestCalculation;
-    };
-
-    function calculate(investmentUSDT, investmentA, trade, orderBookMap, tickers) {
+    service.calculate = function(investmentUSDT, investmentA, trade, orderBookMap, tickers) {
         var calculated = {
             start: {
                 initialUSDT: investmentUSDT,
@@ -288,7 +346,7 @@ function BinanceService($http, $q, signingService, bridgeService) {
                 dust: 0
             },
             symbol: trade.symbol,
-            time: new Date(Math.min(parseInt(orderBookMap[trade.ab.ticker].updated), parseInt(orderBookMap[trade.bc.ticker].updated), parseInt(orderBookMap[trade.ca.ticker].updated))),
+            time: Math.min(orderBookMap[trade.ab.ticker].time, orderBookMap[trade.bc.ticker].time, orderBookMap[trade.ca.ticker].time),
             a: 0,
             b: 0,
             c: 0
@@ -340,8 +398,7 @@ function BinanceService($http, $q, signingService, bridgeService) {
         if (!calculated.percent) calculated.percent = 0;
 
         return calculated;
-
-    }
+    };
 
     function orderBookConversion(amountFrom, symbolFrom, symbolTo, ticker, orderBook) {
         var amountTo = 0;
@@ -395,56 +452,6 @@ function BinanceService($http, $q, signingService, bridgeService) {
             return parseFloat(amount.toString().slice(0, decimalIndex + decimals + 1));
         }
     }
-
-    service.relationships = function(a, b, c) {
-        var ab = service.relationship(a, b);
-        if (!ab) return;
-
-        var bc = service.relationship(b, c);
-        if (!bc) return;
-
-        var ca = service.relationship(c, a);
-        if (!ca) return;
-
-        return {
-            id: a + b + c,
-            found: service.getPriceMapLastUpdatedTime(),
-            ab: ab,
-            bc: bc,
-            ca: ca,
-            percent: ((ab.rate.convert * bc.rate.convert * ca.rate.convert) - 1) * 100,
-            symbol: {
-                a: a.toUpperCase(),
-                b: b.toUpperCase(),
-                c: c.toUpperCase()
-            }
-        };
-    };
-
-    service.relationship = function(a, b) {
-        a = a.toUpperCase();
-        b = b.toUpperCase();
-
-        if (priceMap[a+b]) return {
-            method: 'Sell',
-            ticker: a+b,
-            volume: volumeMap[a+b],
-            rate: {
-                market: priceMap[a + b],
-                convert: priceMap[a + b]
-            }
-        };
-        if (priceMap[b+a]) return {
-            method: 'Buy',
-            ticker: b+a,
-            volume: volumeMap[b+a],
-            rate: {
-                market: priceMap[b + a],
-                convert: ( 1 / priceMap[b + a])
-            }
-        };
-        return null;
-    };
 
     function allowedRequestWeight() {
         var now = new Date();

@@ -16,12 +16,21 @@
             </div>
 
             <div class="config-box">
+                <label>Min Investment</label>
+                <div class="input-group">
+                    <span class="input-group-addon">$</span>
+                    <input type="number" class="form-control" ng-model="CONFIG.INVESTMENT.MIN" ng-model-options="{ debounce: 1000 }">
+                </div>
+                <input type="range" min="10" max="2000" step="10" ng-model="CONFIG.INVESTMENT.MIN">
+            </div>
+
+            <div class="config-box">
                 <label>Max Investment</label>
                 <div class="input-group">
                     <span class="input-group-addon">$</span>
                     <input type="number" class="form-control" ng-model="CONFIG.INVESTMENT.MAX" ng-model-options="{ debounce: 1000 }">
                 </div>
-                <input type="range" min="5" max="2000" step="1" ng-model="CONFIG.INVESTMENT.MAX">
+                <input type="range" min="10" max="2000" step="10" ng-model="CONFIG.INVESTMENT.MAX">
             </div>
 
             <div class="config-box">
@@ -74,6 +83,7 @@
 
         <trade-details ng-if="currentTrade"
                        trade="currentTrade"
+                       min-investment="CONFIG.INVESTMENT.MIN"
                        max-investment="CONFIG.INVESTMENT.MAX"
                        max-volume="CONFIG.VOLUME.MAX"
                        min-profit="CONFIG.PROFIT.MIN"></trade-details>
@@ -92,7 +102,7 @@
             <th ng-click="CONFIG.TABLE.SORT = '-calculated.percent'">Profit</th>
             <th>Details</th>
         </tr>
-        <tr ng-repeat="trade in HISTORY | filter: {symbol: {a: CONFIG.BASE_SYMBOL}} | orderBy: CONFIG.TABLE.SORT">
+        <tr ng-repeat="trade in HISTORY | filter: {symbol: {a: CONFIG.BASE_SYMBOL}} | orderBy: CONFIG.TABLE.SORT" ng-if="trade.calculated.percent >= CONFIG.PROFIT.MIN">
             <td ng-bind-template="{{trade.symbol.a}}&#44; {{trade.symbol.b}}&#44; {{trade.symbol.c}}"></td>
             <td ng-bind="trade.calculated.time | date: 'shortTime'"></td>
             <td ng-bind-template="{{trade.calculated.volume | number : 2}}%" ng-class="{'text-success': trade.calculated.volume < CONFIG.VOLUME.MAX}"></td>

@@ -11,6 +11,7 @@ function Trade(binanceService) {
         templateUrl: '/html/trade-details.html',
         scope: {
             trade: '=',
+            minInvestment: '=',
             maxInvestment: '=',
             maxVolume: '=',
             minProfit: '='
@@ -129,7 +130,7 @@ function Trade(binanceService) {
                 binanceService.refreshOrderBook(trade.ca.ticker)
             ])
                 .then(function(orderBooks) {
-                    return binanceService.optimizeAndCalculate(trade, scope.maxInvestment);
+                    return binanceService.optimizeAndCalculate(trade, scope.minInvestment, scope.maxInvestment);
                 })
                 .then(function(calculated) {
                     scope.investment = calculated.start.initialUSDT;
@@ -143,7 +144,11 @@ function Trade(binanceService) {
         };
 
         scope.calculateAndSet = function(investmentUSDT, trade) {
-            scope.calculated = binanceService.calculate(investmentUSDT, trade);
+            var USDT_to_A_rate = binanceService.convertRate('USDT', trade.symbol.a);
+            var investmentA = investmentUSDT * USDT_to_A_rate;
+            var orderBookMap = binanceService.getOrderBookMap();
+            var tickers = binanceService.getTickers();
+            scope.calculated = binanceService.calculate(investmentUSDT, investmentA, trade, orderBookMap, tickers);
         };
 
         init();
