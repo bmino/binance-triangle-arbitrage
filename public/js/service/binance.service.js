@@ -148,14 +148,13 @@ function BinanceService($http, $q, signingService, bridgeService) {
             promises.push(service.refreshOrderBook(ticker));
         });
         return Promise.all(promises)
-            .catch(console.error)
             .finally(function() {
                 service.LOADING.BOOKS = false;
             });
     };
 
     service.refreshOrderBook = function(ticker) {
-        if (!service.API.KEY || !service.API.SECRET) throw 'Key and Secret not detected.';
+        if (!service.API.KEY || !service.API.SECRET) return Promise.reject('Key and Secret not detected.');
 
         return $http.get('https://api.binance.com/api/v1/depth?limit=100&symbol='+ ticker)
             .then(function(response) {
@@ -166,8 +165,7 @@ function BinanceService($http, $q, signingService, bridgeService) {
                 };
             })
             .catch(function(response) {
-                console.error(response.data);
-                return $q.reject(response.data.msg);
+                return Promise.reject(response.data.msg);
             })
             .finally(function() {
                 updateRequestWeight(1);
@@ -175,7 +173,7 @@ function BinanceService($http, $q, signingService, bridgeService) {
     };
 
     service.performMarketOrder = function(side, quantity, symbol) {
-        if (!service.API.KEY || !service.API.SECRET) throw 'Key and Secret not detected.';
+        if (!service.API.KEY || !service.API.SECRET) return Promise.reject('Key and Secret not detected.');
         console.log(side+'ing ' + quantity + ' ' + symbol + ' at market');
 
         var queryString =   'symbol='+ symbol +
@@ -197,8 +195,7 @@ function BinanceService($http, $q, signingService, bridgeService) {
                 return response.data;
             })
             .catch(function(response) {
-                console.error(response.data);
-                return $q.reject(response.data.msg);
+                return Promise.reject(response.data.msg);
             })
             .finally(function() {
                 updateOrderWeight(1);
@@ -206,7 +203,7 @@ function BinanceService($http, $q, signingService, bridgeService) {
     };
 
     service.accountInformation = function() {
-        if (!service.API.KEY || !service.API.SECRET) throw 'Key and Secret not detected.';
+        if (!service.API.KEY || !service.API.SECRET) return Promise.reject('Key and Secret not detected.');
 
         var queryString = 'timestamp='+ (new Date().getTime() - service.TIME_OFFSET).toString();
         queryString += '&signature=' + signingService.encrypt(queryString, service.API.SECRET);
@@ -223,8 +220,7 @@ function BinanceService($http, $q, signingService, bridgeService) {
                 return response.data;
             })
             .catch(function(response) {
-                console.error(response.data);
-                return $q.reject(response.data.msg);
+                return Promise.reject(response.data.msg);
             })
             .finally(function() {
                 updateRequestWeight(5);
