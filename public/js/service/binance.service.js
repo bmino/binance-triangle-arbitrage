@@ -77,7 +77,6 @@ function BinanceService($http, signingService, bridgeService) {
 
     service.refreshApiCredentials = function() {
         service.LOADING.CREDENTIALS = true;
-        console.log('Refreshing api credentials');
         return bridgeService.getApiVariables()
             .then(function(bridge) {
                 service.API.KEY = bridge.BINANCE.KEY;
@@ -91,10 +90,8 @@ function BinanceService($http, signingService, bridgeService) {
 
     service.refreshVolumeMap = function() {
         service.LOADING.VOLUME = true;
-        console.log('Refreshing volume map');
         return $http.get('https://api.binance.com/api/v1/ticker/24hr')
             .then(function(response) {
-                console.log('Refreshed 24hr history for ' + response.data.length + ' tickers');
                 response.data.map(function(history) {
                     volumeMap[history.symbol] = parseFloat(history.volume);
                 });
@@ -110,18 +107,20 @@ function BinanceService($http, signingService, bridgeService) {
         service.LOADING.TICKERS = true;
         service.LOADING.SYMBOLS = true;
         service.LOADING.RATE_LIMITS = true;
-        console.log('Refreshing symbols and tickers');
         return $http.get('https://api.binance.com/api/v1/exchangeInfo')
             .then(function(response) {
                 service.QUERIES.REQUEST.MINUTE_LIMIT = parseInt(response.data.rateLimits[0].limit);
                 service.QUERIES.ORDER.SECOND_LIMIT = parseInt(response.data.rateLimits[1].limit);
                 var duplicateSymbols = [];
-                response.data.symbols.map(function(symbolObj) {
+                response.data.symbols.forEach(function(symbolObj) {
+                    if (symbolObj.status !== 'TRADING') return;
                     duplicateSymbols.push(symbolObj.baseAsset);
                     symbolObj.dustQty = parseFloat(symbolObj.filters[1].minQty);
                     tickers[symbolObj.symbol] = symbolObj;
                 });
                 symbols = duplicateSymbols.filter(removeDuplicates);
+                console.log('Found ' + Object.keys(tickers).length + '/' + response.data.symbols.length + ' active tickers');
+                console.log('Found ' + symbols.length + ' symbols');
             })
             .catch(andThrow)
             .finally(function() {
