@@ -54,7 +54,8 @@
             <div class="config-box">
                 <label>Arbitrage Cycle Interval</label>
                 <div class="input-group">
-                    <input type="number" class="form-control" ng-model="CONFIG.CYCLE.INTERVAL">
+                    <input type="number" class="form-control" ng-model="CONFIG.CYCLE.INTERVAL" ng-if="!CONFIG.CYCLE.HANDLE">
+                    <input type="number" class="form-control" ng-model="CONFIG.CYCLE.DELAY" ng-if="CONFIG.CYCLE.HANDLE" disabled>
                     <span class="input-group-btn">
                         <button class="btn btn-default" type="button" ng-click="CONFIG.CYCLE.HANDLE ? stopArbitrageCycle() : startArbitrageCycle()">
                             <span ng-class="CONFIG.CYCLE.HANDLE ? 'glyphicon-remove' : 'glyphicon-refresh'" class="glyphicon"></span>

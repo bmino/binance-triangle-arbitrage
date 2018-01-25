@@ -20,6 +20,8 @@ function BinanceController($scope, $interval, binanceService) {
         },
         CYCLE: {
             INTERVAL: 30,
+            LAST_CALL_TIME: 0,
+            DELAY: 0,
             HANDLE: null
         },
         TABLE: {
@@ -41,13 +43,16 @@ function BinanceController($scope, $interval, binanceService) {
     $scope.percentRequestWeightRemaining = 100;
     $scope.currentTrade = null;
     var tickCycle = null;
+    var searchCycle = null;
 
     function init() {
         trackRequests();
+        trackSearchCycle();
     }
 
     $scope.findArbitrage = function() {
         if (binanceService.getSymbols().length === 0) return;
+        $scope.CONFIG.CYCLE.LAST_CALL_TIME = new Date().getTime();
         $scope.LOADING.ARBITRAGE = true;
 
         binanceService.refreshAllOrderBooks()
@@ -108,7 +113,15 @@ function BinanceController($scope, $interval, binanceService) {
         tickCycle = $interval(tick, 500);
     }
 
+    function trackSearchCycle() {
+        var tick = function() {
+            $scope.CONFIG.CYCLE.DELAY = $scope.CONFIG.CYCLE.INTERVAL - Math.floor(((new Date().getTime() - $scope.CONFIG.CYCLE.LAST_CALL_TIME) / 1000));
+        };
+        searchCycle = $interval(tick, 500);
+    }
+
     $scope.startArbitrageCycle = function() {
+        $scope.CONFIG.CYCLE.DELAY = $scope.CONFIG.CYCLE.INTERVAL;
         $scope.CONFIG.CYCLE.HANDLE = $interval($scope.findArbitrage, 1000 * $scope.CONFIG.CYCLE.INTERVAL);
         $scope.findArbitrage();
     };
@@ -121,7 +134,9 @@ function BinanceController($scope, $interval, binanceService) {
     $scope.$on('$destroy', function() {
         $scope.stopArbitrageCycle();
         $interval.cancel(tickCycle);
+        $interval.cancel(searchCycle);
         tickCycle = null;
+        searchCycle = null;
     });
     
     init();
