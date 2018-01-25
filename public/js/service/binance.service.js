@@ -400,11 +400,12 @@ function BinanceService($http, signingService, bridgeService) {
     };
 
     function orderBookConversion(amountFrom, symbolFrom, symbolTo, ticker, orderBook) {
+        var i,j;
         var amountTo = 0;
-        var rate, quantity;
+        var rate, quantity, exchangeableAmount;
 
         if (ticker === symbolFrom + symbolTo) {
-            for (var i=0; i<orderBook.bids.length; i++) {
+            for (i=0; i<orderBook.bids.length; i++) {
                 rate = parseFloat(orderBook.bids[i][0]);
                 quantity = parseFloat(orderBook.bids[i][1]);
                 if (quantity < amountFrom) {
@@ -419,10 +420,10 @@ function BinanceService($http, signingService, bridgeService) {
                 }
             }
         } else {
-            for (var j=0; j<orderBook.asks.length; j++) {
+            for (j=0; j<orderBook.asks.length; j++) {
                 rate = parseFloat(orderBook.asks[j][0]);
                 quantity = parseFloat(orderBook.asks[j][1]);
-                var exchangeableAmount = quantity * rate;
+                exchangeableAmount = quantity * rate;
                 if (exchangeableAmount < amountFrom) {
                     amountFrom -= quantity * rate;
                     amountTo += quantity;
@@ -440,15 +441,16 @@ function BinanceService($http, signingService, bridgeService) {
     }
 
     function calculateDustless(tickerName, amount, tickers) {
+        var amountString = amount.toString();
         var dustQty = tickers[tickerName].dustQty;
         var decimals = dustQty === 1 ? 0 : dustQty.toString().indexOf('1') - 1;
-        var decimalIndex = amount.toString().indexOf('.');
+        var decimalIndex = amountString.indexOf('.');
         if (decimalIndex === -1) {
             // Integer
             return amount;
         } else {
             // Float
-            return parseFloat(amount.toString().slice(0, decimalIndex + decimals + 1));
+            return parseFloat(amountString.slice(0, decimalIndex + decimals + 1));
         }
     }
 

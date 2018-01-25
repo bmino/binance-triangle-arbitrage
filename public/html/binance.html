@@ -107,7 +107,7 @@
             <td ng-bind-template="{{trade.symbol.a}}&#44; {{trade.symbol.b}}&#44; {{trade.symbol.c}}"></td>
             <td ng-bind="trade.calculated.time | date: 'shortTime'"></td>
             <td ng-bind-template="{{trade.calculated.volume | number : 2}}%" ng-class="{'text-success': trade.calculated.volume < CONFIG.VOLUME.MAX}"></td>
-            <td ng-bind-template="{{trade.calculated.percent | number : 4}}%" ng-class="{'text-success': trade.calculated.percent > 0}"></td>
+            <td ng-bind-template="{{trade.calculated.percent | number : 4}}%" ng-class="{'text-success': trade.calculated.percent > 0.15}"></td>
             <td>
                 <button type="button" class="btn btn-default" ng-click="setCurrentTrade(trade)">Show</button>
                 <button type="button" class="btn btn-default" ng-click="removeTrade(trade)"><span class="glyphicon glyphicon-remove"></span></button>
