@@ -8,7 +8,7 @@
             <span class="input-group-addon">$</span>
             <input type="number" class="form-control" ng-model="investment" ng-model-options="{ debounce: 1000 }" ng-change="calculateAndSet(investment, trade)">
         </div>
-        <input type="range" min="{{minInvestment}}" max="{{maxInvestment}}" step="1" ng-model="investment" ng-change="calculateAndSet(investment, trade)">
+        <input type="range" min="{{minInvestment}}" max="{{maxInvestment}}" step="{{stepSize}}" ng-model="investment" ng-change="calculateAndSet(investment, trade)">
     </label>
 
     <div class="details" ng-hide="REFRESHING">

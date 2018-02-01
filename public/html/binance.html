@@ -4,51 +4,42 @@
         <div class="config-container">
 
             <div class="config-box">
-                <label>Base Symbol</label>
-                <div class="input-group">
-                    <input type="text" class="form-control" placeholder="SYM" ng-model="CONFIG.BASE_SYMBOL">
-                    <span class="input-group-btn">
-                        <button class="btn btn-default" type="button" ng-click="CONFIG.BASE_SYMBOL = ''">
-                            <span class="glyphicon glyphicon-remove"></span>
-                        </button>
-                    </span>
-                </div>
-            </div>
-
-            <div class="config-box">
-                <label>Min Investment</label>
-                <div class="input-group">
-                    <span class="input-group-addon">$</span>
-                    <input type="number" class="form-control" ng-model="CONFIG.INVESTMENT.MIN" ng-model-options="{ debounce: 1000 }">
-                </div>
-                <input type="range" min="10" max="2000" step="10" ng-model="CONFIG.INVESTMENT.MIN">
-            </div>
-
-            <div class="config-box">
                 <label>Max Investment</label>
                 <div class="input-group">
-                    <span class="input-group-addon">$</span>
-                    <input type="number" class="form-control" ng-model="CONFIG.INVESTMENT.MAX" ng-model-options="{ debounce: 1000 }">
+                    <input type="number" class="form-control" ng-model="CONFIG.INVESTMENT.MAX">
+                    <div class="input-group-btn">
+                        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">{{CONFIG.BASE.SYMBOL}} <span class="caret"></span></button>
+                        <ul class="dropdown-menu dropdown-menu-right">
+                            <li ng-repeat="symbol in CONFIG.BASE.SYMBOLS"><a ng-click="updateStepSize(symbol)">{{symbol}}</a></li>
+                        </ul>
+                    </div>
                 </div>
-                <input type="range" min="10" max="2000" step="10" ng-model="CONFIG.INVESTMENT.MAX">
+            </div>
+
+            <div class="config-box">
+                <label>Step Size</label>
+                <input type="number" class="form-control" ng-model="CONFIG.INVESTMENT.STEP">
             </div>
 
             <div class="config-box">
                 <label>Max Hourly Volume</label>
                 <div class="input-group">
                     <span class="input-group-addon">%</span>
-                    <input type="number" class="form-control" ng-model="CONFIG.VOLUME.MAX" ng-model-options="{ debounce: 1000 }">
+                    <input type="number" class="form-control" ng-model="CONFIG.VOLUME.MAX">
                 </div>
-                <input type="range" min="0" max="3" step="0.1" ng-model="CONFIG.VOLUME.MAX">
             </div>
 
             <div class="config-box">
                 <label>Minimum Profit</label>
                 <div class="input-group">
                     <span class="input-group-addon">%</span>
-                    <input type="number" class="form-control" ng-model="CONFIG.PROFIT.MIN" ng-model-options="{ debounce: 1000 }">
+                    <input type="number" class="form-control" ng-model="CONFIG.PROFIT.MIN">
+                    <span class="input-group-btn">
+                        <button class="btn btn-default" type="button" ng-click="CONFIG.PROFIT.MIN = 0">
+                            <span class="glyphicon glyphicon-remove"></span>
+                        </button>
+                    </span>
                 </div>
-                <input type="range" min="0" max="3" step="0.05" ng-model="CONFIG.PROFIT.MIN">
             </div>
 
             <div class="config-box">
@@ -67,16 +58,19 @@
             <button type="button"
                     class="form-control btn btn-default"
                     ng-click="findArbitrage()"
-                    ng-disabled="LOADING.API.INITIAL || LOADING.ARBITRAGE">
+                    ng-disabled="LOADING.API.INITIAL || LOADING.ARBITRAGE || LOADING.API.LOADED_BOOKS() > 0">
                 {{LOADING.API.INITIAL ? 'Loading Api ...' :
+                LOADING.API.LOADED_BOOKS() > 0 ? 'Loading Order Book...' :
                 LOADING.ARBITRAGE ? 'Finding Arbitrage ...' : 'Find Arbitrage'
                 }}
             </button>
 
+            <span>Empty Bid/Ask: {{LOADING.API.UNFILLED_BOOKS()}}</span>
+
             <div class="progress">
                 <div class="progress-bar" role="progressbar"
                      ng-style="{'width': percentRequestWeightRemaining + '%'}">
-                    <span>{{RATE_LIMIT.TYPE.REQUEST.REMAINING()}} / {{RATE_LIMIT.TYPE.REQUEST.MINUTE_LIMIT}}</span>
+                    <span>{{CONFIG.RATE_LIMIT.TYPE.REQUEST.REMAINING()}} / {{CONFIG.RATE_LIMIT.TYPE.REQUEST.MINUTE_LIMIT}}</span>
                 </div>
             </div>
 
@@ -86,6 +80,7 @@
                        trade="currentTrade"
                        min-investment="CONFIG.INVESTMENT.MIN"
                        max-investment="CONFIG.INVESTMENT.MAX"
+                       step-size="CONFIG.INVESTMENT.STEP"
                        max-volume="CONFIG.VOLUME.MAX"
                        min-profit="CONFIG.PROFIT.MIN"></trade-details>
 
@@ -103,7 +98,17 @@
             <th ng-click="CONFIG.TABLE.SORT = '-calculated.percent'">Profit</th>
             <th>Details</th>
         </tr>
-        <tr ng-repeat="trade in HISTORY | filter: {symbol: {a: CONFIG.BASE_SYMBOL}} | orderBy: CONFIG.TABLE.SORT" ng-if="trade.calculated.percent >= CONFIG.PROFIT.MIN">
+        <tr ng-if="CONFIG.CYCLE.HANDLE" ng-repeat="trade in history | filter: {symbol: {a: CONFIG.BASE.SYMBOL}} | percentFilter: CONFIG.PROFIT.MIN | orderBy: CONFIG.TABLE.SORT">
+            <td ng-bind-template="{{trade.symbol.a}}&#44; {{trade.symbol.b}}&#44; {{trade.symbol.c}}"></td>
+            <td ng-bind="trade.calculated.time | date: 'shortTime'"></td>
+            <td ng-bind-template="{{trade.calculated.volume | number : 2}}%" ng-class="{'text-success': trade.calculated.volume < CONFIG.VOLUME.MAX}"></td>
+            <td ng-bind-template="{{trade.calculated.percent | number : 4}}%" ng-class="{'text-success': trade.calculated.percent > 0.15}"></td>
+            <td>
+                <button type="button" class="btn btn-default" ng-click="setCurrentTrade(trade)">Show</button>
+                <button type="button" class="btn btn-default" ng-click="removeTrade(trade)"><span class="glyphicon glyphicon-remove"></span></button>
+            </td>
+        </tr>
+        <tr ng-if="!CONFIG.CYCLE.HANDLE" ng-repeat="trade in trades | filter: {symbol: {a: CONFIG.BASE.SYMBOL}} | percentFilter: CONFIG.PROFIT.MIN | orderBy: CONFIG.TABLE.SORT">
             <td ng-bind-template="{{trade.symbol.a}}&#44; {{trade.symbol.b}}&#44; {{trade.symbol.c}}"></td>
             <td ng-bind="trade.calculated.time | date: 'shortTime'"></td>
             <td ng-bind-template="{{trade.calculated.volume | number : 2}}%" ng-class="{'text-success': trade.calculated.volume < CONFIG.VOLUME.MAX}"></td>

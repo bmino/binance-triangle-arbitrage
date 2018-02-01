@@ -13,6 +13,7 @@ function Trade(binanceService) {
             trade: '=',
             minInvestment: '=',
             maxInvestment: '=',
+            stepSize: '=',
             maxVolume: '=',
             minProfit: '='
         },
@@ -42,28 +43,23 @@ function Trade(binanceService) {
         scope.execute = function() {
             var startTime = null;
             scope.executionTime = null;
-            scope.optimizeAndSet(scope.trade)
-                .then(function(metrics) {
-                    startTime = new Date();
-                    if (metrics.percent < scope.minProfit) throw 'Percent ' + metrics.percent.toFixed(2) + '% is too low to execute trade.';
-                    if (metrics.volume > scope.maxVolume) throw 'Volume ' + metrics.volume.toFixed(2) + '% is too high to execute trade.';
-                    return performTradeAndVerify(scope.trade.ab.method, scope.calculated.ab.market, scope.trade.ab.ticker)
-                        .then(function(execution) {
-                            return performTradeAndVerify(scope.trade.bc.method, scope.calculated.bc.market, scope.trade.bc.ticker);
-                        })
-                        .then(function(execution) {
-                            return performTradeAndVerify(scope.trade.ca.method, scope.calculated.ca.market, scope.trade.ca.ticker);
-                        })
-                        .then(function(execution) {
-                            scope.executionTime = new Date() - startTime;
-                            console.log('DONE!');
-                        });
+            var metrics = scope.optimizeAndSet(scope.trade);
+            startTime = new Date();
+            if (metrics.percent < scope.minProfit) throw 'Percent ' + metrics.percent.toFixed(2) + '% is too low to execute trade.';
+            if (metrics.volume > scope.maxVolume) throw 'Volume ' + metrics.volume.toFixed(2) + '% is too high to execute trade.';
+            return performTradeAndVerify(scope.trade.ab.method, scope.calculated.ab.market, scope.trade.ab.ticker)
+                .then(function(execution) {
+                    return performTradeAndVerify(scope.trade.bc.method, scope.calculated.bc.market, scope.trade.bc.ticker);
+                })
+                .then(function(execution) {
+                    return performTradeAndVerify(scope.trade.ca.method, scope.calculated.ca.market, scope.trade.ca.ticker);
+                })
+                .then(function(execution) {
+                    scope.executionTime = new Date() - startTime;
+                    console.log('DONE!');
                 })
                 .then(binanceService.accountInformation)
                 .then(updateBalancesAndCalculateDifference)
-                .then(function(differences) {
-                    return calculateGain(scope.trade.symbol.a, differences);
-                })
                 .catch(console.error);
         };
 
@@ -78,13 +74,11 @@ function Trade(binanceService) {
             var differences = [];
             console.log('Updating balances and calculating differences...');
             accountInformation.balances.forEach(function(balance) {
-                var convertRate = binanceService.convertRate(balance.asset, 'USDT');
                 // Assume we had none before
                 var newBalance = parseFloat(balance.free) + parseFloat(balance.locked);
                 var difference = {
                     asset: balance.asset,
                     change: newBalance,
-                    changeUSD: convertRate * newBalance,
                     percentChange: 100.000
                 };
                 // Check if we did have some of this asset before
@@ -92,7 +86,6 @@ function Trade(binanceService) {
                     var oldBalance = parseFloat(previousBalance.free) + parseFloat(previousBalance.locked);
                     if (previousBalance.asset === balance.asset) {
                         difference.change = newBalance - oldBalance;
-                        difference.changeUSD = convertRate * (newBalance - oldBalance);
                         difference.percentChange = ((newBalance - oldBalance) / oldBalance * 100).toFixed(3);
                     }
                 });
@@ -102,16 +95,6 @@ function Trade(binanceService) {
             console.log(differences);
             scope.balances = accountInformation.balances;
             return differences;
-        }
-
-        function calculateGain(symbol, differences) {
-            var totalChange = 0;
-            differences.forEach(function(difference) {
-                totalChange += binanceService.convertRate(difference.asset, symbol) * difference.change;
-            });
-            console.log('Calculated total change of ' + totalChange + ' ' + symbol);
-            console.log('Calculated total change of ' + binanceService.convertRate(symbol, 'USDT') * totalChange + ' (USD)');
-            return totalChange;
         }
 
         scope.generateLink = function(a, b) {
@@ -124,31 +107,20 @@ function Trade(binanceService) {
 
         scope.optimizeAndSet = function(trade) {
             scope.REFRESHING = true;
-            return Promise.all([
-                binanceService.refreshOrderBook(trade.ab.ticker),
-                binanceService.refreshOrderBook(trade.bc.ticker),
-                binanceService.refreshOrderBook(trade.ca.ticker)
-            ])
-                .then(function(orderBooks) {
-                    return binanceService.optimizeAndCalculate(trade, scope.minInvestment, scope.maxInvestment);
-                })
-                .then(function(calculated) {
-                    scope.investment = calculated.start.initialUSDT;
-                    scope.calculated = calculated;
-                    return calculated;
-                })
-                .catch(console.error)
-                .finally(function() {
-                    scope.REFRESHING = false;
-                });
+            var calculated = binanceService.optimizeAndCalculate(trade, scope.minInvestment, scope.maxInvestment, scope.stepSize);
+            if (calculated) {
+                scope.investment = calculated.start.market;
+                scope.calculated = calculated;
+            }
+
+            scope.REFRESHING = false;
+            return calculated;
         };
 
-        scope.calculateAndSet = function(investmentUSDT, trade) {
-            var USDT_to_A_rate = binanceService.convertRate('USDT', trade.symbol.a);
-            var investmentA = investmentUSDT * USDT_to_A_rate;
+        scope.calculateAndSet = function(investmentA, trade) {
             var orderBookMap = binanceService.getOrderBookMap();
             var tickers = binanceService.getTickers();
-            scope.calculated = binanceService.calculate(investmentUSDT, investmentA, trade, orderBookMap, tickers);
+            scope.calculated = binanceService.calculate(investmentA, trade, orderBookMap, tickers);
         };
 
         init();

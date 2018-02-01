@@ -2,6 +2,8 @@ require('dotenv').config({path: 'config/application.env'});
 var express = require('express');
 var app = express();
 var server = require('http').createServer(app);
+var io = require('socket.io')(server);
+app.io = io;
 var port = process.env.PORT || 3000;
 server.listen(port);
 var path = require('path');
@@ -28,6 +30,7 @@ app.use('/node_modules', express.static(path.join(__dirname, 'node_modules')));
 
 app.use('/',								require('./routes/EjsViewController'));
 app.use('/bridge/',							require('./routes/EnvironmentBridgeController'));
+app.use('/binance/',						require('./routes/BinanceController'));
 
 
 // catch 404 and forward to error handler
@@ -44,5 +47,9 @@ app.use(function(err, req, res, next) {
 	res.json(err.message);
 });
 
+// Socket Events
+io.on('connection', function(socket) {
+    console.log('New socket connection...');
+});
 
 module.exports = app;

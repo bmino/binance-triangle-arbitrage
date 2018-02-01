@@ -2,15 +2,14 @@ angular
     .module('services')
     .service('binanceService', BinanceService);
 
-BinanceService.$inject = ['$http', 'signingService', 'bridgeService'];
+BinanceService.$inject = ['$http', 'signingService', 'bridgeService', 'socket'];
 
-function BinanceService($http, signingService, bridgeService) {
+function BinanceService($http, signingService, bridgeService, socket) {
 
     var service = this;
 
     service.URL = 'https://binance.com/tradeDetail.html?symbol={a}_{b}';
     service.TRANSACTION_FEE = 0.05;
-    service.INITIAL_INVESTMENT = 100;
     service.API = {
         KEY: '',
         SECRET: ''
@@ -21,9 +20,9 @@ function BinanceService($http, signingService, bridgeService) {
         TICKERS: false,
         SYMBOLS: false,
         RATE_LIMITS: false,
-        PRICES: false,
         VOLUME: false,
-        BOOKS: false
+        LOADED_BOOKS: countMissingOrderBooks,
+        UNFILLED_BOOKS: countEmptyOrderBooks
     };
     service.QUERIES = {
         ORDER: {
@@ -37,10 +36,10 @@ function BinanceService($http, signingService, bridgeService) {
         }
     };
     service.TIME_OFFSET = 3000;
+    service.UNFILLED = [];
 
     var symbols = [];
     var tickers = {};
-    var priceMap = {};
     var volumeMap = {};
     var orderBookMap = {};
 
@@ -49,14 +48,31 @@ function BinanceService($http, signingService, bridgeService) {
 
         Promise.all([
             service.refreshApiCredentials(),
-            service.refreshExchangeInfo(),
-            service.refreshPriceMap(),
-            service.refreshVolumeMap()
+            service.refreshExchangeInfo()//,
+            //service.refreshVolumeMap()
         ])
+            .then(function() {
+                return $http({
+                    method: 'POST',
+                    url: '/binance/wss/depth',
+                    data: {
+                        tickers: Object.keys(tickers)
+                    }
+                });
+            })
+            .then(function(response) {
+                updateRequestWeight(response.data);
+            })
             .catch(andThrow)
             .finally(function() {
                 service.LOADING.INITIAL = false;
             });
+
+        socket.on('depth:new', null, function(result) {
+            service.UNFILLED = result.unfilled;
+            delete result.UNFILLED;
+            orderBookMap[result.ticker] = result;
+        });
     }
 
     service.getSymbols = function() {
@@ -69,10 +85,6 @@ function BinanceService($http, signingService, bridgeService) {
 
     service.getOrderBookMap = function() {
         return orderBookMap;
-    };
-
-    service.getPriceMapLastUpdatedTime = function() {
-        return priceMap.LAST_UPDATED;
     };
 
     service.refreshApiCredentials = function() {
@@ -118,7 +130,12 @@ function BinanceService($http, signingService, bridgeService) {
                     symbolObj.dustQty = parseFloat(symbolObj.filters[1].minQty);
                     tickers[symbolObj.symbol] = symbolObj;
                 });
+
+                // Remove bogus info
                 symbols = duplicateSymbols.filter(removeDuplicates);
+                delete tickers["123456"];
+                symbols.splice(symbols.indexOf("123456"), 1);
+
                 console.log('Found ' + Object.keys(tickers).length + '/' + response.data.symbols.length + ' active tickers');
                 console.log('Found ' + symbols.length + ' symbols');
             })
@@ -128,54 +145,6 @@ function BinanceService($http, signingService, bridgeService) {
                 service.LOADING.TICKERS = false;
                 service.LOADING.SYMBOLS = false;
                 service.LOADING.RATE_LIMITS = false;
-            });
-    };
-
-    service.refreshPriceMap = function() {
-        service.LOADING.PRICES = true;
-        return $http.get('https://api.binance.com/api/v3/ticker/price')
-            .then(function(response) {
-                response.data.forEach(function(tick) {
-                    priceMap[tick.symbol] = parseFloat(tick.price);
-                });
-                priceMap.LAST_UPDATED = new Date();
-                return priceMap;
-            })
-            .catch(andThrow)
-            .finally(function() {
-                updateRequestWeight(1);
-                service.LOADING.PRICES = false;
-            });
-    };
-
-    service.refreshAllOrderBooks = function() {
-        service.LOADING.BOOKS = true;
-        var promises = [];
-        Object.keys(tickers).forEach(function(ticker) {
-            promises.push(service.refreshOrderBook(ticker));
-        });
-        return Promise.all(promises)
-            .finally(function() {
-                service.LOADING.BOOKS = false;
-            });
-    };
-
-    service.refreshOrderBook = function(ticker) {
-        if (!service.API.KEY || !service.API.SECRET) return Promise.reject('Key and Secret not detected.');
-
-        return $http.get('https://api.binance.com/api/v1/depth?limit=100&symbol='+ ticker)
-            .then(function(response) {
-                return orderBookMap[ticker] = {
-                    time: new Date().getTime(),
-                    bids: response.data.bids,
-                    asks: response.data.asks
-                };
-            })
-            .catch(function(response) {
-                return Promise.reject(response.data.msg);
-            })
-            .finally(function() {
-                updateRequestWeight(1);
             });
     };
 
@@ -235,7 +204,7 @@ function BinanceService($http, signingService, bridgeService) {
     };
 
     service.generateLink = function(a, b) {
-        if (priceMap[a+b]) return service.URL.replace('{a}', a).replace('{b}', b);
+        if (tickers[a+b]) return service.URL.replace('{a}', a).replace('{b}', b);
         else return service.URL.replace('{a}', b).replace('{b}', a);
     };
 
@@ -251,11 +220,9 @@ function BinanceService($http, signingService, bridgeService) {
 
         return {
             id: a + b + c,
-            found: service.getPriceMapLastUpdatedTime(),
             ab: ab,
             bc: bc,
             ca: ca,
-            percent: ((ab.rate.convert * bc.rate.convert * ca.rate.convert) - 1) * 100,
             symbol: {
                 a: a.toUpperCase(),
                 b: b.toUpperCase(),
@@ -268,63 +235,40 @@ function BinanceService($http, signingService, bridgeService) {
         a = a.toUpperCase();
         b = b.toUpperCase();
 
-        if (priceMap[a+b]) return {
+        if (tickers[a+b]) return {
             method: 'Sell',
             ticker: a+b,
-            volume: volumeMap[a+b],
-            rate: {
-                market: priceMap[a + b],
-                convert: priceMap[a + b]
-            }
+            volume: volumeMap[a+b]
         };
-        if (priceMap[b+a]) return {
+        if (tickers[b+a]) return {
             method: 'Buy',
             ticker: b+a,
-            volume: volumeMap[b+a],
-            rate: {
-                market: priceMap[b + a],
-                convert: ( 1 / priceMap[b + a])
-            }
+            volume: volumeMap[b+a]
         };
         return null;
     };
 
-    service.optimizeAndCalculate = function(trade, minInvestment, maxInvestment) {
+    service.optimizeAndCalculate = function(trade, minInvestment, maxInvestment, stepSize) {
+        var quantity, calculation;
         var bestCalculation = null;
-        var USDT_to_A_rate = service.convertRate('USDT', trade.symbol.a);
 
-        for (var dollars=minInvestment; dollars<=maxInvestment; dollars++) {
-            var investmentA = dollars * USDT_to_A_rate;
-            var calculation = service.calculate(dollars, investmentA, trade, orderBookMap, tickers);
-            if (!bestCalculation || calculation.percent > bestCalculation.percent) {
-                bestCalculation = calculation;
+        try {
+            for (quantity=minInvestment; quantity<=maxInvestment; quantity+=stepSize) {
+                calculation = service.calculate(quantity, trade, orderBookMap, tickers);
+                if (!bestCalculation || calculation.percent > bestCalculation.percent) {
+                    bestCalculation = calculation;
+                }
             }
+        } catch (e) {
+            console.error(e.message);
         }
+
         return bestCalculation;
     };
 
-    service.convertRate = function(symbolFrom, symbolTo) {
-        var direct = service.relationship(symbolFrom, symbolTo);
-        if (direct) return direct.rate.convert;
-
-        var mediums = ['BTC', 'ETH', 'BNB'];
-        for (var i=0; i<mediums.length; i++) {
-            var medium = mediums[i];
-            var am = service.relationship(symbolFrom, medium);
-            var mb = service.relationship(medium, symbolTo);
-            if (am && mb) {
-                return am.rate.convert * mb.rate.convert;
-            }
-        }
-
-        console.error('Could not get '+ symbolTo + ' price for ' + symbolFrom);
-        return NaN;
-    };
-
-    service.calculate = function(investmentUSDT, investmentA, trade, orderBookMap, tickers) {
+    service.calculate = function(investmentA, trade, orderBookMap, tickers) {
         var calculated = {
             start: {
-                initialUSDT: investmentUSDT,
                 total: investmentA,
                 market: 0,
                 dust: 0
@@ -402,12 +346,18 @@ function BinanceService($http, signingService, bridgeService) {
     function orderBookConversion(amountFrom, symbolFrom, symbolTo, ticker, orderBook) {
         var i,j;
         var amountTo = 0;
-        var rate, quantity, exchangeableAmount;
+        var rates, rate, quantity, exchangeableAmount;
+
+        if (amountFrom === 0) return 0;
 
         if (ticker === symbolFrom + symbolTo) {
-            for (i=0; i<orderBook.bids.length; i++) {
-                rate = parseFloat(orderBook.bids[i][0]);
-                quantity = parseFloat(orderBook.bids[i][1]);
+            rates = Object.keys(orderBook.bid);
+            if (rates.length === 0) {
+                throw new Error('No bids available to convert ' + amountFrom + ' ' + symbolFrom + ' to ' + symbolTo);
+            }
+            for (i=0; i<rates.length; i++) {
+                rate = parseFloat(rates[i]);
+                quantity = parseFloat(orderBook.bid[rates[i]]);
                 if (quantity < amountFrom) {
                     amountFrom -= quantity;
                     amountTo += quantity * rate;
@@ -415,14 +365,17 @@ function BinanceService($http, signingService, bridgeService) {
                     // Last fill
                     amountTo += amountFrom * rate;
                     amountFrom = 0;
-                    //console.log('Converted ' + amountFrom.toFixed(3) + ' ' + symbolFrom + ' exactly to ' + amountTo + ' ' + symbolTo);
                     return amountTo;
                 }
             }
         } else {
-            for (j=0; j<orderBook.asks.length; j++) {
-                rate = parseFloat(orderBook.asks[j][0]);
-                quantity = parseFloat(orderBook.asks[j][1]);
+            rates = Object.keys(orderBook.ask);
+            if (rates.length === 0) {
+                throw new Error('No asks available to convert ' + amountFrom + ' ' + symbolFrom + ' to ' + symbolTo);
+            }
+            for (j=0; j<rates.length; j++) {
+                rate = parseFloat(rates[j]);
+                quantity = parseFloat(orderBook.ask[rates[j]]);
                 exchangeableAmount = quantity * rate;
                 if (exchangeableAmount < amountFrom) {
                     amountFrom -= quantity * rate;
@@ -431,13 +384,13 @@ function BinanceService($http, signingService, bridgeService) {
                     // Last fill
                     amountTo += amountFrom / rate;
                     amountFrom = 0;
-                    //console.log('Converted ' + amountFrom.toFixed(3) + ' ' + symbolFrom + ' exactly to ' + amountTo + ' ' + symbolTo);
                     return amountTo;
                 }
             }
         }
-
-        throw 'Could not fill order with given order book depth';
+        console.error('Depth (' + rates.length + ') too shallow to convert ' + amountFrom + ' ' + symbolFrom + ' to ' + symbolTo + ' using ' + ticker);
+        console.error('Went through depths:', rates);
+        return amountTo;
     }
 
     function calculateDustless(tickerName, amount, tickers) {
@@ -452,6 +405,14 @@ function BinanceService($http, signingService, bridgeService) {
             // Float
             return parseFloat(amountString.slice(0, decimalIndex + decimals + 1));
         }
+    }
+
+    function countMissingOrderBooks() {
+        return Object.keys(tickers).length - Object.keys(orderBookMap).length;
+    }
+
+    function countEmptyOrderBooks() {
+        return service.UNFILLED.length;
     }
 
     function allowedRequestWeight() {

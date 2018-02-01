@@ -7,10 +7,20 @@ BinanceController.$inject = ['$scope', '$interval', 'binanceService'];
 function BinanceController($scope, $interval, binanceService) {
 
     $scope.CONFIG = {
-        BASE_SYMBOL: '',
+        BASE: {
+            SYMBOL: 'BTC',
+            SYMBOLS: ['BTC', 'ETH', 'BNB', 'USDT']
+        },
         INVESTMENT: {
-            MIN: 50,
-            MAX: 500
+            MIN: 0,
+            MAX: 0.30,
+            STEP: 0.0001,
+            STEP_DEFAULT: {
+                'BTC': 0.0001,
+                'ETH': 0.001,
+                'BNB': 0.1,
+                'USDT': 1
+            }
         },
         VOLUME: {
             MAX: 1.00
@@ -27,17 +37,17 @@ function BinanceController($scope, $interval, binanceService) {
         TABLE: {
             SORT: '-calculated.percent'
         },
-        showTable: true
+        RATE_LIMIT: {
+            TYPE: binanceService.QUERIES
+        }
     };
 
-    $scope.HISTORY = [];
+    $scope.trades = [];
+    $scope.history = [];
 
     $scope.LOADING = {
         API: binanceService.LOADING,
         ARBITRAGE: false
-    };
-    $scope.RATE_LIMIT = {
-        TYPE: binanceService.QUERIES
     };
 
     $scope.percentRequestWeightRemaining = 100;
@@ -55,46 +65,37 @@ function BinanceController($scope, $interval, binanceService) {
         $scope.CONFIG.CYCLE.LAST_CALL_TIME = new Date().getTime();
         $scope.LOADING.ARBITRAGE = true;
 
-        binanceService.refreshAllOrderBooks()
-            .then(function() {
-                var symbols = binanceService.getSymbols();
-                return analyzeSymbolsForArbitrage(symbols, $scope.CONFIG.BASE_SYMBOL);
-            })
-            .then(function(trades) {
-                var profitFilteredTrades = trades.filter(function(t) {
-                    return t.calculated.percent > $scope.CONFIG.PROFIT.MIN;
-                });
-                console.log('Found ' + profitFilteredTrades.length + '/' + trades.length + ' trades with profit > ' + $scope.CONFIG.PROFIT.MIN + '%');
-                $scope.HISTORY = $scope.HISTORY.concat(profitFilteredTrades);
-                return trades;
-            })
-            .catch(console.error)
-            .finally(function() {
-                $scope.LOADING.ARBITRAGE = false;
-            });
+        var symbols = binanceService.getSymbols();
+        var foundTrades = analyzeSymbolsForArbitrage(symbols, $scope.CONFIG.BASE.SYMBOL);
+        $scope.trades = foundTrades.filter(function(t) {
+            return t.calculated && t.calculated.percent > $scope.CONFIG.PROFIT.MIN;
+        });
+        console.log('Found ' + $scope.trades.length + '/' + foundTrades.length + ' trades with profit > ' + $scope.CONFIG.PROFIT.MIN + '%');
+        $scope.history = $scope.history.concat($scope.trades);
+        $scope.LOADING.ARBITRAGE = false;
+        return foundTrades;
     };
 
-    function analyzeSymbolsForArbitrage(symbols, baseSymbols) {
-        console.log('Optimizing...');
+    function analyzeSymbolsForArbitrage(symbols, baseSymbol) {
+        console.log('\nOptimizing...');
         var before = new Date().getTime();
-
-        if (typeof baseSymbols === 'string') baseSymbols = [baseSymbols];
-        baseSymbols = baseSymbols.filter(function(s) {return s && s.length;});
-        if (baseSymbols.length === 0) baseSymbols = symbols;
+        var relationship;
 
         var relationships = [];
-        baseSymbols.forEach(function(symbol1) {
-            symbols.forEach(function(symbol2) {
-                symbols.forEach(function(symbol3) {
-                    var relationship = binanceService.relationships(symbol1, symbol2, symbol3);
-                    if (relationship) {
-                        relationship.calculated = binanceService.optimizeAndCalculate(relationship, $scope.CONFIG.INVESTMENT.MIN, $scope.CONFIG.INVESTMENT.MAX);
-                        relationships.push(relationship);
-                    }
-                });
+        symbols.forEach(function(symbol2) {
+            symbols.forEach(function(symbol3) {
+                relationship = binanceService.relationships(baseSymbol, symbol2, symbol3);
+                if (relationship) {
+                    relationship.calculated = binanceService.optimizeAndCalculate(relationship, $scope.CONFIG.INVESTMENT.MIN, $scope.CONFIG.INVESTMENT.MAX, $scope.CONFIG.INVESTMENT.STEP);
+                    relationships.push(relationship);
+                }
             });
         });
-        console.log('Optimized in ' + ((new Date().getTime() - before) / 1000).toString() + ' seconds');
+        var calculationCount = Math.ceil(($scope.CONFIG.INVESTMENT.MAX - $scope.CONFIG.INVESTMENT.MIN) / $scope.CONFIG.INVESTMENT.STEP) * relationships.length;
+        var optimizationSeconds = (new Date().getTime() - before) / 1000;
+        console.log('Total Seconds:      ' + optimizationSeconds.toString());
+        console.log('Calculations/Sec:   ' + (calculationCount / optimizationSeconds).toFixed(0));
+        console.log('Average ms:         ' + (optimizationSeconds / calculationCount * 1000).toFixed(5));
         return relationships;
     }
 
@@ -103,12 +104,20 @@ function BinanceController($scope, $interval, binanceService) {
     };
 
     $scope.removeTrade = function(trade) {
-        $scope.HISTORY.splice($scope.HISTORY.indexOf(trade), 1);
+        if ($scope.CONFIG.CYCLE.HANDLE) $scope.history.splice($scope.history.indexOf(trade), 1);
+        else $scope.trades.splice($scope.trades.indexOf(trade), 1);
+    };
+
+    $scope.updateStepSize = function(newSymbol) {
+        if ($scope.CONFIG.BASE.SYMBOL === newSymbol) return;
+        $scope.CONFIG.BASE.SYMBOL = newSymbol;
+        $scope.CONFIG.INVESTMENT.STEP = $scope.CONFIG.INVESTMENT.STEP_DEFAULT[newSymbol] || 0.05;
+
     };
 
     function trackRequests() {
         var tick = function() {
-            $scope.percentRequestWeightRemaining = $scope.RATE_LIMIT.TYPE.REQUEST.REMAINING() / $scope.RATE_LIMIT.TYPE.REQUEST.MINUTE_LIMIT * 100;
+            $scope.percentRequestWeightRemaining = $scope.CONFIG.RATE_LIMIT.TYPE.REQUEST.REMAINING() / $scope.CONFIG.RATE_LIMIT.TYPE.REQUEST.MINUTE_LIMIT * 100;
         };
         tickCycle = $interval(tick, 500);
     }

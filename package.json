@@ -1,6 +1,6 @@
 {
   "name": "mMAD",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "private": true,
   "engines": {
     "node": "8.9.1",
@@ -12,6 +12,7 @@
   "dependencies": {
     "angular": "^1.6.8",
     "angular-route": "^1.6.8",
+    "binance-api-node": "^0.5.3",
     "body-parser": "^1.18.2",
     "bootstrap": "^3.3.7",
     "crypto-js": "^3.1.9-1",
@@ -20,6 +21,8 @@
     "express": "^4.16.2",
     "jquery": "^3.2.1",
     "morgan": "^1.9.0",
-    "serve-favicon": "^2.4.5"
+    "node-binance-api": "^0.4.6",
+    "serve-favicon": "^2.4.5",
+    "socket.io": "^2.0.4"
   }
 }
