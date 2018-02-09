@@ -30,12 +30,10 @@ function depthCache(tickers, sockets) {
         var bidDepth = Object.keys(bids).length;
         var index = UNFILLED.indexOf(symbol);
 
-
         if (askDepth < MIN_THRESHOLD && bidDepth < MIN_THRESHOLD) {
             if (!isPresent(index)) {
                 UNFILLED.push(symbol);
                 console.log('Added ' + symbol + ' (' + askDepth + '/' + bidDepth + ') - ' + UNFILLED.length);
-
             }
         } else if (isPresent(index)) {
             UNFILLED.splice(index, 1);

@@ -47,7 +47,7 @@ function BinanceController($scope, $interval, binanceService) {
 
     $scope.LOADING = {
         API: binanceService.LOADING,
-        ARBITRAGE: false
+        OPTIMIZATION: false
     };
 
     $scope.percentRequestWeightRemaining = 100;
@@ -63,40 +63,37 @@ function BinanceController($scope, $interval, binanceService) {
     $scope.findArbitrage = function() {
         if (binanceService.getSymbols().length === 0) return;
         $scope.CONFIG.CYCLE.LAST_CALL_TIME = new Date().getTime();
-        $scope.LOADING.ARBITRAGE = true;
 
-        var symbols = binanceService.getSymbols();
-        var foundTrades = analyzeSymbolsForArbitrage(symbols, $scope.CONFIG.BASE.SYMBOL);
-        $scope.trades = foundTrades.filter(function(t) {
-            return t.calculated && t.calculated.percent > $scope.CONFIG.PROFIT.MIN;
-        });
-        console.log('Found ' + $scope.trades.length + '/' + foundTrades.length + ' trades with profit > ' + $scope.CONFIG.PROFIT.MIN + '%');
-        $scope.history = $scope.history.concat($scope.trades);
-        $scope.LOADING.ARBITRAGE = false;
-        return foundTrades;
+        return analyzeSymbolsForArbitrage($scope.CONFIG.BASE.SYMBOL)
+            .then(function(foundTrades) {
+                $scope.trades = foundTrades.filter(function(t) {
+                    return t.calculated && t.calculated.percent > $scope.CONFIG.PROFIT.MIN;
+                });
+                console.log('Found ' + $scope.trades.length + '/' + foundTrades.length + ' trades with profit > ' + $scope.CONFIG.PROFIT.MIN + '%');
+                $scope.history = $scope.history.concat($scope.trades);
+                return foundTrades;
+            })
+            .catch(console.error);
     };
 
-    function analyzeSymbolsForArbitrage(symbols, baseSymbol) {
+    function analyzeSymbolsForArbitrage(baseSymbol) {
+        $scope.LOADING.OPTIMIZATION = true;
         console.log('\nOptimizing...');
         var before = new Date().getTime();
-        var relationship;
 
-        var relationships = [];
-        symbols.forEach(function(symbol2) {
-            symbols.forEach(function(symbol3) {
-                relationship = binanceService.relationships(baseSymbol, symbol2, symbol3);
-                if (relationship) {
-                    relationship.calculated = binanceService.optimizeAndCalculate(relationship, $scope.CONFIG.INVESTMENT.MIN, $scope.CONFIG.INVESTMENT.MAX, $scope.CONFIG.INVESTMENT.STEP);
-                    relationships.push(relationship);
-                }
+        return binanceService.analyze($scope.CONFIG.INVESTMENT.MIN, $scope.CONFIG.INVESTMENT.MAX, $scope.CONFIG.INVESTMENT.STEP, baseSymbol)
+            .then(function(trades) {
+                var calculationCount = Math.ceil(($scope.CONFIG.INVESTMENT.MAX - $scope.CONFIG.INVESTMENT.MIN) / $scope.CONFIG.INVESTMENT.STEP) * trades.length;
+                var optimizationSeconds = (new Date().getTime() - before) / 1000;
+                console.log('Total Seconds:      ' + optimizationSeconds.toString());
+                console.log('Calculations/Sec:   ' + (calculationCount / optimizationSeconds).toFixed(0));
+                console.log('Average ms:         ' + (optimizationSeconds / calculationCount * 1000).toFixed(5));
+                return trades;
+            })
+            .catch(console.error)
+            .finally(function() {
+                $scope.LOADING.OPTIMIZATION = false;
             });
-        });
-        var calculationCount = Math.ceil(($scope.CONFIG.INVESTMENT.MAX - $scope.CONFIG.INVESTMENT.MIN) / $scope.CONFIG.INVESTMENT.STEP) * relationships.length;
-        var optimizationSeconds = (new Date().getTime() - before) / 1000;
-        console.log('Total Seconds:      ' + optimizationSeconds.toString());
-        console.log('Calculations/Sec:   ' + (calculationCount / optimizationSeconds).toFixed(0));
-        console.log('Average ms:         ' + (optimizationSeconds / calculationCount * 1000).toFixed(5));
-        return relationships;
     }
 
     $scope.setCurrentTrade = function(trade) {

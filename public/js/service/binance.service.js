@@ -208,18 +208,72 @@ function BinanceService($http, signingService, bridgeService, socket) {
         else return service.URL.replace('{a}', b).replace('{b}', a);
     };
 
-    service.relationships = function(a, b, c) {
-        var ab = service.relationship(a, b);
+    service.analyze = function(minInvestment, maxInvestment, stepSize, baseSymbol) {
+        var relationship, tradePromise;
+        var tradePromises = [];
+
+        var worker = new Worker('/js/worker/optimizeAndCalculate.js');
+        worker.postMessage({
+            tickers: tickers
+        });
+
+        symbols.forEach(function(symbol2) {
+            symbols.forEach(function(symbol3) {
+                relationship = relationships(baseSymbol, symbol2, symbol3);
+                if (relationship) {
+                    tradePromise = service.optimizeAndCalculate(relationship, minInvestment, maxInvestment, stepSize, worker);
+                    tradePromises.push(tradePromise);
+                }
+            });
+        });
+
+        return Promise.all(tradePromises)
+            .finally(function() {
+                worker.terminate();
+            });
+    };
+
+    service.optimizeAndCalculate = function(relationship, minInvestment, maxInvestment, stepSize, worker) {
+        return new Promise(function(resolve, reject) {
+            worker.addEventListener('message', function(event) {
+                if (event.data.id !== relationship.id) return;
+                return resolve(event.data);
+            });
+            worker.addEventListener('error', function(event) {
+                if (event.data.id !== relationship.id) return;
+                console.error('Found error from worker for ' + relationship.id);
+                console.error('Line: ' + event.lineno);
+                return reject(event.message);
+            });
+
+            var smallOrderBook = {};
+            smallOrderBook[relationship.ab.ticker] = orderBookMap[relationship.ab.ticker];
+            smallOrderBook[relationship.bc.ticker] = orderBookMap[relationship.bc.ticker];
+            smallOrderBook[relationship.ca.ticker] = orderBookMap[relationship.ca.ticker];
+
+            worker.postMessage({
+                relationship: relationship,
+                minInvestment: minInvestment,
+                maxInvestment: maxInvestment,
+                stepSize: stepSize,
+                orderBookMap: smallOrderBook
+            });
+        });
+    };
+
+
+    function relationships(a, b, c) {
+        var ab = relationship(a, b);
         if (!ab) return;
 
-        var bc = service.relationship(b, c);
+        var bc = relationship(b, c);
         if (!bc) return;
 
-        var ca = service.relationship(c, a);
+        var ca = relationship(c, a);
         if (!ca) return;
 
         return {
-            id: a + b + c,
+            id: a + b + c + '-' + new Date().getTime(),
             ab: ab,
             bc: bc,
             ca: ca,
@@ -229,9 +283,9 @@ function BinanceService($http, signingService, bridgeService, socket) {
                 c: c.toUpperCase()
             }
         };
-    };
+    }
 
-    service.relationship = function(a, b) {
+    function relationship(a, b) {
         a = a.toUpperCase();
         b = b.toUpperCase();
 
@@ -246,166 +300,8 @@ function BinanceService($http, signingService, bridgeService, socket) {
             volume: volumeMap[b+a]
         };
         return null;
-    };
-
-    service.optimizeAndCalculate = function(trade, minInvestment, maxInvestment, stepSize) {
-        var quantity, calculation;
-        var bestCalculation = null;
-
-        try {
-            for (quantity=minInvestment; quantity<=maxInvestment; quantity+=stepSize) {
-                calculation = service.calculate(quantity, trade, orderBookMap, tickers);
-                if (!bestCalculation || calculation.percent > bestCalculation.percent) {
-                    bestCalculation = calculation;
-                }
-            }
-        } catch (e) {
-            console.error(e.message);
-        }
-
-        return bestCalculation;
-    };
-
-    service.calculate = function(investmentA, trade, orderBookMap, tickers) {
-        var calculated = {
-            start: {
-                total: investmentA,
-                market: 0,
-                dust: 0
-            },
-            ab: {
-                total: 0,
-                market: 0,
-                dust: 0
-            },
-            bc: {
-                total: 0,
-                market: 0,
-                dust: 0
-            },
-            ca: {
-                total: 0,
-                market: 0,
-                dust: 0
-            },
-            symbol: trade.symbol,
-            time: Math.min(orderBookMap[trade.ab.ticker].time, orderBookMap[trade.bc.ticker].time, orderBookMap[trade.ca.ticker].time),
-            a: 0,
-            b: 0,
-            c: 0
-        };
-
-        if (trade.ab.method === 'Buy') {
-            calculated.ab.total = orderBookConversion(calculated.start.total, trade.symbol.a, trade.symbol.b, trade.ab.ticker, orderBookMap[trade.ab.ticker]);
-            calculated.ab.market = calculateDustless(trade.ab.ticker, calculated.ab.total, tickers);
-            calculated.b = calculated.ab.market;
-            calculated.start.market = orderBookConversion(calculated.ab.market, trade.symbol.b, trade.symbol.a, trade.ab.ticker, orderBookMap[trade.ab.ticker]);
-        } else {
-            calculated.ab.total = calculated.start.total;
-            calculated.ab.market = calculateDustless(trade.ab.ticker, calculated.ab.total, tickers);
-            calculated.b = orderBookConversion(calculated.ab.market, trade.symbol.a, trade.symbol.b, trade.ab.ticker, orderBookMap[trade.ab.ticker]);
-            calculated.start.market = calculated.ab.market;
-        }
-        calculated.ab.dust = 0;
-        calculated.ab.volume = calculated.ab.market / (trade.ab.volume / 24);
-
-
-        if (trade.bc.method === 'Buy') {
-            calculated.bc.total = orderBookConversion(calculated.b, trade.symbol.b, trade.symbol.c, trade.bc.ticker, orderBookMap[trade.bc.ticker]);
-            calculated.bc.market = calculateDustless(trade.bc.ticker, calculated.bc.total, tickers);
-            calculated.c = calculated.bc.market;
-        } else {
-            calculated.bc.total = calculated.b;
-            calculated.bc.market = calculateDustless(trade.bc.ticker, calculated.bc.total, tickers);
-            calculated.c = orderBookConversion(calculated.bc.market, trade.symbol.b, trade.symbol.c, trade.bc.ticker, orderBookMap[trade.bc.ticker]);
-        }
-        calculated.bc.dust = calculated.bc.total - calculated.bc.market;
-        calculated.bc.volume = calculated.bc.market / (trade.bc.volume / 24);
-
-
-        if (trade.ca.method === 'Buy') {
-            calculated.ca.total = orderBookConversion(calculated.c, trade.symbol.c, trade.symbol.a, trade.ca.ticker, orderBookMap[trade.ca.ticker]);
-            calculated.ca.market = calculateDustless(trade.ca.ticker, calculated.ca.total, tickers);
-            calculated.a = calculated.ca.market;
-        } else {
-            calculated.ca.total = calculated.c;
-            calculated.ca.market = calculateDustless(trade.ca.ticker, calculated.ca.total, tickers);
-            calculated.a = orderBookConversion(calculated.ca.market, trade.symbol.c, trade.symbol.a, trade.ca.ticker, orderBookMap[trade.ca.ticker]);
-        }
-        calculated.ca.dust = calculated.ca.total - calculated.ca.market;
-        calculated.ca.volume = calculated.ca.market / (trade.ca.volume / 24);
-
-        calculated.volume = Math.max(calculated.ab.volume, calculated.bc.volume, calculated.ca.volume) * 100;
-
-        calculated.percent = (calculated.a - calculated.start.total) / calculated.start.total * 100;
-        if (!calculated.percent) calculated.percent = 0;
-
-        return calculated;
-    };
-
-    function orderBookConversion(amountFrom, symbolFrom, symbolTo, ticker, orderBook) {
-        var i,j;
-        var amountTo = 0;
-        var rates, rate, quantity, exchangeableAmount;
-
-        if (amountFrom === 0) return 0;
-
-        if (ticker === symbolFrom + symbolTo) {
-            rates = Object.keys(orderBook.bid);
-            if (rates.length === 0) {
-                throw new Error('No bids available to convert ' + amountFrom + ' ' + symbolFrom + ' to ' + symbolTo);
-            }
-            for (i=0; i<rates.length; i++) {
-                rate = parseFloat(rates[i]);
-                quantity = parseFloat(orderBook.bid[rates[i]]);
-                if (quantity < amountFrom) {
-                    amountFrom -= quantity;
-                    amountTo += quantity * rate;
-                } else {
-                    // Last fill
-                    amountTo += amountFrom * rate;
-                    amountFrom = 0;
-                    return amountTo;
-                }
-            }
-        } else {
-            rates = Object.keys(orderBook.ask);
-            if (rates.length === 0) {
-                throw new Error('No asks available to convert ' + amountFrom + ' ' + symbolFrom + ' to ' + symbolTo);
-            }
-            for (j=0; j<rates.length; j++) {
-                rate = parseFloat(rates[j]);
-                quantity = parseFloat(orderBook.ask[rates[j]]);
-                exchangeableAmount = quantity * rate;
-                if (exchangeableAmount < amountFrom) {
-                    amountFrom -= quantity * rate;
-                    amountTo += quantity;
-                } else {
-                    // Last fill
-                    amountTo += amountFrom / rate;
-                    amountFrom = 0;
-                    return amountTo;
-                }
-            }
-        }
-        console.error('Depth (' + rates.length + ') too shallow to convert ' + amountFrom + ' ' + symbolFrom + ' to ' + symbolTo + ' using ' + ticker);
-        console.error('Went through depths:', rates);
-        return amountTo;
     }
 
-    function calculateDustless(tickerName, amount, tickers) {
-        var amountString = amount.toString();
-        var dustQty = tickers[tickerName].dustQty;
-        var decimals = dustQty === 1 ? 0 : dustQty.toString().indexOf('1') - 1;
-        var decimalIndex = amountString.indexOf('.');
-        if (decimalIndex === -1) {
-            // Integer
-            return amount;
-        } else {
-            // Float
-            return parseFloat(amountString.slice(0, decimalIndex + decimals + 1));
-        }
-    }
 
     function countMissingOrderBooks() {
         return Object.keys(tickers).length - Object.keys(orderBookMap).length;

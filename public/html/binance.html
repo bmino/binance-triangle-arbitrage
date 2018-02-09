@@ -58,10 +58,10 @@
             <button type="button"
                     class="form-control btn btn-default"
                     ng-click="findArbitrage()"
-                    ng-disabled="LOADING.API.INITIAL || LOADING.ARBITRAGE || LOADING.API.LOADED_BOOKS() > 0">
+                    ng-disabled="LOADING.API.INITIAL || LOADING.OPTIMIZATION || LOADING.API.LOADED_BOOKS() > 0">
                 {{LOADING.API.INITIAL ? 'Loading Api ...' :
-                LOADING.API.LOADED_BOOKS() > 0 ? 'Loading Order Book...' :
-                LOADING.ARBITRAGE ? 'Finding Arbitrage ...' : 'Find Arbitrage'
+                LOADING.API.LOADED_BOOKS() > 0 ? 'Loading Order Books...' :
+                LOADING.OPTIMIZATION ? 'Optimizing ...' : 'Find Arbitrage'
                 }}
             </button>
 
