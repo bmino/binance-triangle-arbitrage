@@ -68,5 +68,5 @@ function calculateArbitrage() {
             }
         });
     });
-    console.log(`Took ${(startTime - new Date())/1000} seconds`);
+    console.log(`Took ${(new Date() - startTime)/1000} seconds`);
 }
