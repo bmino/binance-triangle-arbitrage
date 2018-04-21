@@ -3,8 +3,8 @@
   "version": "2.1.0",
   "private": true,
   "engines": {
-    "node": "8.9.1",
-    "npm": "5.6.0"
+    "node": "9.11.1",
+    "npm": "5.8.0"
   },
   "scripts": {
     "start": "node app.js"
@@ -24,5 +24,6 @@
     "node-binance-api": "^0.4.6",
     "serve-favicon": "^2.4.5",
     "socket.io": "^2.0.4"
-  }
+  },
+  "devDependencies": {}
 }
