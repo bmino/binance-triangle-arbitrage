@@ -11,7 +11,7 @@ const CONFIG = {
         STEP: 0.001
     },
     MIN_PROFIT_PERCENT: 0.0,
-    SCAN_INTERVAL: 30000
+    SCAN_INTERVAL: 10000
 };
 
 // Set up symbols and tickers
@@ -46,8 +46,11 @@ BinanceApi.exchangeInfo().then((data) => {
 
 
 function calculateArbitrage() {
+    MarketCache.pruneDepthsAboveThreshold(100);
+    MarketCache.listDepthsBelowThreshold(60);
+
     let startTime = new Date();
-    console.log(`\nScanning for arbitrage opportunities`);
+    console.log(`\nCalculating arbitrage opportunities`);
     let relationships = [];
     MarketCache.symbols.forEach(function(symbol2) {
         MarketCache.symbols.forEach(function(symbol3) {
@@ -61,6 +64,5 @@ function calculateArbitrage() {
             }
         });
     });
-    console.log(`Optimization took ${(new Date() - startTime)/1000} seconds`);
-    MarketCache.listDepthsBelowThreshold(80);
+    console.log(`Calculations took ${(new Date() - startTime)/1000} seconds\n`);
 }
