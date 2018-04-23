@@ -4,12 +4,13 @@ let MarketCalculation = require('./MarketCalculation');
 
 
 const CONFIG = {
+    BASE_SYMBOL: 'BTC',
     INVESTMENT: {
-        MIN: 0.0,
-        MAX: 0.2,
+        MIN: 0.1,
+        MAX: 0.3,
         STEP: 0.001
     },
-    BASE_SYMBOL: 'BTC',
+    MIN_PROFIT_PERCENT: 0.0,
     SCAN_INTERVAL: 30000
 };
 
@@ -31,20 +32,12 @@ BinanceApi.exchangeInfo().then((data) => {
     MarketCache.symbols = symbols;
     MarketCache.tickers = tickers;
 
-
-    // Shrink tickers for testing
-    // let tickerSubset = {};
-    // Object.keys(tickers).slice(0, 150).forEach((ticker) => {
-    //     tickerSubset[ticker] = tickers[ticker];
-    // });
-    // MarketCache.tickers = tickerSubset;
-
     // Listen for depth updates
     BinanceApi.listenForDepthCache(MarketCache.getTickerArray(), (ticker, depth) => {
         MarketCache.depths[ticker] = depth;
-    });
+    }, 100);
 
-    let intervalHandle = setInterval(calculateArbitrage, CONFIG.SCAN_INTERVAL);
+    setInterval(calculateArbitrage, CONFIG.SCAN_INTERVAL);
 })
     .catch((error) => {
         console.error(error);
@@ -63,10 +56,11 @@ function calculateArbitrage() {
                 relationship.calculated = MarketCalculation.optimizeAndCalculate(relationship, CONFIG.INVESTMENT.MIN, CONFIG.INVESTMENT.MAX, CONFIG.INVESTMENT.STEP);
                 if (relationship.calculated) {
                     relationships.push(relationship);
-                    console.log(`Profit of ${relationship.calculated.percent} on ${relationship.id}`);
+                    if (relationship.calculated.percent >= CONFIG.MIN_PROFIT_PERCENT) console.log(`\tProfit of ${relationship.calculated.percent} on ${relationship.id}`);
                 }
             }
         });
     });
-    console.log(`Took ${(new Date() - startTime)/1000} seconds`);
+    console.log(`Optimization took ${(new Date() - startTime)/1000} seconds`);
+    MarketCache.listDepthsBelowThreshold(80);
 }

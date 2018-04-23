@@ -43,7 +43,6 @@ let MarketCalculation = {
     },
 
     optimizeAndCalculate(trade, minInvestment, maxInvestment, stepSize) {
-        console.log(`Optimizing ${trade.id}`);
         let quantity, calculation;
         let bestCalculation = null;
 
@@ -146,9 +145,6 @@ let MarketCalculation = {
 
         if (ticker === symbolFrom + symbolTo) {
             rates = Object.keys(orderBook.bids || {});
-            if (rates.length === 0) {
-                throw new Error(`No bids available to convert ${amountFrom} ${symbolFrom} to ${symbolTo}`);
-            }
             for (i=0; i<rates.length; i++) {
                 rate = parseFloat(rates[i]);
                 quantity = parseFloat(orderBook.bids[rates[i]]);
@@ -164,9 +160,6 @@ let MarketCalculation = {
             }
         } else {
             rates = Object.keys(orderBook.asks || {});
-            if (rates.length === 0) {
-                throw new Error(`No asks available to convert ${amountFrom} ${symbolFrom} to ${symbolTo}`);
-            }
             for (j=0; j<rates.length; j++) {
                 rate = parseFloat(rates[j]);
                 quantity = parseFloat(orderBook.asks[rates[j]]);
@@ -182,9 +175,10 @@ let MarketCalculation = {
                 }
             }
         }
-        console.log(`Depth (${rates.length}) too shallow to convert ${amountFrom} ${symbolFrom} to ${symbolTo} using ${ticker}`);
-        // console.log('Went through depths:', rates);
-        return amountTo;
+
+        let error = new Error(`Depth (${rates.length}) too shallow to convert ${amountFrom} ${symbolFrom} to ${symbolTo} using ${ticker}`);
+        error.ticker = ticker;
+        throw error;
     },
 
     calculateDustless(ticker, amount) {
