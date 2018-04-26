@@ -1,18 +1,7 @@
 let MarketCache = require('./MarketCache');
 let BinanceApi = require('./BinanceApi');
 let MarketCalculation = require('./MarketCalculation');
-
-
-const CONFIG = {
-    BASE_SYMBOL: 'BTC',
-    INVESTMENT: {
-        MIN: 0.1,
-        MAX: 0.3,
-        STEP: 0.001
-    },
-    MIN_PROFIT_PERCENT: 0.0,
-    SCAN_INTERVAL: 10000
-};
+let CONFIG = require('../../config/live.config');
 
 // Set up symbols and tickers
 BinanceApi.exchangeInfo().then((data) => {
