@@ -7,7 +7,8 @@
     "npm": "5.8.0"
   },
   "scripts": {
-    "start": "node app.js"
+    "start": "node app.js",
+    "monitor": "node src/main/Main.js"
   },
   "dependencies": {
     "angular": "^1.6.8",
