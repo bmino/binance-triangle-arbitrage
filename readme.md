@@ -1,4 +1,4 @@
-# mMAD
+# Binance Triangle Arbitrage
 
 This app monitors the [Binance](https://www.binance.com) cryptocurrency exchange in search of triangle arbitrage opportunities.
 
@@ -10,7 +10,7 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### Installing Prerequisites
 
-The following dependencies are required to run an instance of mMAD:
+The following dependencies are required to run an instance:
 
 1. NodeJS
 2. Npm
@@ -31,7 +31,7 @@ There are currently no tests
 
 Clone the code from github
 ```
-git clone https://github.com/bmino/mMAD.git
+git clone https://github.com/bmino/binance-triangle-arbitrage.git
 ```
 
 Build the project from the root directory
@@ -47,14 +47,15 @@ npm run live
 
 ## Configuration
 
-All configuration is done inside the `/config` directory. To setup your configuration for the first time, copy each of the `/config/*.example` files, remove the ".example" extension, and fill in the appropriate information.
+All configuration is done inside the `/config` directory.
+To setup your configuration for the first time, duplicate each of the `*.example` files, remove the ".example" extension, and fill in the appropriate information.
 
 
 ## Authors
 
 * **[Brandon Mino](https://github.com/bmino)** - *Project Lead*
 
-See also the list of [contributors](https://github.com/bmino/mMAD/contributors) who participated in this project.
+See also the list of [contributors](https://github.com/bmino/binance-triangle-arbitrage/contributors) who participated in this project.
 
 
 ## License
