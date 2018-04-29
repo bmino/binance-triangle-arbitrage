@@ -8,6 +8,7 @@ BinanceApi.exchangeInfo().then((data) => {
 
     let symbols = new Set();
     let tickers = [];
+    const CACHE_INIT_DELAY = 10000;
 
     // Extract Symbols and Tickers
     data.symbols.forEach(function(symbolObj) {
@@ -26,7 +27,16 @@ BinanceApi.exchangeInfo().then((data) => {
         MarketCache.depths[ticker] = depth;
     }, 100);
 
-    setInterval(calculateArbitrage, CONFIG.SCAN_INTERVAL);
+    console.log(`\nWaiting ${CACHE_INIT_DELAY / 1000} seconds to populate market caches`);
+
+    setTimeout(function() {
+        console.log(`\nInitiated calculation cycle:
+            \tCycle Interval: ${CONFIG.SCAN_INTERVAL / 1000} seconds
+            \tBase Symbol: ${CONFIG.BASE_SYMBOL}
+            \tInvestments: [${CONFIG.INVESTMENT.MIN} - ${CONFIG.INVESTMENT.MAX}] by ${CONFIG.INVESTMENT.STEP}
+            \tProfit Logging: Above ${CONFIG.MIN_PROFIT_PERCENT}%`);
+        setInterval(calculateArbitrage, CONFIG.SCAN_INTERVAL);
+    }, CACHE_INIT_DELAY);
 })
     .catch((error) => {
         console.error(error);
@@ -34,16 +44,16 @@ BinanceApi.exchangeInfo().then((data) => {
     });
 
 
-function calculateArbitrage() {
+function calculateArbitrage(baseSymbol = CONFIG.BASE_SYMBOL) {
     MarketCache.pruneDepthsAboveThreshold(100);
-    MarketCache.listDepthsBelowThreshold(60);
+    //MarketCache.listDepthsBelowThreshold(60);
 
     let startTime = new Date();
-    console.log(`\nCalculating arbitrage opportunities`);
+    console.log(`\nCalculating arbitrage opportunities from ${baseSymbol}`);
     let relationships = [];
     MarketCache.symbols.forEach(function(symbol2) {
         MarketCache.symbols.forEach(function(symbol3) {
-            let relationship = MarketCalculation.relationships(CONFIG.BASE_SYMBOL, symbol2, symbol3);
+            let relationship = MarketCalculation.relationships(baseSymbol, symbol2, symbol3);
             if (relationship) {
                 relationship.calculated = MarketCalculation.optimizeAndCalculate(relationship, CONFIG.INVESTMENT.MIN, CONFIG.INVESTMENT.MAX, CONFIG.INVESTMENT.STEP);
                 if (relationship.calculated) {
@@ -53,5 +63,5 @@ function calculateArbitrage() {
             }
         });
     });
-    console.log(`Calculations took ${(new Date() - startTime)/1000} seconds\n`);
+    console.log(`Calculations took ${(new Date() - startTime)/1000} seconds`);
 }
