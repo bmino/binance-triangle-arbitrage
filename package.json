@@ -1,6 +1,6 @@
 {
   "name": "binance-triangle-arbitrage",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "private": true,
   "engines": {
     "node": "9.11.1",
@@ -11,19 +11,8 @@
     "live": "node src/main/Main.js"
   },
   "dependencies": {
-    "angular": "^1.6.8",
-    "angular-route": "^1.6.8",
-    "body-parser": "^1.18.2",
-    "bootstrap": "^3.3.7",
-    "crypto-js": "^3.1.9-1",
-    "dotenv": "^4.0.0",
-    "ejs": "^2.5.7",
-    "express": "^4.16.2",
-    "jquery": "^3.2.1",
-    "morgan": "^1.9.0",
-    "node-binance-api": "^0.4.29",
-    "serve-favicon": "^2.4.5",
-    "socket.io": "^2.0.4"
+    "dotenv": "^5.0.1",
+    "node-binance-api": "^0.4.29"
   },
   "devDependencies": {}
 }
