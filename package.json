@@ -7,7 +7,6 @@
     "npm": "6.0.0"
   },
   "scripts": {
-    "start": "node app.js",
     "live": "node src/main/Main.js"
   },
   "dependencies": {
