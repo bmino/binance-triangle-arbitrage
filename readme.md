@@ -41,7 +41,7 @@ npm install
 
 Start the application
 ```
-npm run monitor
+npm run live
 ```
 
 
