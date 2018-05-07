@@ -3,6 +3,7 @@ let BinanceApi = require('./BinanceApi');
 let MarketCalculation = require('./MarketCalculation');
 let CONFIG = require('../../config/live.config');
 
+const DEPTH_SIZE = 100;
 // Set up symbols and tickers
 BinanceApi.exchangeInfo().then((data) => {
 
@@ -25,7 +26,7 @@ BinanceApi.exchangeInfo().then((data) => {
     // Listen for depth updates
     BinanceApi.listenForDepthCache(MarketCache.getTickerArray(), (ticker, depth) => {
         MarketCache.depths[ticker] = depth;
-    }, 100);
+    }, DEPTH_SIZE);
 
     console.log(`\nWaiting ${CACHE_INIT_DELAY / 1000} seconds to populate market caches`);
 
@@ -45,7 +46,7 @@ BinanceApi.exchangeInfo().then((data) => {
 
 
 function calculateArbitrage(baseSymbol = CONFIG.BASE_SYMBOL) {
-    MarketCache.pruneDepthsAboveThreshold(100);
+    MarketCache.pruneDepthsAboveThreshold(DEPTH_SIZE);
     //MarketCache.listDepthsBelowThreshold(60);
 
     MarketCache.symbols.forEach(function(symbol2) {
