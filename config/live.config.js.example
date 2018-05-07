@@ -6,5 +6,6 @@ module.exports = {
         STEP: 0.001
     },
     MIN_PROFIT_PERCENT: 0.0,
+    DEPTH_SIZE: 50,
     SCAN_DELAY: 1000
 };
