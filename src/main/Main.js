@@ -4,6 +4,8 @@ let MarketCalculation = require('./MarketCalculation');
 let CONFIG = require('../../config/live.config');
 
 const DEPTH_SIZE = 100;
+let relationships = [];
+
 // Set up symbols and tickers
 BinanceApi.exchangeInfo().then((data) => {
 
@@ -22,6 +24,7 @@ BinanceApi.exchangeInfo().then((data) => {
     // Initialize market cache
     MarketCache.symbols = symbols;
     MarketCache.tickers = tickers;
+    relationships = MarketCalculation.allRelationships().filter(relationship => relationship.symbol.a === CONFIG.BASE_SYMBOL.toUpperCase());
 
     // Listen for depth updates
     BinanceApi.listenForDepthCache(MarketCache.getTickerArray(), (ticker, depth) => {
@@ -35,7 +38,7 @@ BinanceApi.exchangeInfo().then((data) => {
             Cycle Delay: ${CONFIG.SCAN_DELAY / 1000} seconds
             Base Symbol: ${CONFIG.BASE_SYMBOL}
             Investments: [${CONFIG.INVESTMENT.MIN} - ${CONFIG.INVESTMENT.MAX}] by ${CONFIG.INVESTMENT.STEP}
-            Profit Logging: Above ${CONFIG.MIN_PROFIT_PERCENT}%`);
+            Profit Logging: Above ${CONFIG.MIN_PROFIT_PERCENT}%\n`);
         calculateArbitrage();
     }, CACHE_INIT_DELAY);
 })
@@ -45,20 +48,15 @@ BinanceApi.exchangeInfo().then((data) => {
     });
 
 
-function calculateArbitrage(baseSymbol = CONFIG.BASE_SYMBOL) {
+function calculateArbitrage() {
     MarketCache.pruneDepthsAboveThreshold(DEPTH_SIZE);
     //MarketCache.listDepthsBelowThreshold(60);
 
-    MarketCache.symbols.forEach(function(symbol2) {
-        MarketCache.symbols.forEach(function(symbol3) {
-            let relationship = MarketCalculation.relationships(baseSymbol, symbol2, symbol3);
-            if (relationship) {
-                relationship.calculated = MarketCalculation.optimizeAndCalculate(relationship, CONFIG.INVESTMENT.MIN, CONFIG.INVESTMENT.MAX, CONFIG.INVESTMENT.STEP);
-                if (relationship.calculated) {
-                    if (relationship.calculated.percent >= CONFIG.MIN_PROFIT_PERCENT) console.log(`${new Date()}: Profit of ${relationship.calculated.percent.toFixed(5)}% on ${relationship.id}`);
-                }
-            }
-        });
+    relationships.forEach(relationship => {
+        relationship.calculated = MarketCalculation.optimizeAndCalculate(relationship, CONFIG.INVESTMENT.MIN, CONFIG.INVESTMENT.MAX, CONFIG.INVESTMENT.STEP);
+        if (relationship.calculated) {
+            if (relationship.calculated.percent >= CONFIG.MIN_PROFIT_PERCENT) console.log(`${new Date()}: Profit of ${relationship.calculated.percent.toFixed(5)}% on ${relationship.id}`);
+        }
     });
 
     setTimeout(calculateArbitrage, CONFIG.SCAN_DELAY);
