@@ -54,7 +54,7 @@ let MarketCalculation = {
                 }
             }
         } catch (e) {
-            console.log(`\tError: ${e.message}`);
+            console.log(`Error: ${e.message}`);
         }
 
         return bestCalculation;
