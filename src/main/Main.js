@@ -8,7 +8,7 @@ BinanceApi.exchangeInfo().then((data) => {
 
     let symbols = new Set();
     let tickers = [];
-    const CACHE_INIT_DELAY = 10000;
+    const CACHE_INIT_DELAY = 15000;
 
     // Extract Symbols and Tickers
     data.symbols.forEach(function(symbolObj) {
