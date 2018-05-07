@@ -36,6 +36,7 @@ BinanceApi.exchangeInfo().then((data) => {
         console.log(`\nInitiated calculation cycle:
             Cycle Delay: ${CONFIG.SCAN_DELAY / 1000} seconds
             Base Symbol: ${CONFIG.BASE_SYMBOL}
+            Relationships: ${relationships.length}
             Investments: [${CONFIG.INVESTMENT.MIN} - ${CONFIG.INVESTMENT.MAX}] by ${CONFIG.INVESTMENT.STEP}
             Profit Logging: Above ${CONFIG.MIN_PROFIT_PERCENT}%\n`);
         calculateArbitrage();
