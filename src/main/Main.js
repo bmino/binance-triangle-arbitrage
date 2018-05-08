@@ -10,7 +10,7 @@ BinanceApi.exchangeInfo().then((data) => {
 
     let symbols = new Set();
     let tickers = [];
-    const CACHE_INIT_DELAY = 15000;
+    const CACHE_INIT_DELAY = 20000;
 
     // Extract Symbols and Tickers
     data.symbols.forEach(function(symbolObj) {
@@ -26,9 +26,11 @@ BinanceApi.exchangeInfo().then((data) => {
     relationships = MarketCalculation.allRelationships().filter(relationship => relationship.symbol.a === CONFIG.BASE_SYMBOL.toUpperCase());
 
     // Listen for depth updates
-    BinanceApi.listenForDepthCache(MarketCache.getTickerArray(), (ticker, depth) => {
-        MarketCache.depths[ticker] = depth;
-    }, CONFIG.DEPTH_SIZE);
+    MarketCache.getTickerArray().forEach(ticker => {
+        BinanceApi.listenForDepthCache(ticker, (ticker, depth) => {
+            MarketCache.depths[ticker] = depth;
+        }, CONFIG.DEPTH_SIZE);
+    });
 
     console.log(`\nWaiting ${CACHE_INIT_DELAY / 1000} seconds to populate market caches`);
 
