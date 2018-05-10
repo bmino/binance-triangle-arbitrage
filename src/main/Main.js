@@ -64,7 +64,10 @@ pool
     .on('done', (job, calculated) => {
         remaining--;
         if (calculated && calculated.percent >= CONFIG.MIN_PROFIT_PERCENT) console.log(`${new Date()}: Profit of ${calculated.percent.toFixed(5)}% on ${calculated.symbol.a}${calculated.symbol.b}${calculated.symbol.c}`);
-        //if (remaining === 0) console.log(`Completed calculations in ${(new Date() - before)/1000} seconds`);
+        if (remaining === 0) {
+            //console.log(`Completed calculations in ${(new Date() - before)/1000} seconds`);
+            setTimeout(calculateArbitrage, CONFIG.SCAN_DELAY);
+        }
     })
     .on('error', (job, error) => {
         console.error(error);
@@ -73,7 +76,6 @@ pool
 function calculateArbitrage() {
     MarketCache.pruneDepthsAboveThreshold(CONFIG.DEPTH_SIZE);
 
-    if (remaining !== 0) console.error(`Beginning new calculation cycle while ${remaining} threads are still processing`);
     remaining = relationships.length;
     before = new Date();
 
@@ -86,6 +88,4 @@ function calculateArbitrage() {
             MarketCache: MarketCache.getSubsetFromTickers([relationship.ab.ticker, relationship.bc.ticker, relationship.ca.ticker])
         });
     });
-
-    setTimeout(calculateArbitrage, CONFIG.SCAN_DELAY);
 }
