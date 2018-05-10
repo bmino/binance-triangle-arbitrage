@@ -1,7 +1,12 @@
 const os = require('os');
 const version = require('../../package.json').version;
-const Pool = require('threads').Pool;
-const pool = new Pool();
+const threads = require('threads');
+threads.config.set({
+    basepath: {
+        node: __dirname
+    }
+});
+const pool = new threads.Pool();
 let MarketCache = require('./MarketCache');
 let BinanceApi = require('./BinanceApi');
 let MarketCalculation = require('./MarketCalculation');
