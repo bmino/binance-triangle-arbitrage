@@ -1,3 +1,7 @@
+const os = require('os');
+const version = require('../../package.json').version;
+const Pool = require('threads').Pool;
+const pool = new Pool();
 let MarketCache = require('./MarketCache');
 let BinanceApi = require('./BinanceApi');
 let MarketCalculation = require('./MarketCalculation');
@@ -26,6 +30,7 @@ BinanceApi.exchangeInfo().then((data) => {
     relationships = MarketCalculation.allRelationships().filter(relationship => relationship.symbol.a === CONFIG.BASE_SYMBOL.toUpperCase());
 
     // Listen for depth updates
+    console.log(`Opening websocket connections for ${MarketCache.getTickerArray().length} tickers`);
     MarketCache.getTickerArray().forEach(ticker => {
         BinanceApi.listenForDepthCache(ticker, (ticker, depth) => {
             MarketCache.depths[ticker] = depth;
@@ -36,11 +41,12 @@ BinanceApi.exchangeInfo().then((data) => {
 
     setTimeout(function() {
         console.log(`\nInitiated calculation cycle:
-            Cycle Delay: ${CONFIG.SCAN_DELAY / 1000} seconds
-            Base Symbol: ${CONFIG.BASE_SYMBOL}
-            Relationships: ${relationships.length}
-            Investments: [${CONFIG.INVESTMENT.MIN} - ${CONFIG.INVESTMENT.MAX}] by ${CONFIG.INVESTMENT.STEP}
-            Profit Logging: Above ${CONFIG.MIN_PROFIT_PERCENT}%\n`);
+            App Version:     ${version}
+            CPU Cores:       ${os.cpus().length}
+            Cycle Delay:     ${CONFIG.SCAN_DELAY / 1000} seconds
+            Relationships:   ${relationships.length}
+            Investments:     [${CONFIG.INVESTMENT.MIN} - ${CONFIG.INVESTMENT.MAX}] by ${CONFIG.INVESTMENT.STEP} ${CONFIG.BASE_SYMBOL}
+            Profit Logging:  > ${CONFIG.MIN_PROFIT_PERCENT}%\n`);
         calculateArbitrage();
     }, CACHE_INIT_DELAY);
 })
@@ -49,15 +55,36 @@ BinanceApi.exchangeInfo().then((data) => {
         console.log(error.message);
     });
 
+// Setup Pool
+let before = new Date();
+let remaining = 0;
+
+pool
+    .run('CalculationNode.js')
+    .on('done', (job, calculated) => {
+        remaining--;
+        if (calculated && calculated.percent >= CONFIG.MIN_PROFIT_PERCENT) console.log(`${new Date()}: Profit of ${calculated.percent.toFixed(5)}% on ${calculated.symbol.a}${calculated.symbol.b}${calculated.symbol.c}`);
+        //if (remaining === 0) console.log(`Completed calculations in ${(new Date() - before)/1000} seconds`);
+    })
+    .on('error', (job, error) => {
+        console.error(error);
+    });
 
 function calculateArbitrage() {
     MarketCache.pruneDepthsAboveThreshold(CONFIG.DEPTH_SIZE);
 
+    if (remaining !== 0) console.error(`Beginning new calculation cycle while ${remaining} threads are still processing`);
+    remaining = relationships.length;
+    before = new Date();
+
     relationships.forEach(relationship => {
-        relationship.calculated = MarketCalculation.optimizeAndCalculate(relationship, CONFIG.INVESTMENT.MIN, CONFIG.INVESTMENT.MAX, CONFIG.INVESTMENT.STEP);
-        if (relationship.calculated) {
-            if (relationship.calculated.percent >= CONFIG.MIN_PROFIT_PERCENT) console.log(`${new Date()}: Profit of ${relationship.calculated.percent.toFixed(5)}% on ${relationship.id}`);
-        }
+        pool.send({
+            trade: relationship,
+            minInvestment: CONFIG.INVESTMENT.MIN,
+            maxInvestment: CONFIG.INVESTMENT.MAX,
+            stepSize: CONFIG.INVESTMENT.STEP,
+            MarketCache: MarketCache.getSubsetFromTickers([relationship.ab.ticker, relationship.bc.ticker, relationship.ca.ticker])
+        });
     });
 
     setTimeout(calculateArbitrage, CONFIG.SCAN_DELAY);

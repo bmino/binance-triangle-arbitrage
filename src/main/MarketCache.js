@@ -8,6 +8,23 @@ let MarketCache = {
         return Object.keys(MarketCache.tickers);
     },
 
+    getSubsetFromTickers(tickers) {
+        let tickersPartial = {};
+        let depthsPartial = {};
+        let volumesPartial = {};
+
+        tickers.forEach(ticker => {
+            tickersPartial[ticker] = MarketCache.tickers[ticker];
+            depthsPartial[ticker] = MarketCache.depths[ticker];
+            volumesPartial[ticker] = MarketCache.volumes[ticker];
+        });
+
+        return {
+            tickers: tickersPartial,
+            depths: depthsPartial
+        };
+    },
+
     pruneDepthsAboveThreshold(threshold=100) {
         Object.values(MarketCache.depths).forEach(depth => {
             Object.keys(depth.bids).forEach((bid, index) => {
