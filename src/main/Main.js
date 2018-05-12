@@ -35,12 +35,9 @@ BinanceApi.exchangeInfo().then((data) => {
     relationships = MarketCalculation.allRelationships().filter(relationship => relationship.symbol.a === CONFIG.BASE_SYMBOL.toUpperCase());
 
     // Listen for depth updates
-    console.log(`Opening websocket connections for ${MarketCache.getTickerArray().length} tickers`);
-    MarketCache.getTickerArray().forEach(ticker => {
-        BinanceApi.listenForDepthCache(ticker, (ticker, depth) => {
-            MarketCache.depths[ticker] = depth;
-        }, CONFIG.DEPTH_SIZE);
-    });
+    BinanceApi.listenForDepthCache(MarketCache.getTickerArray(), (ticker, depth) => {
+        MarketCache.depths[ticker] = depth;
+    }, CONFIG.DEPTH_SIZE);
 
     console.log(`\nWaiting ${CACHE_INIT_DELAY / 1000} seconds to populate market caches`);
 

@@ -53,13 +53,16 @@ let BinanceApi = {
     },
 
     listenForDepthCache(tickers, callback, limit=100) {
-        let tickerCount = typeof tickers === 'string' ? 1 : tickers.length;
-        console.log(`Opening ${tickerCount} depth websockets for ${tickers}`);
-        binance.websockets.depthCache(tickers, (symbol, depth) => {
-            depth.bids = binance.sortBids(depth.bids);
-            depth.asks = binance.sortAsks(depth.asks);
-            callback(symbol, depth);
-        }, limit);
+        tickers = Array.isArray(tickers) ? tickers : [tickers];
+        console.log(`Opening ${tickers.length} depth websockets for ${tickers}`);
+        tickers.forEach(ticker => {
+            binance.websockets.depthCache(ticker, (symbol, depth) => {
+                depth.bids = binance.sortBids(depth.bids);
+                depth.asks = binance.sortAsks(depth.asks);
+                depth.time = new Date().getTime();
+                callback(symbol, depth);
+            }, limit);
+        });
     }
 };
 
