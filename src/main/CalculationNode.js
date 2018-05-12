@@ -40,8 +40,13 @@ function calculate(investmentA, trade, MarketCache) {
             market: 0,
             dust: 0
         },
-        symbol: trade.symbol,
-        //time: Math.min(MarketCache.depths[trade.ab.ticker].time, MarketCache.depths[trade.bc.ticker].time, MarketCache.depths[trade.ca.ticker].time),
+        trade: trade,
+        time: Math.min(MarketCache.depths[trade.ab.ticker].time, MarketCache.depths[trade.bc.ticker].time, MarketCache.depths[trade.ca.ticker].time),
+        times: {
+            ab: MarketCache.depths[trade.ab.ticker].time,
+            bc: MarketCache.depths[trade.bc.ticker].time,
+            ca: MarketCache.depths[trade.ca.ticker].time
+        },
         a: 0,
         b: 0,
         c: 0
