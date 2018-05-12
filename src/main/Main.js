@@ -65,7 +65,11 @@ pool
     .run('CalculationNode.js')
     .on('done', (job, calculated) => {
         remaining--;
-        if (calculated && calculated.percent >= CONFIG.MIN_PROFIT_PERCENT) console.log(`${new Date()}: Profit of ${calculated.percent.toFixed(5)}% on ${calculated.symbol.a}${calculated.symbol.b}${calculated.symbol.c}`);
+        if (calculated) {
+            let id = job.sendArgs[0].trade.id;
+            MarketCache.arbs[id] = calculated;
+            //if (calculated.percent >= CONFIG.MIN_PROFIT_PERCENT) console.log(`${new Date()}: Profit of ${calculated.percent.toFixed(5)}% on ${id}`);
+        }
         if (remaining === 0) {
             //console.log(`Completed calculations in ${(new Date() - before)/1000} seconds`);
             setTimeout(calculateArbitrage, CONFIG.SCAN_DELAY);

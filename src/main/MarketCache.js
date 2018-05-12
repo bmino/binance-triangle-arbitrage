@@ -3,6 +3,7 @@ let MarketCache = {
     tickers: {},
     volumes: {},
     depths: {},
+    arbs: {},
 
     getTickerArray() {
         return Object.keys(MarketCache.tickers);
@@ -58,6 +59,12 @@ let MarketCache = {
         });
         console.log(`Found ${outputBuffer.length}/${Object.keys(MarketCache.depths).length} depth caches above a threshold of ${threshold}`);
         outputBuffer.forEach(output => console.log(output));
+    },
+
+    getArbsAboveProfitPercent(profit) {
+        return Object.values(MarketCache.arbs)
+            .filter(arb => arb.percent > profit)
+            .sort((a, b) => a.percent > b.percent ? -1 : 1);
     }
 
 };
