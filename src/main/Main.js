@@ -8,6 +8,7 @@ threads.config.set({
 });
 const pool = new threads.Pool();
 let MarketCache = require('./MarketCache');
+let ArbDisplay = require('./ArbDisplay');
 let BinanceApi = require('./BinanceApi');
 let MarketCalculation = require('./MarketCalculation');
 let CONFIG = require('../../config/live.config');
@@ -75,6 +76,7 @@ pool
         }
         if (remaining === 0) {
             //console.log(`Completed calculations in ${(new Date() - before)/1000} seconds`);
+            displayTopArbs();
             setTimeout(calculateArbitrage, CONFIG.SCAN_DELAY);
         }
     })
@@ -97,4 +99,9 @@ function calculateArbitrage() {
             MarketCache: MarketCache.getSubsetFromTickers([relationship.ab.ticker, relationship.bc.ticker, relationship.ca.ticker])
         });
     });
+}
+
+function displayTopArbs() {
+    let arbsToDisplay = MarketCache.getArbsAboveProfitPercent(CONFIG.MIN_PROFIT_PERCENT);
+    ArbDisplay.displayArbs(arbsToDisplay);
 }

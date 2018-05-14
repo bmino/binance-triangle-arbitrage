@@ -47,7 +47,7 @@ let BinanceApi = {
         return binance.websockets.userData(balanceCallback, executionCallback);
     },
 
-    listenForDepthCache(tickers, callback, limit=100, CHUNK_SIZE=50, OFFSET=5000) {
+    listenForDepthCache(tickers, callback, limit=100, CHUNK_SIZE=100, OFFSET=5000) {
         let chain, chunks=[];
         tickers = Array.isArray(tickers) ? tickers : [tickers];
         for (let i=0,len=tickers.length; i<len; i+=CHUNK_SIZE) {
