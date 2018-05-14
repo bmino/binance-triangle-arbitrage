@@ -3,6 +3,7 @@ let MarketCache = {
     tickers: {},
     volumes: {},
     depths: {},
+    ticks: {},
     arbs: {},
 
     getTickerArray() {
