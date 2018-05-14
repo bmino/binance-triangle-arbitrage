@@ -47,21 +47,33 @@ let BinanceApi = {
         return binance.websockets.userData(balanceCallback, executionCallback);
     },
 
-    listenForDepth(tickers, callback) {
-        if (typeof tickers === 'string') tickers = [tickers];
-        return binance.websockets.depthCache(tickers, callback);
+    listenForDepthCache(tickers, callback, limit=100, CHUNK_SIZE=50, OFFSET=5000) {
+        let chain, chunks=[];
+        tickers = Array.isArray(tickers) ? tickers : [tickers];
+        for (let i=0,len=tickers.length; i<len; i+=CHUNK_SIZE) {
+            chunks.push(tickers.slice(i, i+CHUNK_SIZE));
+        }
+        chunks.forEach(chunk => {
+            let promise = () => {return BinanceApi.openDepthCache.apply(this, [chunk, callback, limit, OFFSET])};
+            chain = chain ? chain.then(promise) : promise();
+        });
+        return chain;
     },
 
-    listenForDepthCache(tickers, callback, limit=100) {
-        tickers = Array.isArray(tickers) ? tickers : [tickers];
-        console.log(`Opening ${tickers.length} depth websockets for ${tickers}`);
-        tickers.forEach(ticker => {
-            binance.websockets.depthCache(ticker, (symbol, depth) => {
-                depth.bids = binance.sortBids(depth.bids);
-                depth.asks = binance.sortAsks(depth.asks);
-                depth.time = new Date().getTime();
-                callback(symbol, depth);
-            }, limit);
+    openDepthCache(tickers, callback, limit, delay=0) {
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                console.log(`Opening ${tickers.length} depth websockets for ${tickers}`);
+                tickers.forEach(ticker => {
+                    binance.websockets.depthCache(ticker, (symbol, depth) => {
+                        depth.bids = binance.sortBids(depth.bids);
+                        depth.asks = binance.sortAsks(depth.asks);
+                        depth.time = new Date().getTime();
+                        callback(symbol, depth);
+                    }, limit);
+                });
+                resolve();
+            }, delay);
         });
     }
 };
