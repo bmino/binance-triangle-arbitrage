@@ -1,6 +1,6 @@
 {
   "name": "binance-triangle-arbitrage",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "private": true,
   "engines": {
     "node": "9.11.1",
@@ -13,7 +13,7 @@
     "cli-color": "^1.2.0",
     "clui": "^0.3.6",
     "dotenv": "^5.0.1",
-    "node-binance-api": "^0.5.0",
+    "node-binance-api": "^0.6.0",
     "threads": "^0.11.0"
   },
   "devDependencies": {}
