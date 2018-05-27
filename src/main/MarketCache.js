@@ -38,7 +38,7 @@ let MarketCache = {
         });
     },
 
-    listDepthsBelowThreshold(threshold) {
+    getDepthsBelowThreshold(threshold) {
         let outputBuffer = [];
         Object.keys(MarketCache.depths).forEach(ticker => {
             let depth = MarketCache.depths[ticker];
@@ -46,11 +46,10 @@ let MarketCache = {
             let askCount = Object.keys(depth.asks).length;
             if (bidCount < threshold || askCount < threshold) outputBuffer.push(`${ticker}: ${bidCount}/${askCount}`);
         });
-        console.log(`Found ${outputBuffer.length}/${Object.keys(MarketCache.depths).length} depth caches below a threshold of ${threshold}`);
-        outputBuffer.forEach(output => console.log(output));
+        return outputBuffer;
     },
 
-    listDepthsAboveThreshold(threshold) {
+    getDepthsAboveThreshold(threshold) {
         let outputBuffer = [];
         Object.keys(MarketCache.depths).forEach(ticker => {
             let depth = MarketCache.depths[ticker];
@@ -58,8 +57,7 @@ let MarketCache = {
             let askCount = Object.keys(depth.asks).length;
             if (bidCount > threshold || askCount > threshold) outputBuffer.push(`${ticker}: ${bidCount}/${askCount}`);
         });
-        console.log(`Found ${outputBuffer.length}/${Object.keys(MarketCache.depths).length} depth caches above a threshold of ${threshold}`);
-        outputBuffer.forEach(output => console.log(output));
+        return outputBuffer;
     },
 
     getArbsAboveProfitPercent(profit) {
