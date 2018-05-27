@@ -22,11 +22,6 @@ brew install node
 ```
 
 
-## Running the tests
-
-There are currently no tests
-
-
 ## Deployment
 
 Clone the code from github
