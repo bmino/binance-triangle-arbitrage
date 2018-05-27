@@ -36,20 +36,14 @@ let ArbDisplay = {
             .column('Trade', 17, [clc.cyan])
             .column('Profit', 11, [clc.cyan])
             .column('AB Time', 15, [clc.cyan])
-            .column(`AB Ticks`, 10, [clc.cyan])
             .column('BC Time', 15, [clc.cyan])
-            .column(`BC Ticks`, 10, [clc.cyan])
             .column('CA Time', 15, [clc.cyan])
-            .column(`CA Ticks`, 10, [clc.cyan])
             .column('Age', 7, [clc.cyan])
             .fill()
             .store();
 
         // Data
         arbs.forEach(arb => {
-            let abTicker = arb.trade.ab.ticker;
-            let bcTicker = arb.trade.bc.ticker;
-            let caTicker = arb.trade.ca.ticker;
             new CLI.Line(outputBuffer)
                 // ID
                 .column(`${arb.trade.symbol.a}-${arb.trade.symbol.b}-${arb.trade.symbol.c}`, 17)
@@ -57,20 +51,14 @@ let ArbDisplay = {
                 // Profit
                 .column(`${arb.percent.toFixed(4)}%`, 11)
 
-                // AB
+                // Time of Last Tick
                 .column(`${new Date(arb.times.ab).toLocaleTimeString('en-US')}`, 15)
-                .column(`${MarketCache.ticks[abTicker]}`, 10)
-
-                // BC
                 .column(`${new Date(arb.times.bc).toLocaleTimeString('en-US')}`, 15)
-                .column(`${MarketCache.ticks[bcTicker]}`, 10)
-
-                // CA
                 .column(`${new Date(arb.times.ca).toLocaleTimeString('en-US')}`, 15)
-                .column(`${MarketCache.ticks[caTicker]}`, 10)
 
                 // Age
                 .column(`${((now - arb.time)/1000).toFixed(2)}`, 7)
+
                 .fill()
                 .store();
         });

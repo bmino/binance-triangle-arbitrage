@@ -20,11 +20,6 @@ let BinanceApi = {
         });
     },
 
-    mockExchangeInfo(tickers) {
-        let symbolObjects = tickers.map((ticker) => {return {'symbol': ticker}});
-        return Promise.resolve({symbols: symbolObjects});
-    },
-
     marketBuy(ticker, quantity) {
         return new Promise((resolve, reject) => {
             binance.marketBuy(ticker, quantity, (error, response) => {

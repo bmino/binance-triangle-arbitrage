@@ -37,8 +37,6 @@ BinanceApi.exchangeInfo().then((data) => {
 
     // Listen for depth updates
     BinanceApi.listenForDepthCache(MarketCache.getTickerArray(), (ticker, depth) => {
-        if (!MarketCache.ticks[ticker]) MarketCache.ticks[ticker] = 0;
-        MarketCache.ticks[ticker]++;
         MarketCache.depths[ticker] = depth;
     }, CONFIG.DEPTH_SIZE);
 
