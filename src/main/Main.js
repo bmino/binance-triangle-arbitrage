@@ -20,7 +20,7 @@ BinanceApi.exchangeInfo().then((data) => {
 
     let symbols = new Set();
     let tickers = [];
-    const CACHE_INIT_DELAY = 15000;
+    const CACHE_INIT_DELAY = 20000;
 
     // Extract Symbols and Tickers
     data.symbols.forEach(function(symbolObj) {
@@ -40,21 +40,20 @@ BinanceApi.exchangeInfo().then((data) => {
         if (!MarketCache.ticks[ticker]) MarketCache.ticks[ticker] = 0;
         MarketCache.ticks[ticker]++;
         MarketCache.depths[ticker] = depth;
-    }, CONFIG.DEPTH_SIZE)
-        .then(() => {
-            console.log(`\nWaiting ${CACHE_INIT_DELAY / 1000} seconds to populate market caches`);
+    }, CONFIG.DEPTH_SIZE);
 
-            setTimeout(function() {
-                console.log(`\nInitiated calculation cycle:
-                    App Version:     ${version}
-                    CPU Cores:       ${os.cpus().length}
-                    Cycle Delay:     ${CONFIG.SCAN_DELAY / 1000} seconds
-                    Relationships:   ${relationships.length}
-                    Investments:     [${CONFIG.INVESTMENT.MIN} - ${CONFIG.INVESTMENT.MAX}] by ${CONFIG.INVESTMENT.STEP} ${CONFIG.BASE_SYMBOL}
-                    Profit Logging:  > ${CONFIG.MIN_PROFIT_PERCENT}%\n`);
-                calculateArbitrage();
-            }, CACHE_INIT_DELAY);
-        });
+    console.log(`\nWaiting ${CACHE_INIT_DELAY / 1000} seconds to populate market caches`);
+
+    setTimeout(function() {
+        console.log(`\nInitiated calculation cycle:
+            App Version:     ${version}
+            CPU Cores:       ${os.cpus().length}
+            Cycle Delay:     ${CONFIG.SCAN_DELAY / 1000} seconds
+            Relationships:   ${relationships.length}
+            Investments:     [${CONFIG.INVESTMENT.MIN} - ${CONFIG.INVESTMENT.MAX}] by ${CONFIG.INVESTMENT.STEP} ${CONFIG.BASE_SYMBOL}
+            Profit Logging:  > ${CONFIG.MIN_PROFIT_PERCENT}%\n`);
+        calculateArbitrage();
+    }, CACHE_INIT_DELAY);
 })
     .catch((error) => {
         console.error(error);
