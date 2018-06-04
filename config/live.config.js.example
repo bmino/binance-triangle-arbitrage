@@ -7,5 +7,5 @@ module.exports = {
     },
     MIN_PROFIT_PERCENT: 0.0,
     DEPTH_SIZE: 100,
-    SCAN_DELAY: 500
+    SCAN_DELAY: 200
 };
