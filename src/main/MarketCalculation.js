@@ -42,14 +42,12 @@ let MarketCalculation = {
         return null;
     },
 
-    allRelationships() {
+    getRelationshipsFromSymbol(symbol1) {
         let relationships = [];
-        MarketCache.symbols.forEach(function(symbol1) {
-            MarketCache.symbols.forEach(function(symbol2) {
-                MarketCache.symbols.forEach(function(symbol3) {
-                    let relationship = MarketCalculation.relationships(symbol1, symbol2, symbol3);
-                    if (relationship) relationships.push(relationship);
-                });
+        MarketCache.symbols.forEach(function(symbol2) {
+            MarketCache.symbols.forEach(function(symbol3) {
+                let relationship = MarketCalculation.relationships(symbol1, symbol2, symbol3);
+                if (relationship) relationships.push(relationship);
             });
         });
         return relationships;

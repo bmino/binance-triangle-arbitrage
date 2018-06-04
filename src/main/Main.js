@@ -10,7 +10,6 @@ const BinanceApi = require('./BinanceApi');
 const MarketCalculation = require('./MarketCalculation');
 const CONFIG = require('../../config/live.config');
 
-let relationships = [];
 
 // Set up symbols and tickers
 BinanceApi.exchangeInfo().then((data) => {
@@ -30,7 +29,7 @@ BinanceApi.exchangeInfo().then((data) => {
     // Initialize market cache
     MarketCache.symbols = symbols;
     MarketCache.tickers = tickers;
-    relationships = MarketCalculation.allRelationships().filter(relationship => relationship.symbol.a === CONFIG.BASE_SYMBOL.toUpperCase());
+    MarketCache.relationships = MarketCalculation.getRelationshipsFromSymbol(CONFIG.BASE_SYMBOL);
 
     // Listen for depth updates
     BinanceApi.listenForDepthCache(MarketCache.getTickerArray(), (ticker, depth) => {}, CONFIG.DEPTH_SIZE);
@@ -57,7 +56,7 @@ function calculateArbitrage() {
             }
         });
 
-    relationships.forEach(relationship => {
+    MarketCache.relationships.forEach(relationship => {
         job.send({
             trade: relationship,
             minInvestment: CONFIG.INVESTMENT.MIN,

@@ -4,6 +4,7 @@ let MarketCache = {
     symbols: [],
     tickers: {},
     volumes: {},
+    relationships: [],
     arbs: {},
 
     getTickerArray() {
