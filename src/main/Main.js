@@ -7,11 +7,11 @@ threads.config.set({
     }
 });
 const pool = new threads.Pool();
-let MarketCache = require('./MarketCache');
-let ArbDisplay = require('./ArbDisplay');
-let BinanceApi = require('./BinanceApi');
-let MarketCalculation = require('./MarketCalculation');
-let CONFIG = require('../../config/live.config');
+const MarketCache = require('./MarketCache');
+const ArbDisplay = require('./ArbDisplay');
+const BinanceApi = require('./BinanceApi');
+const MarketCalculation = require('./MarketCalculation');
+const CONFIG = require('../../config/live.config');
 
 let relationships = [];
 

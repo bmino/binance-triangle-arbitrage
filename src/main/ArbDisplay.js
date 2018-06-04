@@ -1,8 +1,8 @@
 const MarketCache = require('./MarketCache');
 const config = require('../../config/live.config');
 
-let CLI = require('clui');
-let clc = require('cli-color');
+const CLI = require('clui');
+const clc = require('cli-color');
 
 
 let ArbDisplay = {

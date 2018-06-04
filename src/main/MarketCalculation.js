@@ -1,4 +1,4 @@
-let MarketCache = require('./MarketCache');
+const MarketCache = require('./MarketCache');
 
 let MarketCalculation = {
 

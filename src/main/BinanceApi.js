@@ -1,4 +1,4 @@
-let binance = require('node-binance-api');
+const binance = require('node-binance-api');
 
 if (process.env.BINANCE_API_KEY && process.env.BINANCE_API_SECRET) {
     binance.options({

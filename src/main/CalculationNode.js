@@ -1,5 +1,5 @@
 module.exports = function(inputs, done) {
-    let {trade, minInvestment, maxInvestment, stepSize, MarketCache} = inputs;
+    const {trade, minInvestment, maxInvestment, stepSize, MarketCache} = inputs;
     let quantity, calculation;
     let bestCalculation = null;
 
