@@ -1,8 +1,9 @@
+const binance = require('node-binance-api');
+
 let MarketCache = {
     symbols: [],
     tickers: {},
     volumes: {},
-    depths: {},
     arbs: {},
 
     getTickerArray() {
@@ -16,7 +17,7 @@ let MarketCache = {
 
         tickers.forEach(ticker => {
             tickersPartial[ticker] = MarketCache.tickers[ticker];
-            depthsPartial[ticker] = MarketCache.depths[ticker];
+            depthsPartial[ticker] = binance.depthCache(ticker);
             volumesPartial[ticker] = MarketCache.volumes[ticker];
         });
 
@@ -27,7 +28,8 @@ let MarketCache = {
     },
 
     pruneDepthsAboveThreshold(threshold=100) {
-        Object.values(MarketCache.depths).forEach(depth => {
+        Object.keys(MarketCache.tickers).forEach(ticker => {
+            let depth = binance.depthCache(ticker);
             Object.keys(depth.bids).forEach((bid, index) => {
                 index >= threshold && delete depth.bids[bid];
             });
@@ -39,8 +41,8 @@ let MarketCache = {
 
     getDepthsBelowThreshold(threshold) {
         let outputBuffer = [];
-        Object.keys(MarketCache.depths).forEach(ticker => {
-            let depth = MarketCache.depths[ticker];
+        Object.keys(MarketCache.tickers).forEach(ticker => {
+            let depth = binance.depthCache(ticker);
             let bidCount = Object.keys(depth.bids).length;
             let askCount = Object.keys(depth.asks).length;
             if (bidCount < threshold || askCount < threshold) outputBuffer.push(`${ticker}: ${bidCount}/${askCount}`);
@@ -50,8 +52,8 @@ let MarketCache = {
 
     getDepthsAboveThreshold(threshold) {
         let outputBuffer = [];
-        Object.keys(MarketCache.depths).forEach(ticker => {
-            let depth = MarketCache.depths[ticker];
+        Object.keys(MarketCache.tickers).forEach(ticker => {
+            let depth = binance.depthCache(ticker);
             let bidCount = Object.keys(depth.bids).length;
             let askCount = Object.keys(depth.asks).length;
             if (bidCount > threshold || askCount > threshold) outputBuffer.push(`${ticker}: ${bidCount}/${askCount}`);

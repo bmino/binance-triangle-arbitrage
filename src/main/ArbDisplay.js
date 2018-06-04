@@ -25,7 +25,7 @@ let ArbDisplay = {
 
         let threshold = Math.ceil(config.DEPTH_SIZE / 2);
         new CLI.Line(outputBuffer)
-            .column(`${MarketCache.getDepthsBelowThreshold(threshold).length}/${Object.keys(MarketCache.depths).length} depth caches below a threshold of ${threshold}`, 55, [clc.white])
+            .column(`${MarketCache.getDepthsBelowThreshold(threshold).length}/${MarketCache.getTickerArray().length} depth caches below a threshold of ${threshold}`, 55, [clc.white])
             .fill()
             .store();
 

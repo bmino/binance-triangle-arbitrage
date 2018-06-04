@@ -110,7 +110,7 @@ function orderBookConversion(amountFrom, symbolFrom, symbolTo, ticker, MarketCac
         rates = Object.keys(orderBook.bids || {});
         for (i=0; i<rates.length; i++) {
             rate = parseFloat(rates[i]);
-            quantity = parseFloat(orderBook.bids[rates[i]]);
+            quantity = orderBook.bids[rates[i]];
             if (quantity < amountFrom) {
                 amountFrom -= quantity;
                 amountTo += quantity * rate;
@@ -125,7 +125,7 @@ function orderBookConversion(amountFrom, symbolFrom, symbolTo, ticker, MarketCac
         rates = Object.keys(orderBook.asks || {});
         for (j=0; j<rates.length; j++) {
             rate = parseFloat(rates[j]);
-            quantity = parseFloat(orderBook.asks[rates[j]]);
+            quantity = orderBook.asks[rates[j]];
             exchangeableAmount = quantity * rate;
             if (exchangeableAmount < amountFrom) {
                 amountFrom -= quantity * rate;
