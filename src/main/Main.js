@@ -16,7 +16,7 @@ BinanceApi.exchangeInfo().then((data) => {
 
     let symbols = new Set();
     let tickers = [];
-    const CACHE_INIT_DELAY = 20000;
+    const CACHE_INIT_DELAY = CONFIG.CACHE_INIT_DELAY;
 
     // Extract Symbols and Tickers
     data.symbols.forEach(function(symbolObj) {
@@ -54,8 +54,7 @@ function calculateArbitrage() {
         .on('error',  console.error)
         .on('done', (job, calculated) => {
             if (calculated) {
-                let id = calculated.trade.id;
-                MarketCache.arbs[id] = calculated;
+                MarketCache.arbs[calculated.trade.id] = calculated;
             }
         });
 
