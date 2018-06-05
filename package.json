@@ -1,12 +1,13 @@
 {
   "name": "binance-triangle-arbitrage",
-  "version": "3.2.2",
+  "version": "3.3.0",
   "private": true,
   "engines": {
     "node": "9.11.1",
-    "npm": "6.0.0"
+    "npm": "6.1.0"
   },
   "scripts": {
+    "start": "node src/main/Main.js",
     "live": "node src/main/Main.js"
   },
   "dependencies": {
