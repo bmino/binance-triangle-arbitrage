@@ -11,11 +11,10 @@ module.exports = function(inputs, done) {
             }
         }
     } catch(e) {
-        console.error(e.message);
+        //console.error(e.message);
     }
 
     done(bestCalculation);
-    return bestCalculation;
 };
 
 function calculate(investmentA, trade, MarketCache) {
