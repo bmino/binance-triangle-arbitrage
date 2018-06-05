@@ -66,6 +66,12 @@ let MarketCache = {
         return Object.values(MarketCache.arbs)
             .filter(arb => arb.percent > profit)
             .sort((a, b) => a.percent > b.percent ? -1 : 1);
+    },
+
+    getTopProfitableArbs(count) {
+        return Object.values(MarketCache.arbs)
+            .sort((a, b) => a.percent > b.percent ? -1 : 1)
+            .slice(0, count);
     }
 
 };

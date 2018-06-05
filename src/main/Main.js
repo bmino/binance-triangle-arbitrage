@@ -36,7 +36,10 @@ BinanceApi.exchangeInfo().then((data) => {
 
     // Delay before beginning calculation cycle
     console.log(`\nWaiting ${CACHE_INIT_DELAY / 1000} seconds to populate market caches`);
-    setTimeout(calculateArbitrage, CACHE_INIT_DELAY);
+    setTimeout(() => {
+        calculateArbitrage();
+        CONFIG.HUD_REFRESH_INTERVAL && setInterval(refreshDisplay, CONFIG.HUD_REFRESH_INTERVAL);
+    }, CACHE_INIT_DELAY);
 })
     .catch(console.error);
 
@@ -68,8 +71,11 @@ function calculateArbitrage() {
 
     pool.on('finished', () => {
         pool.killAll();
-        let arbsToDisplay = MarketCache.getArbsAboveProfitPercent(CONFIG.MIN_PROFIT_PERCENT);
-        ArbDisplay.displayArbs(arbsToDisplay);
         setTimeout(calculateArbitrage, CONFIG.SCAN_DELAY);
     });
+}
+
+function refreshDisplay() {
+    const arbsToDisplay = MarketCache.getTopProfitableArbs(CONFIG.HUD_ARB_COUNT);
+    ArbDisplay.displayArbs(arbsToDisplay);
 }
