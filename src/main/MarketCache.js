@@ -39,7 +39,7 @@ let MarketCache = {
     },
 
     pruneDepthsAboveThreshold(threshold=100) {
-        Object.keys(MarketCache.tickers).forEach(ticker => {
+        MarketCache.getTickerArray().forEach(ticker => {
             let depth = binance.depthCache(ticker);
             Object.keys(depth.bids).forEach((bid, index) => {
                 index >= threshold && delete depth.bids[bid];
@@ -52,7 +52,7 @@ let MarketCache = {
 
     getDepthsBelowThreshold(threshold) {
         let outputBuffer = [];
-        Object.keys(MarketCache.tickers).forEach(ticker => {
+        MarketCache.getTickerArray().forEach(ticker => {
             let depth = binance.depthCache(ticker);
             let bidCount = Object.keys(depth.bids).length;
             let askCount = Object.keys(depth.asks).length;
@@ -63,7 +63,7 @@ let MarketCache = {
 
     getDepthsAboveThreshold(threshold) {
         let outputBuffer = [];
-        Object.keys(MarketCache.tickers).forEach(ticker => {
+        MarketCache.getTickerArray().forEach(ticker => {
             let depth = binance.depthCache(ticker);
             let bidCount = Object.keys(depth.bids).length;
             let askCount = Object.keys(depth.asks).length;
