@@ -12,35 +12,31 @@ const CONFIG = require('../../config/live.config');
 
 
 // Set up symbols and tickers
-BinanceApi.exchangeInfo().then((data) => {
+BinanceApi.exchangeInfo()
+    .then((data) => {
+        let symbols = new Set();
+        let tickers = [];
 
-    let symbols = new Set();
-    let tickers = [];
-    const CACHE_INIT_DELAY = CONFIG.CACHE_INIT_DELAY;
+        // Extract Symbols and Tickers
+        data.symbols.forEach(function (symbolObj) {
+            if (symbolObj.status !== 'TRADING') return;
+            symbols.add(symbolObj.baseAsset);
+            symbolObj.dustQty = parseFloat(symbolObj.filters[1].minQty);
+            tickers[symbolObj.symbol] = symbolObj;
+        });
 
-    // Extract Symbols and Tickers
-    data.symbols.forEach(function(symbolObj) {
-        if (symbolObj.status !== 'TRADING') return;
-        symbols.add(symbolObj.baseAsset);
-        symbolObj.dustQty = parseFloat(symbolObj.filters[1].minQty);
-        tickers[symbolObj.symbol] = symbolObj;
-    });
+        // Initialize market cache
+        MarketCache.symbols = symbols;
+        MarketCache.tickers = tickers;
+        MarketCache.relationships = MarketCalculation.getRelationshipsFromSymbol(CONFIG.BASE_SYMBOL);
 
-    // Initialize market cache
-    MarketCache.symbols = symbols;
-    MarketCache.tickers = tickers;
-    MarketCache.relationships = MarketCalculation.getRelationshipsFromSymbol(CONFIG.BASE_SYMBOL);
-
-    // Listen for depth updates
-    BinanceApi.listenForDepthCache(MarketCache.getTickerArray(), (ticker, depth) => {}, CONFIG.DEPTH_SIZE);
-
-    // Delay before beginning calculation cycle
-    console.log(`\nWaiting ${CACHE_INIT_DELAY / 1000} seconds to populate market caches`);
-    setTimeout(() => {
+        // Listen for depth updates
+        return BinanceApi.depthCache(MarketCache.getTickerArray(), CONFIG.DEPTH_SIZE, CONFIG.DEPTH_OPEN_INTERVAL);
+    })
+    .then(() => {
         calculateArbitrage();
         CONFIG.HUD_REFRESH_INTERVAL && setInterval(refreshDisplay, CONFIG.HUD_REFRESH_INTERVAL);
-    }, CACHE_INIT_DELAY);
-})
+    })
     .catch(console.error);
 
 

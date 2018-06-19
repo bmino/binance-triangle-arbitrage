@@ -42,16 +42,29 @@ let BinanceApi = {
         return binance.websockets.userData(balanceCallback, executionCallback);
     },
 
-    listenForDepthCache(tickers, callback, limit=100) {
-        console.log(`Opening depth cache for ${Array.isArray(tickers) ? tickers.length : 1} tickers`);
-        binance.websockets.depthCache(tickers, (symbol, depth) => {
-            depth.bids = binance.sortBids(depth.bids);
-            depth.asks = binance.sortAsks(depth.asks);
-            depth.time = new Date().getTime();
-            callback(symbol, depth);
-        }, limit);
+    depthCache(tickers, limit=100, delay=200) {
+        let chain;
+
+        console.log(`Expect ${(tickers.length * delay / 1000).toFixed(0)} seconds to open ${tickers.length} depth websockets.`);
+
+        tickers.forEach(ticker => {
+            let promise = () => {
+                return new Promise((resolve, reject) => {
+                    binance.websockets.depthCache(ticker, processDepth, limit);
+                    setTimeout(resolve, delay);
+                });
+            };
+            chain = chain ? chain.then(promise) : promise();
+        });
+        return chain;
     }
 
 };
+
+function processDepth(symbol, depth) {
+    depth.bids = binance.sortBids(depth.bids);
+    depth.asks = binance.sortAsks(depth.asks);
+    depth.time = new Date().getTime();
+}
 
 module.exports = BinanceApi;
