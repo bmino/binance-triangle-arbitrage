@@ -6,39 +6,47 @@ const blessed = require('blessed');
 let ArbDisplay = {
 
     screen: null,
-    table: null,
-    tableHeaders: ['Trade', 'Profit', 'AB Time', 'BC Time', 'CA Time', 'Age'],
+    objects: {
+        arbTable: null,
+        depthTable: null
+    },
+    headers: {
+        arb: ['Trade', 'Profit', 'AB Time', 'BC Time', 'CA Time', 'Age'],
+        depth: ['Ticker', 'Bids', 'Asks']
+    },
 
-    setupTable() {
+    initScreen() {
+        if (ArbDisplay.screen) return;
         ArbDisplay.screen = blessed.screen({
             smartCSR: true
         });
-
-        ArbDisplay.table = blessed.table({
-            top: '0',
-            left: 'center',
-            width: '50%',
-            height: '50%',
-            border: {
-                type: 'line'
-            },
-            style: {
-                header: {
-                    fg: 'blue',
-                    bold: true
-                }
-            }
-        });
-
-        ArbDisplay.screen.append(ArbDisplay.table);
     },
 
     displayArbs(arbs) {
-        if (!ArbDisplay.table) ArbDisplay.setupTable();
+        ArbDisplay.initScreen();
+        if (!ArbDisplay.objects.arbTable) {
+            ArbDisplay.objects.arbTable = blessed.table({
+                top: '0',
+                left: 'center',
+                width: '50%',
+                height: '50%',
+                border: {
+                    type: 'line'
+                },
+                style: {
+                    header: {
+                        fg: 'blue',
+                        bold: true
+                    }
+                }
+            });
+
+            ArbDisplay.screen.append(ArbDisplay.objects.arbTable);
+        }
 
         let now = new Date().getTime();
 
-        let tableData = [ArbDisplay.tableHeaders];
+        let tableData = [ArbDisplay.headers.arb];
         arbs.forEach(arb => {
             tableData.push([
                 `${arb.trade.symbol.a}-${arb.trade.symbol.b}-${arb.trade.symbol.c}`,
@@ -50,7 +58,42 @@ let ArbDisplay = {
             ]);
         });
 
-        ArbDisplay.table.setData(tableData);
+        ArbDisplay.objects.arbTable.setData(tableData);
+        ArbDisplay.screen.render();
+    },
+
+    displayDepths() {
+        ArbDisplay.initScreen();
+        if (!ArbDisplay.objects.depthTable) {
+            ArbDisplay.objects.depthTable = blessed.table({
+                top: '0',
+                left: 'center',
+                width: '50%',
+                height: '50%',
+                border: {
+                    type: 'line'
+                },
+                style: {
+                    header: {
+                        fg: 'blue',
+                        bold: true
+                    }
+                }
+            });
+
+            ArbDisplay.screen.append(ArbDisplay.objects.depthTable);
+        }
+
+        let tableData = [ArbDisplay.headers.depth];
+        MarketCache.getDepthCache().forEach(depth => {
+            tableData.push([
+                `${depth.ticker}`,
+                `${Object.keys(depth.bids).length}`,
+                `${Object.keys(depth.asks).length}`
+            ]);
+        });
+
+        ArbDisplay.objects.depthTable.setData(tableData);
         ArbDisplay.screen.render();
     }
 
