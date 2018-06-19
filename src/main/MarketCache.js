@@ -11,6 +11,16 @@ let MarketCache = {
         return Object.keys(MarketCache.tickers);
     },
 
+    getDepthCache() {
+        let outputBuffer = [];
+        MarketCache.getTickerArray().forEach(ticker => {
+            let depth = binance.depthCache(ticker);
+            depth.ticker = ticker;
+            outputBuffer.push(depth);
+        });
+        return outputBuffer;
+    },
+
     getSubsetFromTickers(tickers) {
         let tickersPartial = {};
         let depthsPartial = {};
