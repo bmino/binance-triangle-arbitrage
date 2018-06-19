@@ -12,8 +12,8 @@ module.exports = {
     // Valid Values: [5, 10, 20, 50, 100, 500, 1000]
     DEPTH_SIZE: 100,
 
-    // Delay (ms) between opening initial websockets and beginning to scan for arbs
-    CACHE_INIT_DELAY: 20000,
+    // Delay (ms) between the opening of each depth websocket
+    DEPTH_OPEN_INTERVAL: 100,
 
     // Delay (ms) after calculations are performed before starting another cycle
     SCAN_DELAY: 200,
