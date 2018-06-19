@@ -1,69 +1,57 @@
 const MarketCache = require('./MarketCache');
 const config = require('../../config/live.config');
-
-const CLI = require('clui');
-const clc = require('cli-color');
+const blessed = require('blessed');
 
 
 let ArbDisplay = {
 
+    screen: null,
+    table: null,
+    tableHeaders: ['Trade', 'Profit', 'AB Time', 'BC Time', 'CA Time', 'Age'],
+
+    setupTable() {
+        ArbDisplay.screen = blessed.screen({
+            smartCSR: true
+        });
+
+        ArbDisplay.table = blessed.table({
+            top: '0',
+            left: 'center',
+            width: '50%',
+            height: '50%',
+            border: {
+                type: 'line'
+            },
+            style: {
+                header: {
+                    fg: 'blue',
+                    bold: true
+                }
+            }
+        });
+
+        ArbDisplay.screen.append(ArbDisplay.table);
+    },
+
     displayArbs(arbs) {
-        console.clear();
-        let now = new Date();
+        if (!ArbDisplay.table) ArbDisplay.setupTable();
 
-        let outputBuffer = new CLI.LineBuffer({
-            x: 0,
-            y: 0,
-            width: 'console',
-            height: 'console'
-        });
+        let now = new Date().getTime();
 
-        new CLI.Line(outputBuffer)
-            .column(`Current time: ${now.toLocaleString('en-US')}`, 40, [clc.white])
-            .fill()
-            .store();
-
-        let threshold = Math.ceil(config.DEPTH_SIZE / 2);
-        new CLI.Line(outputBuffer)
-            .column(`${MarketCache.getDepthsBelowThreshold(threshold).length}/${MarketCache.getTickerArray().length} depth caches below a threshold of ${threshold}`, 55, [clc.white])
-            .fill()
-            .store();
-
-        new CLI.Line(outputBuffer).fill().store();
-
-        // Header
-        new CLI.Line(outputBuffer)
-            .column('Trade', 17, [clc.cyan])
-            .column('Profit', 11, [clc.cyan])
-            .column('AB Time', 15, [clc.cyan])
-            .column('BC Time', 15, [clc.cyan])
-            .column('CA Time', 15, [clc.cyan])
-            .column('Age', 7, [clc.cyan])
-            .fill()
-            .store();
-
-        // Data
+        let tableData = [ArbDisplay.tableHeaders];
         arbs.forEach(arb => {
-            new CLI.Line(outputBuffer)
-                // ID
-                .column(`${arb.trade.symbol.a}-${arb.trade.symbol.b}-${arb.trade.symbol.c}`, 17)
-
-                // Profit
-                .column(`${arb.percent.toFixed(4)}%`, 11)
-
-                // Time of Last Tick
-                .column(`${new Date(arb.times.ab).toLocaleTimeString('en-US')}`, 15)
-                .column(`${new Date(arb.times.bc).toLocaleTimeString('en-US')}`, 15)
-                .column(`${new Date(arb.times.ca).toLocaleTimeString('en-US')}`, 15)
-
-                // Age
-                .column(`${((now - arb.time)/1000).toFixed(2)}`, 7)
-
-                .fill()
-                .store();
+            tableData.push([
+                `${arb.trade.symbol.a}-${arb.trade.symbol.b}-${arb.trade.symbol.c}`,
+                `${arb.percent.toFixed(4)}%`,
+                `${new Date(arb.times.ab).toLocaleTimeString('en-US')}`,
+                `${new Date(arb.times.bc).toLocaleTimeString('en-US')}`,
+                `${new Date(arb.times.ca).toLocaleTimeString('en-US')}`,
+                `${((now - arb.time)/1000).toFixed(2)}`
+            ]);
         });
 
-        outputBuffer.output();
+        ArbDisplay.table.setData(tableData);
+        ArbDisplay.screen.render();
     }
 
 };
