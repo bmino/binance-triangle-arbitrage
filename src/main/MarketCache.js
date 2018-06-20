@@ -8,7 +8,13 @@ let MarketCache = {
     arbs: {},
 
     getTickerArray() {
-        return Object.keys(MarketCache.tickers);
+        let tickers  = new Set();
+        MarketCache.relationships.forEach(obj => {
+            tickers.add(obj.ab.ticker);
+            tickers.add(obj.bc.ticker);
+            tickers.add(obj.ca.ticker);
+        });
+        return Array.from(tickers);
     },
 
     getDepthCache() {
