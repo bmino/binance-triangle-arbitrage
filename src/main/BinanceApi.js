@@ -1,13 +1,4 @@
-const binance = require('node-binance-api');
-
-if (process.env.BINANCE_API_KEY && process.env.BINANCE_API_SECRET) {
-    binance.options({
-        APIKEY: process.env.BINANCE_API_KEY,
-        APISECRET: process.env.BINANCE_API_SECRET,
-        useServerTime: true,
-        test: true
-    });
-}
+const binance = require('node-binance-api')();
 
 let BinanceApi = {
     exchangeInfo() {

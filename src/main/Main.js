@@ -9,7 +9,13 @@ const ArbDisplay = require('./ArbDisplay');
 const BinanceApi = require('./BinanceApi');
 const MarketCalculation = require('./MarketCalculation');
 const CONFIG = require('../../config/live.config');
-
+const API_CONFIG = require('../../config/api');
+const binance = require('node-binance-api')().options({
+    APIKEY: API_CONFIG.BINANCE_API_KEY,
+    APISECRET: API_CONFIG.BINANCE_API_SECRET,
+    useServerTime: true,
+    test: true
+});
 
 // Set up symbols and tickers
 BinanceApi.exchangeInfo()

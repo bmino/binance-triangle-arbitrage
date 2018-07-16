@@ -1,4 +1,4 @@
-const binance = require('node-binance-api');
+const binance = require('node-binance-api')();
 
 let MarketCache = {
     symbols: [],
