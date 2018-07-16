@@ -1,0 +1,4 @@
+module.exports = {
+    BINANCE_API_KEY: 'EXAMPLE_KEY',
+    BINANCE_API_SECRET: 'EXAMPLE_SECRET'
+};
