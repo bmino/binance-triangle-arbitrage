@@ -6,6 +6,18 @@
 
 This app monitors the [Binance](https://www.binance.com) cryptocurrency exchange in search of triangle arbitrage opportunities.
 
+### The HUD
+The HUD is the chart displayed above. It can be painted at a configurable interval to show snapshots of currently detected
+arbitrage opportunities.
+
+#### Reading the HUD
+* **Trade** - Symbols involved in the triangle arbitrage. The first must be converted into the second, which must be converted into the third, and then back to the first.
+* **Profit** - Percent profit or loss from executing the triangle arbitrage. This does not include trading fees.
+* **AB Time** - Timestamp of the most recent market update for the ticker relating the first and second symbols in the arbitrage.
+* **BC Time** - Timestamp of the most recent market update for the ticker relating the second and third symbols in the arbitrage.
+* **CA Time** - Timestamp of the most recent market update for the ticker relating the third and first symbols in the arbitrage.
+* **Age** - Time in seconds since the least recently updated market ticker involved in the triangle arbitrage.
+
 
 ## Getting Started
 
