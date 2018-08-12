@@ -56,7 +56,7 @@ function calculateArbitrage() {
         .on('error',  console.error)
         .on('done', (job, calculated) => {
             if (calculated) {
-                MarketCache.arbs[calculated.trade.id] = calculated;
+                MarketCache.arbs[calculated.id] = calculated;
             }
         });
 

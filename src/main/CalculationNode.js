@@ -19,6 +19,7 @@ module.exports = function(inputs, done) {
 
 function calculate(investmentA, trade, MarketCache) {
     let calculated = {
+        id: `${trade.symbol.a}-${trade.symbol.b}-${trade.symbol.c}`,
         start: {
             total: investmentA,
             market: 0,
@@ -39,7 +40,6 @@ function calculate(investmentA, trade, MarketCache) {
             market: 0,
             dust: 0
         },
-        trade: trade,
         time: Math.min(MarketCache.depths[trade.ab.ticker].time, MarketCache.depths[trade.bc.ticker].time, MarketCache.depths[trade.ca.ticker].time),
         times: {
             ab: MarketCache.depths[trade.ab.ticker].time,

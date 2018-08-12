@@ -49,7 +49,7 @@ let ArbDisplay = {
         let tableData = [ArbDisplay.headers.arb];
         arbs.forEach(arb => {
             tableData.push([
-                `${arb.trade.symbol.a}-${arb.trade.symbol.b}-${arb.trade.symbol.c}`,
+                `${arb.id}`,
                 `${arb.percent.toFixed(4)}%`,
                 `${new Date(arb.times.ab).toLocaleTimeString('en-US')}`,
                 `${new Date(arb.times.bc).toLocaleTimeString('en-US')}`,
