@@ -4,7 +4,7 @@
   "private": true,
   "engines": {
     "node": "9.11.2",
-    "npm": "6.1.0"
+    "npm": "6.3.0"
   },
   "scripts": {
     "start": "node src/main/Main.js",
@@ -13,7 +13,8 @@
   "dependencies": {
     "blessed": "^0.1.81",
     "node-binance-api": "^0.8.1",
-    "threads": "^0.11.0"
+    "threads": "^0.11.0",
+    "winston": "^3.0.0"
   },
   "devDependencies": {}
 }

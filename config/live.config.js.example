@@ -22,5 +22,9 @@ module.exports = {
     HUD_REFRESH_INTERVAL: 200,
 
     // Number of arbs shown on the HUD
-    HUD_ARB_COUNT: 10
+    HUD_ARB_COUNT: 10,
+
+    LOGGING: {
+        PROFIT_THRESHOLD: 0.00
+    }
 };

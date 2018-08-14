@@ -4,6 +4,14 @@ threads.config.set({
         node: __dirname
     }
 });
+const winston = require('winston');
+const logger = winston.createLogger({
+    level: 'info',
+    format: winston.format.printf(info => info.message),
+    transports: [
+        new winston.transports.File({ filename: `${__dirname}/../../logs/research.txt` })
+    ]
+});
 const MarketCache = require('./MarketCache');
 const ArbDisplay = require('./ArbDisplay');
 const BinanceApi = require('./BinanceApi');
@@ -55,9 +63,11 @@ function calculateArbitrage() {
         .run('CalculationNode.js')
         .on('error',  console.error)
         .on('done', (job, calculated) => {
-            if (calculated) {
-                MarketCache.arbs[calculated.id] = calculated;
-            }
+            if (!calculated) return;
+            MarketCache.arbs[calculated.id] = calculated;
+            if (!CONFIG.LOGGING || CONFIG.LOGGING.PROFIT_THRESHOLD === undefined) return;
+            if (calculated.percent < CONFIG.LOGGING.PROFIT_THRESHOLD) return;
+            logger.info(`${calculated.id}: ${calculated.percent.toFixed(3)}% on ${new Date(calculated.time).toLocaleString()} - aged ${((new Date() - calculated.time)/1000).toFixed(2)} seconds`)
         });
 
     MarketCache.relationships.forEach(relationship => {
@@ -67,7 +77,7 @@ function calculateArbitrage() {
             maxInvestment: CONFIG.INVESTMENT.MAX,
             stepSize: CONFIG.INVESTMENT.STEP,
             MarketCache: MarketCache.getSubsetFromTickers([relationship.ab.ticker, relationship.bc.ticker, relationship.ca.ticker])
-        })
+        });
     });
 
     pool.on('finished', () => {
