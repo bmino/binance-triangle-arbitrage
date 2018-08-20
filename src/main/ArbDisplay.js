@@ -54,7 +54,7 @@ let ArbDisplay = {
                 `${new Date(arb.times.ab).toLocaleTimeString('en-US')}`,
                 `${new Date(arb.times.bc).toLocaleTimeString('en-US')}`,
                 `${new Date(arb.times.ca).toLocaleTimeString('en-US')}`,
-                `${((now - arb.time)/1000).toFixed(2)}`
+                `${((now - Math.min(arb.times.ab, arb.times.bc, arb.times.ca))/1000).toFixed(2)}`
             ]);
         });
 

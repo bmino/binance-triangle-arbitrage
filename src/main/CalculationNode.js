@@ -40,7 +40,6 @@ function calculate(investmentA, trade, MarketCache) {
             market: 0,
             dust: 0
         },
-        time: Math.min(MarketCache.depths[trade.ab.ticker].time, MarketCache.depths[trade.bc.ticker].time, MarketCache.depths[trade.ca.ticker].time),
         times: {
             ab: MarketCache.depths[trade.ab.ticker].time,
             bc: MarketCache.depths[trade.bc.ticker].time,
@@ -115,9 +114,7 @@ function orderBookConversion(amountFrom, symbolFrom, symbolTo, ticker, MarketCac
                 amountTo += quantity * rate;
             } else {
                 // Last fill
-                amountTo += amountFrom * rate;
-                amountFrom = 0;
-                return amountTo;
+                return amountTo + amountFrom * rate;
             }
         }
     } else {
@@ -131,9 +128,7 @@ function orderBookConversion(amountFrom, symbolFrom, symbolTo, ticker, MarketCac
                 amountTo += quantity;
             } else {
                 // Last fill
-                amountTo += amountFrom / rate;
-                amountFrom = 0;
-                return amountTo;
+                return amountTo + amountFrom / rate;
             }
         }
     }
@@ -145,8 +140,7 @@ function orderBookConversion(amountFrom, symbolFrom, symbolTo, ticker, MarketCac
 
 function calculateDustless(ticker, amount, MarketCache) {
     let amountString = amount.toString();
-    let dustQty = MarketCache.tickers[ticker].dustQty;
-    let decimals = dustQty === 1 ? 0 : dustQty.toString().indexOf('1') - 1;
+    let decimals = MarketCache.tickers[ticker].dustDecimals;
     let decimalIndex = amountString.indexOf('.');
     if (decimalIndex === -1) {
         // Integer
