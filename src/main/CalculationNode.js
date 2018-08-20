@@ -1,17 +1,13 @@
-module.exports = function(inputs, done) {
+module.exports = function(inputs, done, progress) {
     const {trade, minInvestment, maxInvestment, stepSize, MarketCache} = inputs;
     let quantity, calculation;
     let bestCalculation = null;
 
-    try {
-        for (quantity = minInvestment || stepSize; quantity <= maxInvestment; quantity += stepSize) {
-            calculation = calculate(quantity, trade, MarketCache);
-            if (!bestCalculation || calculation.percent > bestCalculation.percent) {
-                bestCalculation = calculation;
-            }
+    for (quantity = minInvestment || stepSize; quantity <= maxInvestment; quantity += stepSize) {
+        calculation = calculate(quantity, trade, MarketCache);
+        if (!bestCalculation || calculation.percent > bestCalculation.percent) {
+            bestCalculation = calculation;
         }
-    } catch(e) {
-        //console.error(e.message);
     }
 
     done(bestCalculation);
