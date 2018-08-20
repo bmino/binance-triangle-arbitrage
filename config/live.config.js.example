@@ -19,12 +19,14 @@ module.exports = {
     SCAN_DELAY: 200,
 
     // Interval (ms) at which the HUD is refreshed
+    // Disable: set to 0
     HUD_REFRESH_INTERVAL: 200,
 
     // Number of arbs shown on the HUD
     HUD_ARB_COUNT: 10,
 
     LOGGING: {
+        // Minimum profit required to log an opportunity
         PROFIT_THRESHOLD: 0.00
     }
 };
