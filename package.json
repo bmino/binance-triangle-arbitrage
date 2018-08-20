@@ -1,20 +1,19 @@
 {
   "name": "binance-triangle-arbitrage",
-  "version": "3.4.0",
+  "version": "3.5.0",
   "private": true,
   "engines": {
     "node": "9.11.2",
-    "npm": "6.3.0"
+    "npm": "6.4.0"
   },
   "scripts": {
-    "start": "node src/main/Main.js",
-    "live": "node src/main/Main.js"
+    "start": "node src/main/Main.js"
   },
   "dependencies": {
     "blessed": "^0.1.81",
     "node-binance-api": "^0.8.1",
-    "threads": "^0.11.0",
-    "winston": "^3.0.0"
+    "simple-node-logger": "^0.93.37",
+    "threads": "^0.12.0"
   },
   "devDependencies": {}
 }

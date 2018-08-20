@@ -6,11 +6,11 @@
 
 This app monitors the [Binance](https://www.binance.com) cryptocurrency exchange in search of triangle arbitrage opportunities.
 
-### The HUD
+## The HUD
 The HUD is the chart displayed above. It can be painted at a configurable interval to show snapshots of currently detected
-arbitrage opportunities.
+arbitrage opportunities. To disable the HUD, set `HUD_REFRESH_INTERVAL` to 0.
 
-#### Reading the HUD
+### Reading the HUD
 * **Trade** - Symbols involved in the triangle arbitrage. The first must be converted into the second, which must be converted into the third, and then back to the first.
 * **Profit** - Percent profit or loss from executing the triangle arbitrage. This does not include trading fees.
 * **AB Time** - Timestamp of the most recent market update for the ticker relating the first and second symbols in the arbitrage.
@@ -21,45 +21,47 @@ arbitrage opportunities.
 
 ## Getting Started
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
+These instructions will get a copy of the project up and running on your local machine for development and testing purposes.
 
-
-### Installing Prerequisites
+### Install Prerequisites
 
 The following dependencies are required to run an instance:
 
 1. NodeJS
 2. Npm
 
-Install NodeJS and npm
-
-```
-brew install node
-```
-
-
-## Deployment
-
-Clone the code from github
-```
-git clone https://github.com/bmino/binance-triangle-arbitrage.git
-```
-
-Build the project from the root directory
-```
-npm install
-```
-
-Start the application
-```
-npm run live
-```
-
-
-## Configuration
+### Configuration
 
 All configuration is done inside the `/config` directory.
-To setup your configuration for the first time, duplicate each of the `*.example` files, remove the ".example" extension, and fill in the appropriate information.
+To setup your configuration for the first time, duplicate each of the `*.example` files and remove the ".example" extension.
+This will need to be redone after each major version update where the configuration has changed.
+
+### Obtain the Codebase
+
+* Clone from github
+    ```
+    git clone https://github.com/bmino/binance-triangle-arbitrage.git
+    ```
+* Download a zip of the [latest release](https://github.com/bmino/binance-triangle-arbitrage/releases/latest)
+
+### Deployment
+
+1. Install project dependencies
+    ```
+    cd binance-triangle-arbitrage
+    npm install
+    ```
+
+2. Start the application
+    ```
+    npm start
+    ```
+
+
+## Logging
+All logs are stored in the `/logs` directory.
+* **research.log** - Historical findings about prices.
+* **performance.log** - Data about performance and speed.
 
 
 ## Authors
@@ -72,3 +74,4 @@ See also the list of [contributors](https://github.com/bmino/binance-triangle-ar
 ## License
 
 This project is licensed under mit
+
