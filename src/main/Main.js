@@ -55,7 +55,7 @@ function calculateArbitrage() {
             minInvestment: CONFIG.INVESTMENT.MIN,
             maxInvestment: CONFIG.INVESTMENT.MAX,
             stepSize: CONFIG.INVESTMENT.STEP,
-            MarketCache: MarketCache.getSubsetFromTickers([relationship.ab.ticker, relationship.bc.ticker, relationship.ca.ticker])
+            marketCache: MarketCache.getSubsetFromTickers([relationship.ab.ticker, relationship.bc.ticker, relationship.ca.ticker])
         })
             .on('error', error => errorCount++)
             .on('done', handleDone);

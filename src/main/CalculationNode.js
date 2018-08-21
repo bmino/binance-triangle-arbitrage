@@ -1,10 +1,10 @@
 module.exports = function(inputs, done, progress) {
-    const {trade, minInvestment, maxInvestment, stepSize, MarketCache} = inputs;
+    const {trade, minInvestment, maxInvestment, stepSize, marketCache} = inputs;
     let quantity, calculation;
     let bestCalculation = null;
 
     for (quantity = minInvestment || stepSize; quantity <= maxInvestment; quantity += stepSize) {
-        calculation = calculate(quantity, trade, MarketCache);
+        calculation = calculate(quantity, trade, marketCache);
         if (!bestCalculation || calculation.percent > bestCalculation.percent) {
             bestCalculation = calculation;
         }
@@ -13,7 +13,7 @@ module.exports = function(inputs, done, progress) {
     done(bestCalculation);
 };
 
-function calculate(investmentA, trade, MarketCache) {
+function calculate(investmentA, trade, marketCache) {
     let calculated = {
         id: `${trade.symbol.a}-${trade.symbol.b}-${trade.symbol.c}`,
         start: {
@@ -37,9 +37,9 @@ function calculate(investmentA, trade, MarketCache) {
             dust: 0
         },
         times: {
-            ab: MarketCache.depths[trade.ab.ticker].time,
-            bc: MarketCache.depths[trade.bc.ticker].time,
-            ca: MarketCache.depths[trade.ca.ticker].time
+            ab: marketCache.depths[trade.ab.ticker].time,
+            bc: marketCache.depths[trade.bc.ticker].time,
+            ca: marketCache.depths[trade.ca.ticker].time
         },
         a: 0,
         b: 0,
@@ -47,40 +47,40 @@ function calculate(investmentA, trade, MarketCache) {
     };
 
     if (trade.ab.method === 'Buy') {
-        calculated.ab.total = orderBookConversion(calculated.start.total, trade.symbol.a, trade.symbol.b, trade.ab.ticker, MarketCache);
-        calculated.ab.market = calculateDustless(trade.ab.ticker, calculated.ab.total, MarketCache);
+        calculated.ab.total = orderBookConversion(calculated.start.total, trade.symbol.a, trade.symbol.b, trade.ab.ticker, marketCache);
+        calculated.ab.market = calculateDustless(trade.ab.ticker, calculated.ab.total, marketCache);
         calculated.b = calculated.ab.market;
-        calculated.start.market = orderBookConversion(calculated.ab.market, trade.symbol.b, trade.symbol.a, trade.ab.ticker, MarketCache);
+        calculated.start.market = orderBookConversion(calculated.ab.market, trade.symbol.b, trade.symbol.a, trade.ab.ticker, marketCache);
     } else {
         calculated.ab.total = calculated.start.total;
-        calculated.ab.market = calculateDustless(trade.ab.ticker, calculated.ab.total, MarketCache);
-        calculated.b = orderBookConversion(calculated.ab.market, trade.symbol.a, trade.symbol.b, trade.ab.ticker, MarketCache);
+        calculated.ab.market = calculateDustless(trade.ab.ticker, calculated.ab.total, marketCache);
+        calculated.b = orderBookConversion(calculated.ab.market, trade.symbol.a, trade.symbol.b, trade.ab.ticker, marketCache);
         calculated.start.market = calculated.ab.market;
     }
     calculated.ab.dust = 0;
     calculated.ab.volume = calculated.ab.market / (trade.ab.volume / 24);
 
     if (trade.bc.method === 'Buy') {
-        calculated.bc.total = orderBookConversion(calculated.b, trade.symbol.b, trade.symbol.c, trade.bc.ticker, MarketCache);
-        calculated.bc.market = calculateDustless(trade.bc.ticker, calculated.bc.total, MarketCache);
+        calculated.bc.total = orderBookConversion(calculated.b, trade.symbol.b, trade.symbol.c, trade.bc.ticker, marketCache);
+        calculated.bc.market = calculateDustless(trade.bc.ticker, calculated.bc.total, marketCache);
         calculated.c = calculated.bc.market;
     } else {
         calculated.bc.total = calculated.b;
-        calculated.bc.market = calculateDustless(trade.bc.ticker, calculated.bc.total, MarketCache);
-        calculated.c = orderBookConversion(calculated.bc.market, trade.symbol.b, trade.symbol.c, trade.bc.ticker, MarketCache);
+        calculated.bc.market = calculateDustless(trade.bc.ticker, calculated.bc.total, marketCache);
+        calculated.c = orderBookConversion(calculated.bc.market, trade.symbol.b, trade.symbol.c, trade.bc.ticker, marketCache);
     }
     calculated.bc.dust = calculated.bc.total - calculated.bc.market;
     calculated.bc.volume = calculated.bc.market / (trade.bc.volume / 24);
 
 
     if (trade.ca.method === 'Buy') {
-        calculated.ca.total = orderBookConversion(calculated.c, trade.symbol.c, trade.symbol.a, trade.ca.ticker, MarketCache);
-        calculated.ca.market = calculateDustless(trade.ca.ticker, calculated.ca.total, MarketCache);
+        calculated.ca.total = orderBookConversion(calculated.c, trade.symbol.c, trade.symbol.a, trade.ca.ticker, marketCache);
+        calculated.ca.market = calculateDustless(trade.ca.ticker, calculated.ca.total, marketCache);
         calculated.a = calculated.ca.market;
     } else {
         calculated.ca.total = calculated.c;
-        calculated.ca.market = calculateDustless(trade.ca.ticker, calculated.ca.total, MarketCache);
-        calculated.a = orderBookConversion(calculated.ca.market, trade.symbol.c, trade.symbol.a, trade.ca.ticker, MarketCache);
+        calculated.ca.market = calculateDustless(trade.ca.ticker, calculated.ca.total, marketCache);
+        calculated.a = orderBookConversion(calculated.ca.market, trade.symbol.c, trade.symbol.a, trade.ca.ticker, marketCache);
     }
     calculated.ca.dust = calculated.ca.total - calculated.ca.market;
     calculated.ca.volume = calculated.ca.market / (trade.ca.volume / 24);
@@ -93,9 +93,9 @@ function calculate(investmentA, trade, MarketCache) {
     return calculated;
 }
 
-function orderBookConversion(amountFrom, symbolFrom, symbolTo, ticker, MarketCache) {
+function orderBookConversion(amountFrom, symbolFrom, symbolTo, ticker, marketCache) {
     let i, j, rates, rate, quantity, exchangeableAmount;
-    let orderBook = MarketCache.depths[ticker] || {};
+    let orderBook = marketCache.depths[ticker] || {};
     let amountTo = 0;
 
     if (amountFrom === 0) return 0;
@@ -134,7 +134,7 @@ function orderBookConversion(amountFrom, symbolFrom, symbolTo, ticker, MarketCac
     throw error;
 }
 
-function calculateDustless(ticker, amount, MarketCache) {
+function calculateDustless(ticker, amount, marketCache) {
     const amountString = amount.toString();
     const decimals = marketCache.tickers[ticker].dustDecimals;
     const decimalIndex = amountString.indexOf('.');
