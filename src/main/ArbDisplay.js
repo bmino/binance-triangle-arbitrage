@@ -1,5 +1,5 @@
 const MarketCache = require('./MarketCache');
-const config = require('../../config/live.config');
+const CONFIG = require('../../config/live.config');
 const blessed = require('blessed');
 
 
@@ -44,7 +44,7 @@ let ArbDisplay = {
             ArbDisplay.screen.append(ArbDisplay.objects.arbTable);
         }
 
-        let now = new Date().getTime();
+        const now = new Date().getTime();
 
         let tableData = [ArbDisplay.headers.arb];
         arbs.forEach(arb => {
