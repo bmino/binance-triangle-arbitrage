@@ -27,8 +27,8 @@ These instructions will get a copy of the project up and running on your local m
 
 The following dependencies are required to run an instance:
 
-1. NodeJS
-2. Npm
+1. **NodeJS** - 9.11.2
+2. **Npm** - 6.4.0
 
 ### Configuration
 
