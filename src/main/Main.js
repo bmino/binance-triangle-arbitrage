@@ -57,7 +57,7 @@ function calculateArbitrage() {
             stepSize: CONFIG.INVESTMENT.STEP,
             MarketCache: MarketCache.getSubsetFromTickers([relationship.ab.ticker, relationship.bc.ticker, relationship.ca.ticker])
         })
-            .on('error', (job, error) => errorCount++)
+            .on('error', error => errorCount++)
             .on('done', handleDone);
     });
 
@@ -70,7 +70,7 @@ function calculateArbitrage() {
     });
 }
 
-function handleDone(job, calculated) {
+function handleDone(calculated) {
     if (!calculated) return;
     MarketCache.arbs[calculated.id] = calculated;
     if (!CONFIG.LOGGING || CONFIG.LOGGING.PROFIT_THRESHOLD === undefined) return;
