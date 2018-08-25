@@ -67,7 +67,7 @@ function calculateArbitrage() {
     pool.on('finished', () => {
         const total = MarketCache.relationships.length;
         const completed = total - errorCount;
-        logger.performance.info(`Completed ${completed}/${total} (${((completed/total)*100).toFixed(0)}%) calculations in ${((new Date().getTime() - before)/1000).toFixed(2)} seconds`);
+        logger.performance.info(`Completed ${completed}/${total} (${((completed/total)*100).toFixed(0)}%) calculations in ${new Date().getTime() - before} ms`);
         pool.killAll();
         setTimeout(calculateArbitrage, CONFIG.SCAN_DELAY);
     });
