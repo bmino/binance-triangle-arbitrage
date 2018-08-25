@@ -45,7 +45,7 @@ BinanceApi.exchangeInfo()
 
 function calculateArbitrage() {
     const before = new Date().getTime();
-    const pool = new threads.Pool();
+    const pool = new threads.Pool(CONFIG.CALCULATION_POOL_WORKERS);
     const job = pool.run('CalculationNode.js');
 
     let errorCount = 0;

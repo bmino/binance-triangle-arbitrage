@@ -13,10 +13,13 @@ module.exports = {
     DEPTH_SIZE: 100,
 
     // Delay (ms) between the opening of each depth websocket
-    DEPTH_OPEN_INTERVAL: 100,
+    DEPTH_OPEN_INTERVAL: 50,
 
     // Delay (ms) after calculations are performed before starting another cycle
     SCAN_DELAY: 200,
+
+    // Number of works processing calculations in the job pool
+    CALCULATION_POOL_WORKERS: 1,
 
     // Interval (ms) at which the HUD is refreshed
     // Disable: set to 0
