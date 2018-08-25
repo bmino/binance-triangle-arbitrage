@@ -1,10 +1,8 @@
 module.exports = function(input, done, progress) {
     let before = new Date().getTime();
     const result = fib(input);
-    let after = new Date().getTime();
 
-    progress(after - before);
-    done(result);
+    done(new Date().getTime() - before);
 };
 
 function fib(num) {
