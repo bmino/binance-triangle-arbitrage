@@ -5,14 +5,14 @@ const BinanceApi = require('./BinanceApi');
 let ArbitrageExecution = {
 
     executeCalculatedPosition(calculated) {
-        const oldestUpdateTime = Math.min(calculated.times.ab, calculated.times.bc, calculated.times.ca);
+        const ageInMilliseconds = new Date().getTime() - Math.min(calculated.times.ab, calculated.times.bc, calculated.times.ca);
 
         if (calculated.percent < CONFIG.TRADING.PROFIT_THRESHOLD) return false;
-        if (oldestUpdateTime > CONFIG.TRADING.AGE_THRESHOLD) return false;
+        if (ageInMilliseconds > CONFIG.TRADING.AGE_THRESHOLD) return false;
 
         if (!CONFIG.TRADING.ENABLED) {
             // Would trade if switch was enabled
-            logger.research.info(`${calculated.id}: ${calculated.percent.toFixed(3)}% - aged ${((new Date().getTime() - oldestUpdateTime)/1000).toFixed(2)} seconds`);
+            logger.research.info(`${calculated.id}: ${calculated.percent.toFixed(3)}% - aged ${ageInMilliseconds.toFixed(2)} seconds`);
             return false;
         }
 

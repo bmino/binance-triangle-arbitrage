@@ -12,6 +12,7 @@ let BinanceApi = {
     },
 
     marketBuy(ticker, quantity) {
+        console.log(`Buying ${quantity} ${ticker} @ market price`);
         return new Promise((resolve, reject) => {
             binance.marketBuy(ticker, quantity, (error, response) => {
                 if (error) return reject(error);
@@ -21,6 +22,7 @@ let BinanceApi = {
     },
 
     marketSell(ticker, quantity) {
+        console.log(`Selling ${quantity} ${ticker} @ market price`);
         return new Promise((resolve, reject) => {
             binance.marketSell(ticker, quantity, (error, response) => {
                 if (error) return reject(error);
