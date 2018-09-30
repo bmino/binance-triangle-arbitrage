@@ -1,4 +1,4 @@
-const CONFIG = require('../../config/live.config');
+const CONFIG = require('../../config/config');
 const threads = require('threads');
 threads.config.set({
     basepath: {
