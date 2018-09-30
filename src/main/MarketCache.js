@@ -3,7 +3,6 @@ const binance = require('node-binance-api')();
 let MarketCache = {
     symbols: [],
     tickers: {},
-    volumes: {},
     relationships: [],
     arbs: {},
 

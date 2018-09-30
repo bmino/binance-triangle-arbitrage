@@ -31,13 +31,11 @@ let MarketCalculation = {
 
         if (MarketCache.tickers[a+b]) return {
             method: 'Sell',
-            ticker: a+b,
-            volume: MarketCache.volumes[a+b]
+            ticker: a+b
         };
         if (MarketCache.tickers[b+a]) return {
             method: 'Buy',
-            ticker: b+a,
-            volume: MarketCache.volumes[b+a]
+            ticker: b+a
         };
         return null;
     },

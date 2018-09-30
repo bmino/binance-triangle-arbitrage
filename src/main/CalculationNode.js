@@ -58,7 +58,6 @@ function calculate(investmentA, trade, marketCache) {
         calculated.start.market = calculated.ab.market;
     }
     calculated.ab.dust = 0;
-    calculated.ab.volume = calculated.ab.market / (trade.ab.volume / 24);
 
     if (trade.bc.method === 'Buy') {
         calculated.bc.total = orderBookConversion(calculated.b, trade.symbol.b, trade.symbol.c, trade.bc.ticker, marketCache);
@@ -70,8 +69,6 @@ function calculate(investmentA, trade, marketCache) {
         calculated.c = orderBookConversion(calculated.bc.market, trade.symbol.b, trade.symbol.c, trade.bc.ticker, marketCache);
     }
     calculated.bc.dust = calculated.bc.total - calculated.bc.market;
-    calculated.bc.volume = calculated.bc.market / (trade.bc.volume / 24);
-
 
     if (trade.ca.method === 'Buy') {
         calculated.ca.total = orderBookConversion(calculated.c, trade.symbol.c, trade.symbol.a, trade.ca.ticker, marketCache);
@@ -83,9 +80,6 @@ function calculate(investmentA, trade, marketCache) {
         calculated.a = orderBookConversion(calculated.ca.market, trade.symbol.c, trade.symbol.a, trade.ca.ticker, marketCache);
     }
     calculated.ca.dust = calculated.ca.total - calculated.ca.market;
-    calculated.ca.volume = calculated.ca.market / (trade.ca.volume / 24);
-
-    calculated.volume = Math.max(calculated.ab.volume, calculated.bc.volume, calculated.ca.volume) * 100;
 
     calculated.percent = (calculated.a - calculated.start.total) / calculated.start.total * 100;
     if (!calculated.percent) calculated.percent = 0;
