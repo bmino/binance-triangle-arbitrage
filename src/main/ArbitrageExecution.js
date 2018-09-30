@@ -1,5 +1,6 @@
 const CONFIG = require('../../config/live.config');
 const logger = require('./Loggers');
+const BinanceApi = require('./BinanceApi');
 
 let ArbitrageExecution = {
 
@@ -15,12 +16,22 @@ let ArbitrageExecution = {
             return false;
         }
 
-        // TODO: Execute arbitrage position
-        // TODO: Calculate profit
-        // TODO: Log results
-
+        return Promise.all([
+            marketBuyOrSell(calculated.trade.ab.method)(calculated.trade.ab.ticker, calculated.ab.market),
+            marketBuyOrSell(calculated.trade.bc.method)(calculated.trade.bc.ticker, calculated.bc.market),
+            marketBuyOrSell(calculated.trade.ca.method)(calculated.trade.ca.ticker, calculated.ca.market)
+        ])
+            .then(results => {
+                // TODO: Calculate profit
+                // TODO: Log results
+            })
+            .catch(console.error);
     }
 
 };
+
+function marketBuyOrSell(method) {
+    return method === 'Buy' ? BinanceApi.marketBuy : BinanceApi.marketSell;
+}
 
 module.exports = ArbitrageExecution;

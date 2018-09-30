@@ -16,6 +16,7 @@ module.exports = function(inputs, done, progress) {
 function calculate(investmentA, trade, marketCache) {
     let calculated = {
         id: `${trade.symbol.a}-${trade.symbol.b}-${trade.symbol.c}`,
+        trade: trade,
         start: {
             total: investmentA,
             market: 0,
