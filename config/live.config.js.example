@@ -1,11 +1,26 @@
 module.exports = {
-    // Base symbol which all triangle trades must start and end with
-    BASE_SYMBOL: 'BTC',
 
     INVESTMENT: {
+        // Symbol which all triangle trades must start and end with
+        BASE: 'BTC',
         MIN: 0.1,
         MAX: 0.3,
         STEP: 0.001
+    },
+
+    TRADING: {
+        // Execute identified arbitrage positions when found
+        ENABLED: false,
+
+        // Minimum profit (percent)
+        PROFIT_THRESHOLD: 0.5,
+
+        // Maximum time (seconds) since the oldest depth tick involved in the position
+        AGE_THRESHOLD: 0.5,
+
+        // Symbols to include when searching for triangle arbitrage
+        // Defaults to all symbols when left empty
+        WHITELIST: []
     },
 
     // Order book depth to maintain on each ticker
@@ -16,7 +31,7 @@ module.exports = {
     DEPTH_OPEN_INTERVAL: 50,
 
     // Delay (ms) after calculations are performed before starting another cycle
-    SCAN_DELAY: 200,
+    SCAN_DELAY: 50,
 
     // Number of works processing calculations in the job pool
     CALCULATION_POOL_WORKERS: 1,
@@ -26,10 +41,6 @@ module.exports = {
     HUD_REFRESH_INTERVAL: 200,
 
     // Number of arbs shown on the HUD
-    HUD_ARB_COUNT: 10,
+    HUD_ARB_COUNT: 10
 
-    LOGGING: {
-        // Minimum profit required to log an opportunity
-        PROFIT_THRESHOLD: 0.00
-    }
 };

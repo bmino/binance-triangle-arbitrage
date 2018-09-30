@@ -1,3 +1,4 @@
+const CONFIG = require('../../config/live.config');
 const threads = require('threads');
 threads.config.set({
     basepath: {
@@ -10,7 +11,7 @@ const MarketCache = require('./MarketCache');
 const ArbDisplay = require('./ArbDisplay');
 const BinanceApi = require('./BinanceApi');
 const MarketCalculation = require('./MarketCalculation');
-const CONFIG = require('../../config/live.config');
+const ArbitrageExecution = require('./ArbitrageExecution');
 
 // Set up symbols and tickers
 BinanceApi.exchangeInfo()
@@ -21,6 +22,7 @@ BinanceApi.exchangeInfo()
         // Extract Symbols and Tickers
         data.symbols.forEach(function (symbolObj) {
             if (symbolObj.status !== 'TRADING') return;
+            if (CONFIG.TRADING.WHITELIST.length > 0 && !CONFIG.TRADING.WHITELIST.includes(symbolObj.symbol)) return;
             symbols.add(symbolObj.baseAsset);
             symbolObj.dustDecimals = Math.max(symbolObj.filters[1].minQty.indexOf('1') - 1, 0);
             tickers[symbolObj.symbol] = symbolObj;
@@ -29,14 +31,13 @@ BinanceApi.exchangeInfo()
         // Initialize market cache
         MarketCache.symbols = symbols;
         MarketCache.tickers = tickers;
-        MarketCache.relationships = MarketCalculation.getRelationshipsFromSymbol(CONFIG.BASE_SYMBOL);
+        MarketCache.relationships = MarketCalculation.getRelationshipsFromSymbol(CONFIG.INVESTMENT.BASE);
 
         // Listen for depth updates
         return BinanceApi.depthCache(MarketCache.getTickerArray(), CONFIG.DEPTH_SIZE, CONFIG.DEPTH_OPEN_INTERVAL);
     })
     .then(() => {
-        logger.performance.info(`\nRunning on ${os.type()} with ${os.cpus().length} cores @ [${os.cpus().map(cpu => cpu.speed)}] MHz`);
-        if (CONFIG.LOGGING && CONFIG.LOGGING.PROFIT_THRESHOLD !== undefined) logger.research.info(`\nLogging profits > ${CONFIG.LOGGING.PROFIT_THRESHOLD}%`);
+        console.log(`Running on ${os.type()} with ${os.cpus().length} cores @ [${os.cpus().map(cpu => cpu.speed)}] MHz`);
         calculateArbitrage();
         CONFIG.HUD_REFRESH_INTERVAL && setInterval(refreshDisplay, CONFIG.HUD_REFRESH_INTERVAL);
     })
@@ -76,10 +77,7 @@ function calculateArbitrage() {
 function handleDone(calculated) {
     if (!calculated) return;
     MarketCache.arbs[calculated.id] = calculated;
-    if (!CONFIG.LOGGING || CONFIG.LOGGING.PROFIT_THRESHOLD === undefined) return;
-    if (calculated.percent < CONFIG.LOGGING.PROFIT_THRESHOLD) return;
-    const oldestUpdateTime = Math.min(calculated.times.ab, calculated.times.bc, calculated.times.ca);
-    logger.research.info(`${calculated.id}: ${calculated.percent.toFixed(3)}% - aged ${((new Date().getTime() - oldestUpdateTime)/1000).toFixed(2)} seconds`)
+    ArbitrageExecution.executeCalculatedPosition(calculated);
 }
 
 function refreshDisplay() {
