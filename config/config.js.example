@@ -1,5 +1,10 @@
 module.exports = {
 
+    KEYS: {
+        API: undefined,
+        SECRET: undefined
+    },
+
     INVESTMENT: {
         // Symbol which all triangle trades must start and end with
         BASE: 'BTC',

@@ -1,4 +1,10 @@
+const CONFIG = require('../../config/config');
 const binance = require('node-binance-api')();
+binance.options({
+    APIKEY: CONFIG.KEYS.API,
+    APISECRET: CONFIG.KEYS.SECRET,
+    test: true
+});
 
 let BinanceApi = {
     exchangeInfo() {
