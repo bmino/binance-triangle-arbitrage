@@ -13,14 +13,15 @@ const BinanceApi = require('./BinanceApi');
 const MarketCalculation = require('./MarketCalculation');
 const ArbitrageExecution = require('./ArbitrageExecution');
 
-// Set up symbols and tickers
-BinanceApi.exchangeInfo()
-    .then((data) => {
+// Populate initial balances
+ArbitrageExecution.refreshBalances()
+    .then(BinanceApi.exchangeInfo)
+    .then((exchangeInfo) => {
         let symbols = new Set();
         let tickers = [];
 
         // Extract Symbols and Tickers
-        data.symbols.forEach(function (symbolObj) {
+        exchangeInfo.symbols.forEach(function (symbolObj) {
             if (symbolObj.status !== 'TRADING') return;
             if (CONFIG.TRADING.WHITELIST.length > 0 && !CONFIG.TRADING.WHITELIST.includes(symbolObj.symbol)) return;
             symbols.add(symbolObj.baseAsset);

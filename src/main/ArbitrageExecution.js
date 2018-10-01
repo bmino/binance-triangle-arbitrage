@@ -5,6 +5,7 @@ const BinanceApi = require('./BinanceApi');
 let ArbitrageExecution = {
     inProgressIds: new Set(),
     orderHistory: {},
+    balances: {},
 
     executeCalculatedPosition(calculated) {
         const ageInMilliseconds = new Date().getTime() - Math.min(calculated.times.ab, calculated.times.bc, calculated.times.ca);
@@ -36,7 +37,16 @@ let ArbitrageExecution = {
             .catch(console.error)
             .then(() => {
                 ArbitrageExecution.inProgressIds.delete(calculated.id);
+                return ArbitrageExecution.refreshBalances();
             });
+    },
+
+    refreshBalances() {
+        return BinanceApi.getBalances()
+            .then(balances => {
+                return ArbitrageExecution.balances = balances;
+            })
+            .catch(console.error);
     },
 
     mostRecentTradeTime() {
