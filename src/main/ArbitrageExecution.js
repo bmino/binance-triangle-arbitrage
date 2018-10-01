@@ -23,6 +23,7 @@ let ArbitrageExecution = {
         ArbitrageExecution.inProgressIds.add(calculated.id);
         ArbitrageExecution.orderHistory[calculated.id] = new Date().getTime();
 
+        let before = new Date().getTime();
         return Promise.all([
             marketBuyOrSell(calculated.trade.ab.method)(calculated.trade.ab.ticker, calculated.ab.market),
             marketBuyOrSell(calculated.trade.bc.method)(calculated.trade.bc.ticker, calculated.bc.market),
@@ -30,7 +31,7 @@ let ArbitrageExecution = {
         ])
             .then(results => {
                 // TODO: Calculate profit
-                // TODO: Log results
+                console.log(`Executed ${calculated.id} position in ${new Date().getTime() - before} ms`);
             })
             .catch(console.error)
             .then(() => {
