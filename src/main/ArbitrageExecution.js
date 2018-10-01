@@ -4,16 +4,15 @@ const BinanceApi = require('./BinanceApi');
 
 let ArbitrageExecution = {
     inProgressIds: new Set(),
+    orderHistory: {},
 
     executeCalculatedPosition(calculated) {
         const ageInMilliseconds = new Date().getTime() - Math.min(calculated.times.ab, calculated.times.bc, calculated.times.ca);
 
         if (calculated.percent < CONFIG.TRADING.PROFIT_THRESHOLD) return false;
         if (ageInMilliseconds > CONFIG.TRADING.AGE_THRESHOLD) return false;
-        if (ArbitrageExecution.inProgressIds.has(calculated.id)) {
-            console.log(`${calculated.id} already in progress`);
-            return false;
-        }
+        if (ArbitrageExecution.inProgressIds.has(calculated.id)) return false;
+        if (ArbitrageExecution.tradesInXSeconds(10) >= 3) return false;
 
         if (!CONFIG.TRADING.ENABLED) {
             // Would trade if switch was enabled
@@ -22,6 +21,7 @@ let ArbitrageExecution = {
         }
 
         ArbitrageExecution.inProgressIds.add(calculated.id);
+        ArbitrageExecution.orderHistory[calculated.id] = new Date().getTime();
 
         return Promise.all([
             marketBuyOrSell(calculated.trade.ab.method)(calculated.trade.ab.ticker, calculated.ab.market),
@@ -36,6 +36,15 @@ let ArbitrageExecution = {
             .then(() => {
                 ArbitrageExecution.inProgressIds.delete(calculated.id);
             });
+    },
+
+    mostRecentTradeTime() {
+        return Object.values(ArbitrageExecution.orderHistory).reduce((a,b) => Math.max(a,b), 0);
+    },
+
+    tradesInXSeconds(seconds) {
+        let timeFloor = new Date().getTime() - (seconds * 1000);
+        return Object.values(ArbitrageExecution.orderHistory).filter(time => time > timeFloor).length;
     }
 
 };
