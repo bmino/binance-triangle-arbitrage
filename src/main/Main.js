@@ -13,8 +13,15 @@ const BinanceApi = require('./BinanceApi');
 const MarketCalculation = require('./MarketCalculation');
 const ArbitrageExecution = require('./ArbitrageExecution');
 
+if (CONFIG.TRADING.ENABLED) console.log(`WARNING! Order execution is enabled!`);
+else console.log(`Running in research mode.`);
+
 // Populate initial balances
-ArbitrageExecution.refreshBalances()
+BinanceApi.getBalances()
+    .then(balances => {
+        // Initialize balances
+        ArbitrageExecution.balances = balances;
+    })
     .then(BinanceApi.exchangeInfo)
     .then((exchangeInfo) => {
         let symbols = new Set();
@@ -35,10 +42,13 @@ ArbitrageExecution.refreshBalances()
         MarketCache.relationships = MarketCalculation.getRelationshipsFromSymbol(CONFIG.INVESTMENT.BASE);
 
         // Listen for depth updates
+        console.log(`Opening ${tickers.length} depth websockets...`);
         return BinanceApi.depthCache(MarketCache.getTickerArray(), CONFIG.DEPTH_SIZE, CONFIG.DEPTH_OPEN_INTERVAL);
     })
     .then(() => {
         console.log(`Running on ${os.type()} with ${os.cpus().length} cores @ [${os.cpus().map(cpu => cpu.speed)}] MHz`);
+        console.log(`Will execute on opportunities with profit > ${CONFIG.TRADING.PROFIT_THRESHOLD}% and an age < ${CONFIG.TRADING.AGE_THRESHOLD} ms`);
+        console.log(`Will not exceed ${CONFIG.TRADING.EXECUTION_CAP} execution(s)`);
         calculateArbitrage();
         CONFIG.HUD_REFRESH_INTERVAL && setInterval(refreshDisplay, CONFIG.HUD_REFRESH_INTERVAL);
     })
@@ -69,7 +79,7 @@ function calculateArbitrage() {
     pool.on('finished', () => {
         const total = MarketCache.relationships.length;
         const completed = total - errorCount;
-        logger.performance.info(`Completed ${completed}/${total} (${((completed/total)*100).toFixed(0)}%) calculations in ${new Date().getTime() - before} ms`);
+        logger.performance.log(`Completed ${completed}/${total} (${((completed/total)*100).toFixed(0)}%) calculations in ${new Date().getTime() - before} ms`);
         pool.killAll();
         setTimeout(calculateArbitrage, CONFIG.SCAN_DELAY);
     });
