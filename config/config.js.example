@@ -17,11 +17,15 @@ module.exports = {
         // Execute identified arbitrage positions when found
         ENABLED: false,
 
+        // Maximum number of executions to attempt before requiring a restart
+        // Defaults to unlimited when undefined
+        EXECUTION_CAP: undefined,
+
         // Minimum profit (percent)
         PROFIT_THRESHOLD: 0.5,
 
         // Maximum time (ms) since the oldest depth tick involved in the position
-        AGE_THRESHOLD: 500,
+        AGE_THRESHOLD: 400,
 
         // Symbols to include when searching for triangle arbitrage
         // Defaults to all symbols when left empty
