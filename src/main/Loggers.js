@@ -1,4 +1,3 @@
-const simpleNodeLogger = require('simple-node-logger');
 const fs = require('fs');
 const logs = `${__dirname}/../../logs`;
 
@@ -7,7 +6,26 @@ if (!fs.existsSync(logs)){
     fs.mkdirSync(logs);
 }
 
-module.exports = {
-    research: simpleNodeLogger.createSimpleFileLogger(`${logs}/research.log`),
-    performance: simpleNodeLogger.createSimpleFileLogger(`${logs}/performance.log`)
+const options = {flags:'a'};
+const stream = {
+    'performance': fs.createWriteStream(`${logs}/performance.log`, options),
+    'execution': fs.createWriteStream(`${logs}/execution.log`, options)
 };
+
+module.exports = {
+    'performance': {
+        log(data) {
+            return doLog(data, stream.performance);
+        }
+    },
+    'execution': {
+        log(data) {
+            return doLog(data, stream.execution);
+        }
+    }
+};
+
+function doLog(data, stream) {
+    if (typeof data === 'object') return stream.write(`${JSON.stringify(data)}\n`);
+    else return stream.write(`${data}\n`);
+}
