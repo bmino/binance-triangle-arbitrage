@@ -26,6 +26,7 @@ module.exports = {
 };
 
 function doLog(data, stream) {
-    if (typeof data === 'object') return stream.write(`${JSON.stringify(data)}\n`);
-    else return stream.write(`${data}\n`);
+    let timestamp = `${new Date().toLocaleString()}`;
+    if (typeof data === 'object') return stream.write(`${timestamp} | ${JSON.stringify(data)}\n`);
+    else return stream.write(`${timestamp} | ${data}\n`);
 }
