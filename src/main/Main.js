@@ -47,6 +47,7 @@ BinanceApi.getBalances()
     })
     .then(() => {
         console.log(`Running on ${os.type()} with ${os.cpus().length} cores @ [${os.cpus().map(cpu => cpu.speed)}] MHz`);
+        console.log(`Investing up to ${CONFIG.INVESTMENT.MAX} ${CONFIG.INVESTMENT.BASE}`);
         console.log(`Will execute opportunities with profit > ${CONFIG.TRADING.PROFIT_THRESHOLD}% and an age < ${CONFIG.TRADING.AGE_THRESHOLD} ms`);
         console.log(`Will not exceed ${CONFIG.TRADING.EXECUTION_CAP} execution(s)`);
         console.log(`Using ${CONFIG.TRADING.EXECUTION_STRATEGY} strategy`);
