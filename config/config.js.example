@@ -17,6 +17,10 @@ module.exports = {
         // Execute identified arbitrage positions when found
         ENABLED: false,
 
+        // Execution strategy to use
+        // Valid Values: ['Parallel', 'Linear']
+        EXECUTION_STRATEGY: 'Parallel',
+
         // Maximum number of executions to attempt before requiring a restart
         // Defaults to unlimited when undefined
         EXECUTION_CAP: undefined,

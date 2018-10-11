@@ -50,13 +50,16 @@ let BinanceApi = {
         });
     },
 
+    marketBuyOrSell(method) {
+        return method.toUpperCase() === 'BUY' ? BinanceApi.marketBuy : BinanceApi.marketSell;
+    },
+
     listenForUserData(balanceCallback, executionCallback) {
         return binance.websockets.userData(balanceCallback, executionCallback);
     },
 
     depthCache(tickers, limit=100, delay=200) {
         let chain;
-
         tickers.forEach(ticker => {
             let promise = () => new Promise((resolve, reject) => {
                 binance.websockets.depthCache(ticker, processDepth, limit);

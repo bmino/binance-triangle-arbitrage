@@ -26,9 +26,9 @@ let ArbitrageExecution = {
         ArbitrageExecution.orderHistory[calculated.id] = new Date().getTime();
 
         let before = new Date().getTime();
-        return ArbitrageExecution.asyncExecutionStrategy(calculated)
+        return ArbitrageExecution.getExecutionStrategy()(calculated)
             .then(results => {
-                logger.execution.log(`${CONFIG.TRADING.ENABLED ? 'Executed' : 'Test: Executed'} ${calculated.id} position in ${new Date().getTime() - before} ms`);
+                logger.execution.log(`${CONFIG.TRADING.ENABLED ? 'Executed' : 'Test: Executed'} ${calculated.id} position in ${new Date().getTime() - before} ms\n`);
             })
             .then(BinanceApi.getBalances)
             .then(balances => {
@@ -45,10 +45,8 @@ let ArbitrageExecution = {
     },
 
     compareBalances(b1, b2, symbols = [...Object.keys(b1), ...Object.keys(b2)]) {
-        symbols = new Set(symbols);
         let differences = {};
-
-        symbols.forEach(symbol => {
+        new Set(symbols).forEach(symbol => {
             let before = b1[symbol] ? b1[symbol].available : 0;
             let after = b2[symbol] ? b2[symbol].available : 0;
             let difference = after - before;
@@ -67,16 +65,31 @@ let ArbitrageExecution = {
         return Object.values(ArbitrageExecution.orderHistory).filter(time => time > timeFloor).length;
     },
 
-    asyncExecutionStrategy(calculated) {
-        let marketBuyOrSell = (method) => {
-            return method === 'Buy' ? BinanceApi.marketBuy : BinanceApi.marketSell;
-        };
+    getExecutionStrategy() {
+        switch (CONFIG.TRADING.EXECUTION_STRATEGY.toUpperCase()) {
+            case 'LINEAR':
+                return ArbitrageExecution.linearExecutionStrategy;
+            default:
+                return ArbitrageExecution.parallelExecutionStrategy;
+        }
+    },
 
+    parallelExecutionStrategy(calculated) {
         return Promise.all([
-            marketBuyOrSell(calculated.trade.ab.method)(calculated.trade.ab.ticker, calculated.ab.market),
-            marketBuyOrSell(calculated.trade.bc.method)(calculated.trade.bc.ticker, calculated.bc.market),
-            marketBuyOrSell(calculated.trade.ca.method)(calculated.trade.ca.ticker, calculated.ca.market)
+            BinanceApi.marketBuyOrSell(calculated.trade.ab.method)(calculated.trade.ab.ticker, calculated.ab.market),
+            BinanceApi.marketBuyOrSell(calculated.trade.bc.method)(calculated.trade.bc.ticker, calculated.bc.market),
+            BinanceApi.marketBuyOrSell(calculated.trade.ca.method)(calculated.trade.ca.ticker, calculated.ca.market)
         ]);
+    },
+
+    linearExecutionStrategy(calculated) {
+        return BinanceApi.marketBuyOrSell(calculated.trade.ab.method)(calculated.trade.ab.ticker, calculated.ab.market)
+            .then(() => {
+                return BinanceApi.marketBuyOrSell(calculated.trade.bc.method)(calculated.trade.bc.ticker, calculated.bc.market);
+            })
+            .then(() => {
+                return BinanceApi.marketBuyOrSell(calculated.trade.ca.method)(calculated.trade.ca.ticker, calculated.ca.market);
+            });
     }
 
 };
