@@ -48,13 +48,18 @@ BinanceApi.getBalances()
         return BinanceApi.depthCache(MarketCache.getTickerArray(), CONFIG.DEPTH_SIZE, CONFIG.DEPTH_OPEN_INTERVAL);
     })
     .then(() => {
-        console.log(`Running on ${os.type()} with ${os.cpus().length} cores @ [${os.cpus().map(cpu => cpu.speed)}] MHz`);
+        console.log(`\nRunning on ${os.type()} with ${os.cpus().length} cores @ [${os.cpus().map(cpu => cpu.speed)}] MHz`);
         console.log(`Investing up to ${CONFIG.INVESTMENT.MAX} ${CONFIG.INVESTMENT.BASE}`);
         console.log(`Will execute opportunities with profit > ${CONFIG.TRADING.PROFIT_THRESHOLD}% and an age < ${CONFIG.TRADING.AGE_THRESHOLD} ms`);
         console.log(`Will not exceed ${CONFIG.TRADING.EXECUTION_CAP} execution(s)`);
         console.log(`Using ${CONFIG.TRADING.EXECUTION_STRATEGY} strategy`);
-        calculateArbitrage();
-        CONFIG.HUD_REFRESH_INTERVAL && setInterval(refreshDisplay, CONFIG.HUD_REFRESH_INTERVAL);
+        console.log();
+
+        // Allow time to read output before starting calculation cycles
+        setTimeout(() => {
+            calculateArbitrage();
+            CONFIG.HUD_REFRESH_INTERVAL && setInterval(refreshDisplay, CONFIG.HUD_REFRESH_INTERVAL);
+        }, 3000);
     })
     .catch(console.error);
 
