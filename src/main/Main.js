@@ -26,10 +26,12 @@ BinanceApi.getBalances()
     .then((exchangeInfo) => {
         let symbols = new Set();
         let tickers = [];
+        let tradingSymbolObjects = exchangeInfo.symbols.filter(symbolObj => symbolObj.status === 'TRADING');
+
+        console.log(`Found ${tradingSymbolObjects.length}/${exchangeInfo.symbols.length} currently trading tickers.`);
 
         // Extract Symbols and Tickers
-        exchangeInfo.symbols.forEach(function (symbolObj) {
-            if (symbolObj.status !== 'TRADING') return;
+        tradingSymbolObjects.forEach(symbolObj => {
             if (CONFIG.TRADING.WHITELIST.length > 0 && !CONFIG.TRADING.WHITELIST.includes(symbolObj.symbol)) return;
             symbols.add(symbolObj.baseAsset);
             symbolObj.dustDecimals = Math.max(symbolObj.filters[1].minQty.indexOf('1') - 1, 0);
@@ -42,7 +44,7 @@ BinanceApi.getBalances()
         MarketCache.relationships = MarketCalculation.getRelationshipsFromSymbol(CONFIG.INVESTMENT.BASE);
 
         // Listen for depth updates
-        console.log(`Opening ${tickers.length} depth websockets...`);
+        console.log(`Opening ${MarketCache.getTickerArray().length} depth websockets ...`);
         return BinanceApi.depthCache(MarketCache.getTickerArray(), CONFIG.DEPTH_SIZE, CONFIG.DEPTH_OPEN_INTERVAL);
     })
     .then(() => {
