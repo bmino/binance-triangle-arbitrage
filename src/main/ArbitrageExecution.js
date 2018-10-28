@@ -38,7 +38,7 @@ let ArbitrageExecution = {
                 });
                 ArbitrageExecution.balances = balances;
             })
-            .catch(logger.execution.error)
+            .catch(logger.execution.log)
             .then(() => {
                 ArbitrageExecution.inProgressIds.delete(calculated.id);
             });
