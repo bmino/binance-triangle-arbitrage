@@ -58,16 +58,8 @@ let BinanceApi = {
         return binance.websockets.userData(balanceCallback, executionCallback);
     },
 
-    depthCache(tickers, limit=100, delay=200) {
-        let chain;
-        tickers.forEach(ticker => {
-            let promise = () => new Promise((resolve, reject) => {
-                binance.websockets.depthCache(ticker, processDepth, limit);
-                setTimeout(resolve, delay);
-            });
-            chain = chain ? chain.then(promise) : promise();
-        });
-        return chain;
+    depthCache(tickers, limit=100, stagger=200) {
+        return binance.websockets.depthCacheStaggered(tickers, processDepth, limit, stagger);
     }
 
 };

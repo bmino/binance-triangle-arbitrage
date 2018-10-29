@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "blessed": "^0.1.81",
-    "node-binance-api": "^0.8.1",
+    "node-binance-api": "^0.8.5",
     "threads": "^0.12.0"
   },
   "devDependencies": {}
