@@ -34,7 +34,7 @@ BinanceApi.getBalances()
         tradingSymbolObjects.forEach(symbolObj => {
             if (CONFIG.TRADING.WHITELIST.length > 0 && !CONFIG.TRADING.WHITELIST.includes(symbolObj.baseAsset)) return;
             symbols.add(symbolObj.baseAsset);
-            symbolObj.dustDecimals = Math.max(symbolObj.filters[1].minQty.indexOf('1') - 1, 0);
+            symbolObj.dustDecimals = Math.max(symbolObj.filters.filter(f => f.filterType === 'LOT_SIZE')[0].minQty.indexOf('1') - 1, 0);
             tickers[symbolObj.symbol] = symbolObj;
         });
 
