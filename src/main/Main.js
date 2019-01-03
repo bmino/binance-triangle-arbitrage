@@ -22,7 +22,7 @@ BinanceApi.exchangeInfo()
         data.symbols.forEach(function (symbolObj) {
             if (symbolObj.status !== 'TRADING') return;
             symbols.add(symbolObj.baseAsset);
-            symbolObj.dustDecimals = Math.max(symbolObj.filters[1].minQty.indexOf('1') - 1, 0);
+            symbolObj.dustDecimals = Math.max(symbolObj.filters.filter(f => f.filterType==='LOT_SIZE')[0].minQty.indexOf('1') - 1, 0);
             tickers[symbolObj.symbol] = symbolObj;
         });
 
