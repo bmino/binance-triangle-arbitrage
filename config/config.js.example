@@ -19,13 +19,15 @@ module.exports = {
 
         // Execution strategy to use
         // Valid Values: ['Parallel', 'Linear']
+        // Parallel: all three legs of the triangle arbitrage are executed in parallel
+        // Linear: the three legs of the triangle arbitrage are executed sequentially
         EXECUTION_STRATEGY: 'Parallel',
 
-        // Maximum number of executions to attempt before requiring a restart
+        // Maximum number of executions to attempt before shutting down
         // Defaults to unlimited when undefined
         EXECUTION_CAP: undefined,
 
-        // Minimum profit (percent)
+        // Minimum profit (percent) required to consider executing a position
         PROFIT_THRESHOLD: 0.5,
 
         // Maximum time (ms) since the oldest depth tick involved in the position

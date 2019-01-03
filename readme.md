@@ -28,12 +28,12 @@ These instructions will get a copy of the project up and running on your local m
 The following dependencies are required to run an instance:
 
 1. **NodeJS** - 9.11.2
-2. **Npm** - 6.4.0
+2. **Npm** - 6.4.1
 
 ### Configuration
 
 All configuration is done inside the `/config` directory.
-To setup your configuration for the first time, duplicate each of the `*.example` files and remove the ".example" extension.
+To setup your configuration for the first time, duplicate the `config.js.example` file and remove the ".example" extension.
 This will need to be redone after each major version update where the configuration has changed.
 
 ### Obtain the Codebase
@@ -60,8 +60,8 @@ This will need to be redone after each major version update where the configurat
 
 ## Logging
 All logs are stored in the `/logs` directory.
-* **research.log** - Historical findings about prices.
 * **performance.log** - Data about performance and speed.
+* **execution.log** - Market interactions and profits.
 
 
 ## Authors
