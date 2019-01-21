@@ -130,14 +130,9 @@ function orderBookConversion(amountFrom, symbolFrom, symbolTo, ticker, marketCac
 }
 
 function calculateDustless(ticker, amount, marketCache) {
-    const amountString = amount.toString();
+    if (Number.isInteger(amount)) return amount;
+    const amountString = amount.toFixed(12);
     const decimals = marketCache.tickers[ticker].dustDecimals;
     const decimalIndex = amountString.indexOf('.');
-    if (decimalIndex === -1) {
-        // Integer
-        return amount;
-    } else {
-        // Float
-        return parseFloat(amountString.slice(0, decimalIndex + decimals + 1));
-    }
+    return parseFloat(amountString.slice(0, decimalIndex + decimals + 1));
 }
