@@ -25,16 +25,10 @@ These instructions will get a copy of the project up and running on your local m
 
 ### Install Prerequisites
 
-The following dependencies are required to run an instance:
+The following dependencies are recommended to run an instance:
 
 1. **NodeJS** - 9.11.2
-2. **Npm** - 6.4.1
-
-### Configuration
-
-All configuration is done inside the `/config` directory.
-To setup your configuration for the first time, duplicate the `config.js.example` file and remove the ".example" extension.
-This will need to be redone after each major version update where the configuration has changed.
+2. **Npm** - 6.6.0
 
 ### Obtain the Codebase
 
@@ -43,6 +37,12 @@ This will need to be redone after each major version update where the configurat
     git clone https://github.com/bmino/binance-triangle-arbitrage.git
     ```
 * Download a zip of the [latest release](https://github.com/bmino/binance-triangle-arbitrage/releases/latest)
+
+### Configuration
+
+All configuration is done inside the `/config` directory.
+To setup your configuration for the first time, duplicate the `config.js.example` file and remove the ".example" extension.
+This process will need to be redone after each major version update where the configuration has changed.
 
 ### Deployment
 
