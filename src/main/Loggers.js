@@ -1,32 +1,14 @@
-const fs = require('fs');
-const logs = `${__dirname}/../../logs`;
+const pino = require('pino');
 
-// Ensure Log Directory Exists
-if (!fs.existsSync(logs)){
-    fs.mkdirSync(logs);
-}
-
-const options = {flags:'a'};
-const stream = {
-    'performance': fs.createWriteStream(`${logs}/performance.log`, options),
-    'execution': fs.createWriteStream(`${logs}/execution.log`, options)
+const LOG_DIR = `${__dirname}/../../logs`;
+const PINO_OPTS = {
+    base: null
 };
+
+const now = new Date();
+const LOG_FILE_APPENDIX = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
 
 module.exports = {
-    'performance': {
-        log(data) {
-            return doLog(data, stream.performance);
-        }
-    },
-    'execution': {
-        log(data) {
-            return doLog(data, stream.execution);
-        }
-    }
+    'performance': pino(PINO_OPTS, pino.destination(`${LOG_DIR}/performance.log`)),
+    'execution': pino(PINO_OPTS, pino.destination(`${LOG_DIR}/execution.log`))
 };
-
-function doLog(data, stream) {
-    let timestamp = `${new Date().toLocaleString()}`;
-    if (typeof data === 'object') return stream.write(`${timestamp} | ${JSON.stringify(data)}\n`);
-    else return stream.write(`${timestamp} | ${data}\n`);
-}

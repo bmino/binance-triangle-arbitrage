@@ -13,7 +13,7 @@ let ArbitrageExecution = {
         if (Object.keys(ArbitrageExecution.orderHistory).length >= CONFIG.TRADING.EXECUTION_CAP &&
             ArbitrageExecution.inProgressIds.size === 0) {
             const msg = `Cannot exceed execution cap of ${CONFIG.TRADING.EXECUTION_CAP} execution`;
-            logger.execution.log(msg);
+            logger.execution.info(msg);
             throw new Error(msg);
         }
 
@@ -30,17 +30,17 @@ let ArbitrageExecution = {
         let before = new Date().getTime();
         return ArbitrageExecution.getExecutionStrategy()(calculated)
             .then(results => {
-                logger.execution.log(`${CONFIG.TRADING.ENABLED ? 'Executed' : 'Test: Executed'} ${calculated.id} position in ${new Date().getTime() - before} ms\n`);
+                logger.execution.info(`${CONFIG.TRADING.ENABLED ? 'Executed' : 'Test: Executed'} ${calculated.id} position in ${new Date().getTime() - before} ms`);
             })
             .then(BinanceApi.getBalances)
             .then(balances => {
                 let differences = ArbitrageExecution.compareBalances(ArbitrageExecution.balances, balances);
                 Object.keys(differences).forEach(symbol => {
-                    logger.execution.log(`${symbol} delta: ${differences[symbol]}`);
+                    logger.execution.info(`${symbol} delta: ${differences[symbol]}`);
                 });
                 ArbitrageExecution.balances = balances;
             })
-            .catch(logger.execution.log)
+            .catch(err => logger.execution.error(JSON.parse(err.body).msg))
             .then(() => {
                 ArbitrageExecution.inProgressIds.delete(calculated.id);
             });

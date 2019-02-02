@@ -46,17 +46,17 @@ BinanceApi.getBalances()
         // Ensure enough information is being watched
         if (MarketCache.relationships.length < 3) {
             const msg = `Watching ${MarketCache.relationships.length} relationship(s) is not sufficient to engage in triangle arbitrage`;
-            logger.execution.log(msg);
+            logger.execution.info(msg);
             throw new Error(msg);
         }
         if (MarketCache.symbols.length < 3) {
             const msg = `Watching ${MarketCache.symbols.length} symbol(s) is not sufficient to engage in triangle arbitrage`;
-            logger.execution.log(msg);
+            logger.execution.info(msg);
             throw new Error(msg);
         }
         if (CONFIG.TRADING.WHITELIST.length > 0 && !CONFIG.TRADING.WHITELIST.includes(CONFIG.INVESTMENT.BASE)) {
             const msg = `Whitelist must include the base symbol of ${CONFIG.INVESTMENT.BASE}`;
-            logger.execution.log(msg);
+            logger.execution.info(msg);
             throw new Error(msg);
         }
 
@@ -65,9 +65,10 @@ BinanceApi.getBalances()
         return BinanceApi.depthCache(MarketCache.getTickerArray(), CONFIG.DEPTH_SIZE, CONFIG.DEPTH_OPEN_INTERVAL);
     })
     .then(() => {
-        console.log(`\nRunning on ${os.type()} with ${os.cpus().length} cores @ [${os.cpus().map(cpu => cpu.speed)}] MHz`);
+        console.log();
+        console.log(`Running on ${os.type()} with ${os.cpus().length} cores @ [${os.cpus().map(cpu => cpu.speed)}] MHz`);
         console.log(`Investing up to ${CONFIG.INVESTMENT.MAX} ${CONFIG.INVESTMENT.BASE}`);
-        console.log(`Will execute opportunities with profit > ${CONFIG.TRADING.PROFIT_THRESHOLD}% and an age < ${CONFIG.TRADING.AGE_THRESHOLD} ms`);
+        console.log(`Execution criteria:\n\tProfit > ${CONFIG.TRADING.PROFIT_THRESHOLD}%\n\tAge < ${CONFIG.TRADING.AGE_THRESHOLD} ms`);
         console.log(`Will not exceed ${CONFIG.TRADING.EXECUTION_CAP} execution(s)`);
         console.log(`Using ${CONFIG.TRADING.EXECUTION_STRATEGY} strategy`);
         console.log();
@@ -105,7 +106,7 @@ function calculateArbitrage() {
     pool.on('finished', () => {
         const total = MarketCache.relationships.length;
         const completed = total - errorCount;
-        logger.performance.log(`Completed ${completed}/${total} (${((completed/total)*100).toFixed(0)}%) calculations in ${new Date().getTime() - before} ms`);
+        logger.performance.info(`Completed ${completed}/${total} (${((completed/total)*100).toFixed(0)}%) calculations in ${new Date().getTime() - before} ms`);
         pool.killAll();
         setTimeout(calculateArbitrage, CONFIG.SCAN_DELAY);
     });
