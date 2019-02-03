@@ -124,9 +124,7 @@ function orderBookConversion(amountFrom, symbolFrom, symbolTo, ticker, marketCac
         }
     }
 
-    let error = new Error(`Depth (${rates.length}) too shallow to convert ${amountFrom} ${symbolFrom} to ${symbolTo} using ${ticker}`);
-    error.ticker = ticker;
-    throw error;
+    throw new Error(`Depth (${rates.length}) too shallow to convert ${amountFrom} ${symbolFrom} to ${symbolTo} using ${ticker}`);
 }
 
 function calculateDustless(ticker, amount, marketCache) {

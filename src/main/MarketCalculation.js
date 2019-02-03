@@ -3,13 +3,13 @@ const MarketCache = require('./MarketCache');
 let MarketCalculation = {
 
     relationships(a, b, c) {
-        let ab = MarketCalculation.relationship(a, b);
+        const ab = MarketCalculation.relationship(a, b);
         if (!ab) return;
 
-        let bc = MarketCalculation.relationship(b, c);
+        const bc = MarketCalculation.relationship(b, c);
         if (!bc) return;
 
-        let ca = MarketCalculation.relationship(c, a);
+        const ca = MarketCalculation.relationship(c, a);
         if (!ca) return;
 
         return {
@@ -44,7 +44,7 @@ let MarketCalculation = {
         let relationships = [];
         MarketCache.symbols.forEach(function(symbol2) {
             MarketCache.symbols.forEach(function(symbol3) {
-                let relationship = MarketCalculation.relationships(symbol1, symbol2, symbol3);
+                const relationship = MarketCalculation.relationships(symbol1, symbol2, symbol3);
                 if (relationship) relationships.push(relationship);
             });
         });

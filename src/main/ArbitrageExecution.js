@@ -27,7 +27,7 @@ let ArbitrageExecution = {
         ArbitrageExecution.inProgressIds.add(calculated.id);
         ArbitrageExecution.orderHistory[calculated.id] = new Date().getTime();
 
-        let before = new Date().getTime();
+        const before = new Date().getTime();
         return ArbitrageExecution.getExecutionStrategy()(calculated)
             .then(results => {
                 logger.execution.info(`${CONFIG.TRADING.ENABLED ? 'Executed' : 'Test: Executed'} ${calculated.id} position in ${new Date().getTime() - before} ms`);
@@ -35,7 +35,7 @@ let ArbitrageExecution = {
             })
             .then(BinanceApi.getBalances)
             .then(balances => {
-                let differences = ArbitrageExecution.compareBalances(ArbitrageExecution.balances, balances);
+                const differences = ArbitrageExecution.compareBalances(ArbitrageExecution.balances, balances);
                 Object.keys(differences).forEach(symbol => {
                     logger.execution.info(`${symbol} delta: ${differences[symbol]}`);
                 });
@@ -50,9 +50,9 @@ let ArbitrageExecution = {
     compareBalances(b1, b2, symbols = [...Object.keys(b1), ...Object.keys(b2)]) {
         let differences = {};
         new Set(symbols).forEach(symbol => {
-            let before = b1[symbol] ? b1[symbol].available : 0;
-            let after = b2[symbol] ? b2[symbol].available : 0;
-            let difference = after - before;
+            const before = b1[symbol] ? b1[symbol].available : 0;
+            const after = b2[symbol] ? b2[symbol].available : 0;
+            const difference = after - before;
             if (difference === 0) return;
             differences[symbol] = difference;
         });
@@ -64,7 +64,7 @@ let ArbitrageExecution = {
     },
 
     tradesInXSeconds(seconds) {
-        let timeFloor = new Date().getTime() - (seconds * 1000);
+        const timeFloor = new Date().getTime() - (seconds * 1000);
         return Object.values(ArbitrageExecution.orderHistory).filter(time => time > timeFloor).length;
     },
 
