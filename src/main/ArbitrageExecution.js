@@ -13,17 +13,17 @@ let ArbitrageExecution = {
         if (Object.keys(ArbitrageExecution.orderHistory).length >= CONFIG.TRADING.EXECUTION_CAP &&
             ArbitrageExecution.inProgressIds.size === 0) {
             const msg = `Cannot exceed execution cap of ${CONFIG.TRADING.EXECUTION_CAP} execution`;
-            logger.execution.info(msg);
+            logger.execution.error(msg);
             throw new Error(msg);
         }
 
         if (Object.keys(ArbitrageExecution.orderHistory).length >= CONFIG.TRADING.EXECUTION_CAP) return false;
         if (calculated.percent < CONFIG.TRADING.PROFIT_THRESHOLD) return false;
         if (ageInMilliseconds > CONFIG.TRADING.AGE_THRESHOLD) return false;
-
         if (ArbitrageExecution.inProgressIds.has(calculated.id)) return false;
         if (ArbitrageExecution.tradesInXSeconds(10) >= 3) return false;
 
+        // Register trade id as being executed
         ArbitrageExecution.inProgressIds.add(calculated.id);
         ArbitrageExecution.orderHistory[calculated.id] = new Date().getTime();
 
@@ -31,6 +31,7 @@ let ArbitrageExecution = {
         return ArbitrageExecution.getExecutionStrategy()(calculated)
             .then(results => {
                 logger.execution.info(`${CONFIG.TRADING.ENABLED ? 'Executed' : 'Test: Executed'} ${calculated.id} position in ${new Date().getTime() - before} ms`);
+                logger.execution.debug({trade: calculated});
             })
             .then(BinanceApi.getBalances)
             .then(balances => {
