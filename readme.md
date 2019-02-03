@@ -20,29 +20,25 @@ arbitrage opportunities. To disable the HUD, set `HUD_REFRESH_INTERVAL` to 0.
 
 
 ## Getting Started
-
 These instructions will get a copy of the project up and running on your local machine for development and testing purposes.
 
 ### Install Prerequisites
+The following dependencies are recommended to run an instance:
 
-The following dependencies are required to run an instance:
-
-1. **NodeJS** - 9.11.2
-2. **Npm** - 6.4.0
-
-### Configuration
-
-All configuration is done inside the `/config` directory.
-To setup your configuration for the first time, duplicate each of the `*.example` files and remove the ".example" extension.
-This will need to be redone after each major version update where the configuration has changed.
+1. **NodeJS** - 11.8.0
+2. **Npm** - 6.7.0
 
 ### Obtain the Codebase
-
 * Clone from github
     ```
     git clone https://github.com/bmino/binance-triangle-arbitrage.git
     ```
 * Download a zip of the [latest release](https://github.com/bmino/binance-triangle-arbitrage/releases/latest)
+
+### Configuration
+All configuration is done inside the `/config` directory.
+To setup your configuration for the first time, duplicate the `config.js.example` file and remove the ".example" extension.
+This process must be done before deploying the app for the first time and redone after each major version update where the configuration has changed.
 
 ### Deployment
 
@@ -60,18 +56,24 @@ This will need to be redone after each major version update where the configurat
 
 ## Logging
 All logs are stored in the `/logs` directory.
-* **research.log** - Historical findings about prices.
 * **performance.log** - Data about performance and speed.
+* **execution.log** - Market interactions and profits.
 
 
 ## Authors
-
 * **[Brandon Mino](https://github.com/bmino)** - *Project Lead*
 
 See also the list of [contributors](https://github.com/bmino/binance-triangle-arbitrage/contributors) who participated in this project.
 
 
-## License
+## Donations
+The developers listed above created and currently maintain this project for free.
+We don't expect any compensation nor donations, but if you appreciate our work feel free to donate to the following addresses:
 
+* Bitcoin (BTC): 1KLBb9qzFN19RxaQwD35CQmnYZvW1819XZ
+* Binance Coin (BNB): 0xb046b6991eb1bdc838cae567cff838b542e9f19d
+
+
+## License
 This project is licensed under mit
 

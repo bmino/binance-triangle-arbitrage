@@ -1,8 +1,14 @@
+const CONFIG = require('../../config/config');
+const logger = require('./Loggers');
 const binance = require('node-binance-api')();
+binance.options({
+    APIKEY: CONFIG.KEYS.API,
+    APISECRET: CONFIG.KEYS.SECRET,
+    test: !CONFIG.TRADING.ENABLED
+});
 
 let BinanceApi = {
     exchangeInfo() {
-        console.log('Querying exchangeInfo');
         return new Promise((resolve, reject) => {
             binance.exchangeInfo((error, data) => {
                 if (error) return reject(error);
@@ -11,7 +17,21 @@ let BinanceApi = {
         });
     },
 
+    getBalances() {
+        return new Promise((resolve, reject) => {
+            binance.balance((error, balances) => {
+                if (error) return reject(error);
+                Object.values(balances).forEach(balance => {
+                    balance.available = parseFloat(balance.available);
+                    balance.onOrder = parseFloat(balance.onOrder);
+                });
+                return resolve(balances);
+            });
+        });
+    },
+
     marketBuy(ticker, quantity) {
+        logger.execution.info(`${binance.getOption('test') ? 'Test: Buying' : 'Buying'} ${quantity} ${ticker} @ market price`);
         return new Promise((resolve, reject) => {
             binance.marketBuy(ticker, quantity, (error, response) => {
                 if (error) return reject(error);
@@ -21,6 +41,7 @@ let BinanceApi = {
     },
 
     marketSell(ticker, quantity) {
+        logger.execution.info(`${binance.getOption('test') ? 'Test: Selling' : 'Selling'} ${quantity} ${ticker} @ market price`);
         return new Promise((resolve, reject) => {
             binance.marketSell(ticker, quantity, (error, response) => {
                 if (error) return reject(error);
@@ -29,25 +50,16 @@ let BinanceApi = {
         });
     },
 
+    marketBuyOrSell(method) {
+        return method.toUpperCase() === 'BUY' ? BinanceApi.marketBuy : BinanceApi.marketSell;
+    },
+
     listenForUserData(balanceCallback, executionCallback) {
         return binance.websockets.userData(balanceCallback, executionCallback);
     },
 
-    depthCache(tickers, limit=100, delay=200) {
-        let chain;
-
-        console.log(`Expect ${(tickers.length * delay / 1000).toFixed(0)} seconds to open ${tickers.length} depth websockets.`);
-
-        tickers.forEach(ticker => {
-            let promise = () => {
-                return new Promise((resolve, reject) => {
-                    binance.websockets.depthCache(ticker, processDepth, limit);
-                    setTimeout(resolve, delay);
-                });
-            };
-            chain = chain ? chain.then(promise) : promise();
-        });
-        return chain;
+    depthCache(tickers, limit=100, stagger=200) {
+        return binance.websockets.depthCacheStaggered(tickers, processDepth, limit, stagger);
     }
 
 };

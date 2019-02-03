@@ -1,3 +1,4 @@
+const CONFIG = require('../../config/config');
 const threads = require('threads');
 threads.config.set({
     basepath: {
@@ -10,35 +11,73 @@ const MarketCache = require('./MarketCache');
 const ArbDisplay = require('./ArbDisplay');
 const BinanceApi = require('./BinanceApi');
 const MarketCalculation = require('./MarketCalculation');
-const CONFIG = require('../../config/live.config');
+const ArbitrageExecution = require('./ArbitrageExecution');
 
-// Set up symbols and tickers
-BinanceApi.exchangeInfo()
-    .then((data) => {
+if (CONFIG.TRADING.ENABLED) console.log(`WARNING! Order execution is enabled!`);
+else console.log(`Running in research mode.`);
+
+// Populate initial balances
+BinanceApi.getBalances()
+    .then(balances => {
+        // Initialize balances
+        ArbitrageExecution.balances = balances;
+    })
+    .then(BinanceApi.exchangeInfo)
+    .then((exchangeInfo) => {
         let symbols = new Set();
         let tickers = [];
+        let tradingSymbolObjects = exchangeInfo.symbols.filter(symbolObj => symbolObj.status === 'TRADING');
+
+        console.log(`Found ${tradingSymbolObjects.length}/${exchangeInfo.symbols.length} currently trading tickers.`);
 
         // Extract Symbols and Tickers
-        data.symbols.forEach(function (symbolObj) {
-            if (symbolObj.status !== 'TRADING') return;
+        tradingSymbolObjects.forEach(symbolObj => {
+            if (CONFIG.TRADING.WHITELIST.length > 0 && !CONFIG.TRADING.WHITELIST.includes(symbolObj.baseAsset)) return;
             symbols.add(symbolObj.baseAsset);
-            symbolObj.dustDecimals = Math.max(symbolObj.filters.filter(f => f.filterType==='LOT_SIZE')[0].minQty.indexOf('1') - 1, 0);
+            symbolObj.dustDecimals = Math.max(symbolObj.filters.filter(f => f.filterType === 'LOT_SIZE')[0].minQty.indexOf('1') - 1, 0);
             tickers[symbolObj.symbol] = symbolObj;
         });
 
         // Initialize market cache
         MarketCache.symbols = symbols;
         MarketCache.tickers = tickers;
-        MarketCache.relationships = MarketCalculation.getRelationshipsFromSymbol(CONFIG.BASE_SYMBOL);
+        MarketCache.relationships = MarketCalculation.getRelationshipsFromSymbol(CONFIG.INVESTMENT.BASE);
+
+        // Ensure enough information is being watched
+        if (MarketCache.relationships.length < 3) {
+            const msg = `Watching ${MarketCache.relationships.length} relationship(s) is not sufficient to engage in triangle arbitrage`;
+            logger.execution.error(msg);
+            throw new Error(msg);
+        }
+        if (MarketCache.symbols.length < 3) {
+            const msg = `Watching ${MarketCache.symbols.length} symbol(s) is not sufficient to engage in triangle arbitrage`;
+            logger.execution.error(msg);
+            throw new Error(msg);
+        }
+        if (CONFIG.TRADING.WHITELIST.length > 0 && !CONFIG.TRADING.WHITELIST.includes(CONFIG.INVESTMENT.BASE)) {
+            const msg = `Whitelist must include the base symbol of ${CONFIG.INVESTMENT.BASE}`;
+            logger.execution.error(msg);
+            throw new Error(msg);
+        }
 
         // Listen for depth updates
+        console.log(`Opening ${MarketCache.getTickerArray().length} depth websockets ...`);
         return BinanceApi.depthCache(MarketCache.getTickerArray(), CONFIG.DEPTH_SIZE, CONFIG.DEPTH_OPEN_INTERVAL);
     })
     .then(() => {
-        logger.performance.info(`\nRunning on ${os.type()} with ${os.cpus().length} cores @ [${os.cpus().map(cpu => cpu.speed)}] MHz`);
-        if (CONFIG.LOGGING && CONFIG.LOGGING.PROFIT_THRESHOLD !== undefined) logger.research.info(`\nLogging profits > ${CONFIG.LOGGING.PROFIT_THRESHOLD}%`);
-        calculateArbitrage();
-        CONFIG.HUD_REFRESH_INTERVAL && setInterval(refreshDisplay, CONFIG.HUD_REFRESH_INTERVAL);
+        console.log();
+        console.log(`Running on ${os.type()} with ${os.cpus().length} cores @ [${os.cpus().map(cpu => cpu.speed)}] MHz`);
+        console.log(`Investing up to ${CONFIG.INVESTMENT.MAX} ${CONFIG.INVESTMENT.BASE}`);
+        console.log(`Execution criteria:\n\tProfit > ${CONFIG.TRADING.PROFIT_THRESHOLD}%\n\tAge < ${CONFIG.TRADING.AGE_THRESHOLD} ms`);
+        console.log(`Will not exceed ${CONFIG.TRADING.EXECUTION_CAP} execution(s)`);
+        console.log(`Using ${CONFIG.TRADING.EXECUTION_STRATEGY} strategy`);
+        console.log();
+
+        // Allow time to read output before starting calculation cycles
+        setTimeout(() => {
+            calculateArbitrage();
+            CONFIG.HUD_REFRESH_INTERVAL && setInterval(refreshDisplay, CONFIG.HUD_REFRESH_INTERVAL);
+        }, 3000);
     })
     .catch(console.error);
 
@@ -76,10 +115,7 @@ function calculateArbitrage() {
 function handleDone(calculated) {
     if (!calculated) return;
     MarketCache.arbs[calculated.id] = calculated;
-    if (!CONFIG.LOGGING || CONFIG.LOGGING.PROFIT_THRESHOLD === undefined) return;
-    if (calculated.percent < CONFIG.LOGGING.PROFIT_THRESHOLD) return;
-    const oldestUpdateTime = Math.min(calculated.times.ab, calculated.times.bc, calculated.times.ca);
-    logger.research.info(`${calculated.id}: ${calculated.percent.toFixed(3)}% - aged ${((new Date().getTime() - oldestUpdateTime)/1000).toFixed(2)} seconds`)
+    ArbitrageExecution.executeCalculatedPosition(calculated);
 }
 
 function refreshDisplay() {

@@ -1,5 +1,5 @@
 const MarketCache = require('./MarketCache');
-const CONFIG = require('../../config/live.config');
+const CONFIG = require('../../config/config');
 const blessed = require('blessed');
 
 

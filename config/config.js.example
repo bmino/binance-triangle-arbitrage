@@ -1,0 +1,61 @@
+module.exports = {
+
+    KEYS: {
+        API: undefined,
+        SECRET: undefined
+    },
+
+    INVESTMENT: {
+        // Symbol which all triangle trades must start and end with
+        BASE: 'BTC',
+        MIN: 0.0,
+        MAX: 0.15,
+        STEP: 0.001
+    },
+
+    TRADING: {
+        // Execute identified arbitrage positions when found
+        ENABLED: false,
+
+        // Execution strategy to use
+        // Valid Values: ['Parallel', 'Linear']
+        // Parallel: all three legs of the triangle arbitrage are executed in parallel
+        // Linear: the three legs of the triangle arbitrage are executed sequentially
+        EXECUTION_STRATEGY: 'Parallel',
+
+        // Maximum number of executions to attempt before shutting down
+        // Defaults to unlimited when undefined
+        EXECUTION_CAP: undefined,
+
+        // Minimum profit (percent) required to consider executing a position
+        PROFIT_THRESHOLD: 0.5,
+
+        // Maximum time (ms) since the oldest depth tick involved in the position
+        AGE_THRESHOLD: 400,
+
+        // Symbols to include when searching for triangle arbitrage
+        // Defaults to all symbols when left empty
+        WHITELIST: []
+    },
+
+    // Order book depth to maintain on each ticker
+    // Valid Values: [5, 10, 20, 50, 100, 500, 1000]
+    DEPTH_SIZE: 100,
+
+    // Delay (ms) between the opening of each depth websocket
+    DEPTH_OPEN_INTERVAL: 50,
+
+    // Delay (ms) after calculations are performed before starting another cycle
+    SCAN_DELAY: 50,
+
+    // Number of works processing calculations in the job pool
+    CALCULATION_POOL_WORKERS: 1,
+
+    // Interval (ms) at which the HUD is refreshed
+    // Disable: set to 0
+    HUD_REFRESH_INTERVAL: 200,
+
+    // Number of arbs shown on the HUD
+    HUD_ARB_COUNT: 10
+
+};
