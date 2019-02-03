@@ -14,7 +14,7 @@ let ArbitrageExecution = {
             ArbitrageExecution.inProgressIds.size === 0) {
             const msg = `Cannot exceed execution cap of ${CONFIG.TRADING.EXECUTION_CAP} execution`;
             logger.execution.error(msg);
-            throw new Error(msg);
+            process.exit();
         }
 
         if (Object.keys(ArbitrageExecution.orderHistory).length >= CONFIG.TRADING.EXECUTION_CAP) return false;
