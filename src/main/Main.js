@@ -8,7 +8,7 @@ threads.config.set({
 const logger = require('./Loggers');
 const os = require('os');
 const MarketCache = require('./MarketCache');
-const ArbDisplay = require('./ArbDisplay');
+const HUD = require('./HUD');
 const BinanceApi = require('./BinanceApi');
 const MarketCalculation = require('./MarketCalculation');
 const ArbitrageExecution = require('./ArbitrageExecution');
@@ -118,7 +118,8 @@ function handleDone(calculated) {
     ArbitrageExecution.executeCalculatedPosition(calculated);
 }
 
-function refreshDisplay() {
+function refreshHUD(arbs) {
     const arbsToDisplay = MarketCache.getTopProfitableArbs(CONFIG.HUD_ARB_COUNT);
-    ArbDisplay.displayArbs(arbsToDisplay);
+        .sort((a, b) => a.percent > b.percent ? -1 : 1)
+    HUD.displayArbs(arbsToDisplay);
 }

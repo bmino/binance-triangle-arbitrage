@@ -1,9 +1,8 @@
 const MarketCache = require('./MarketCache');
-const CONFIG = require('../../config/config');
 const blessed = require('blessed');
 
 
-let ArbDisplay = {
+let HUD = {
 
     screen: null,
     objects: {
@@ -11,21 +10,21 @@ let ArbDisplay = {
         depthTable: null
     },
     headers: {
-        arb: ['Trade', 'Profit', 'AB Time', 'BC Time', 'CA Time', 'Age'],
+        arb: ['Trade', 'Profit', 'AB Age', 'BC Age', 'CA Age', 'Age'],
         depth: ['Ticker', 'Bids', 'Asks']
     },
 
     initScreen() {
-        if (ArbDisplay.screen) return;
-        ArbDisplay.screen = blessed.screen({
+        if (HUD.screen) return;
+        HUD.screen = blessed.screen({
             smartCSR: true
         });
     },
 
     displayArbs(arbs) {
-        ArbDisplay.initScreen();
-        if (!ArbDisplay.objects.arbTable) {
-            ArbDisplay.objects.arbTable = blessed.table({
+        HUD.initScreen();
+        if (!HUD.objects.arbTable) {
+            HUD.objects.arbTable = blessed.table({
                 top: '0',
                 left: 'center',
                 width: '50%',
@@ -41,31 +40,31 @@ let ArbDisplay = {
                 }
             });
 
-            ArbDisplay.screen.append(ArbDisplay.objects.arbTable);
+            HUD.screen.append(HUD.objects.arbTable);
         }
 
         const now = new Date().getTime();
 
-        let tableData = [ArbDisplay.headers.arb];
+        let tableData = [HUD.headers.arb];
         arbs.forEach(arb => {
             tableData.push([
                 `${arb.id}`,
                 `${arb.percent.toFixed(4)}%`,
-                `${new Date(arb.times.ab).toLocaleTimeString('en-US')}`,
-                `${new Date(arb.times.bc).toLocaleTimeString('en-US')}`,
-                `${new Date(arb.times.ca).toLocaleTimeString('en-US')}`,
+                `${((now - arb.times.ab)/1000).toFixed(2)}`,
+                `${((now - arb.times.bc)/1000).toFixed(2)}`,
+                `${((now - arb.times.ca)/1000).toFixed(2)}`,
                 `${((now - Math.min(arb.times.ab, arb.times.bc, arb.times.ca))/1000).toFixed(2)}`
             ]);
         });
 
-        ArbDisplay.objects.arbTable.setData(tableData);
-        ArbDisplay.screen.render();
+        HUD.objects.arbTable.setData(tableData);
+        HUD.screen.render();
     },
 
     displayDepths() {
-        ArbDisplay.initScreen();
-        if (!ArbDisplay.objects.depthTable) {
-            ArbDisplay.objects.depthTable = blessed.table({
+        HUD.initScreen();
+        if (!HUD.objects.depthTable) {
+            HUD.objects.depthTable = blessed.table({
                 top: '0',
                 left: 'center',
                 width: '50%',
@@ -81,10 +80,10 @@ let ArbDisplay = {
                 }
             });
 
-            ArbDisplay.screen.append(ArbDisplay.objects.depthTable);
+            HUD.screen.append(HUD.objects.depthTable);
         }
 
-        let tableData = [ArbDisplay.headers.depth];
+        let tableData = [HUD.headers.depth];
         MarketCache.getDepthCache().forEach(depth => {
             tableData.push([
                 `${depth.ticker}`,
@@ -93,10 +92,10 @@ let ArbDisplay = {
             ]);
         });
 
-        ArbDisplay.objects.depthTable.setData(tableData);
-        ArbDisplay.screen.render();
+        HUD.objects.depthTable.setData(tableData);
+        HUD.screen.render();
     }
 
 };
 
-module.exports = ArbDisplay;
+module.exports = HUD;
