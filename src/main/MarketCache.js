@@ -4,7 +4,6 @@ let MarketCache = {
     symbols: [],
     tickers: {},
     relationships: [],
-    arbs: {},
 
     initialize(exchangeInfo, whitelistSymbols, baseSymbol) {
         let symbols = new Set();
@@ -136,18 +135,6 @@ let MarketCache = {
             if (bidCount > threshold || askCount > threshold) outputBuffer.push(`${ticker}: ${bidCount}/${askCount}`);
         });
         return outputBuffer;
-    },
-
-    getArbsAboveProfitPercent(profit) {
-        return Object.values(MarketCache.arbs)
-            .filter(arb => arb.percent > profit)
-            .sort((a, b) => a.percent > b.percent ? -1 : 1);
-    },
-
-    getTopProfitableArbs(count) {
-        return Object.values(MarketCache.arbs)
-            .sort((a, b) => a.percent > b.percent ? -1 : 1)
-            .slice(0, count);
     }
 
 };

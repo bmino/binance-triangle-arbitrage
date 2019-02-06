@@ -50,10 +50,7 @@ ArbitrageExecution.refreshBalances()
         console.log();
 
         // Allow time to read output before starting calculation cycles
-        setTimeout(() => {
-            calculateArbitrage();
-            CONFIG.HUD_REFRESH_INTERVAL && setInterval(refreshDisplay, CONFIG.HUD_REFRESH_INTERVAL);
-        }, 3000);
+        setTimeout(calculateArbitrage, 3000);
     })
     .catch(console.error);
 
@@ -64,6 +61,7 @@ function calculateArbitrage() {
     const job = pool.run('CalculationNode.js');
 
     let errorCount = 0;
+    let results = {};
 
     MarketCache.pruneDepthsAboveThreshold(CONFIG.DEPTH_SIZE);
 
@@ -76,7 +74,11 @@ function calculateArbitrage() {
             marketCache: MarketCache.getSubsetFromTickers([relationship.ab.ticker, relationship.bc.ticker, relationship.ca.ticker])
         })
             .on('error', error => errorCount++)
-            .on('done', handleDone);
+            .on('done', calculated => {
+                if (!calculated) return;
+                if (CONFIG.HUD.ENABLED) results[calculated.id] = calculated;
+                ArbitrageExecution.executeCalculatedPosition(calculated);
+            });
     });
 
     pool.on('finished', () => {
@@ -84,18 +86,15 @@ function calculateArbitrage() {
         const completed = total - errorCount;
         logger.performance.info(`Completed ${completed}/${total} (${((completed/total)*100).toFixed(0)}%) calculations in ${new Date().getTime() - before} ms`);
         pool.killAll();
+        if (CONFIG.HUD.ENABLED) refreshHUD(results);
         setTimeout(calculateArbitrage, CONFIG.SCAN_DELAY);
     });
 }
 
-function handleDone(calculated) {
-    if (!calculated) return;
-    MarketCache.arbs[calculated.id] = calculated;
-    ArbitrageExecution.executeCalculatedPosition(calculated);
-}
 
 function refreshHUD(arbs) {
-    const arbsToDisplay = MarketCache.getTopProfitableArbs(CONFIG.HUD_ARB_COUNT);
+    const arbsToDisplay = Object.values(arbs)
         .sort((a, b) => a.percent > b.percent ? -1 : 1)
+        .slice(0, CONFIG.HUD.ARB_COUNT);
     HUD.displayArbs(arbsToDisplay);
 }
