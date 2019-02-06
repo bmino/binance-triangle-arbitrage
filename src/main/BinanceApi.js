@@ -34,7 +34,7 @@ let BinanceApi = {
         logger.execution.info(`${binance.getOption('test') ? 'Test: Buying' : 'Buying'} ${quantity} ${ticker} @ market price`);
         return new Promise((resolve, reject) => {
             binance.marketBuy(ticker, quantity, (error, response) => {
-                if (error) return reject(error);
+                if (error) return reject(new Error(JSON.parse(error.body).msg));
                 return resolve(response);
             })
         })
@@ -44,7 +44,7 @@ let BinanceApi = {
         logger.execution.info(`${binance.getOption('test') ? 'Test: Selling' : 'Selling'} ${quantity} ${ticker} @ market price`);
         return new Promise((resolve, reject) => {
             binance.marketSell(ticker, quantity, (error, response) => {
-                if (error) return reject(error);
+                if (error) return reject(new Error(JSON.parse(error.body).msg));
                 return resolve(response);
             });
         });

@@ -33,6 +33,9 @@ let ArbitrageExecution = {
                 logger.execution.info(`${CONFIG.TRADING.ENABLED ? 'Executed' : 'Test: Executed'} ${calculated.id} position in ${new Date().getTime() - before} ms`);
                 logger.execution.debug({trade: calculated});
             })
+            .catch(err => {
+                logger.execution.error(err.message);
+            })
             .then(BinanceApi.getBalances)
             .then(balances => {
                 const differences = ArbitrageExecution.compareBalances(ArbitrageExecution.balances, balances);
@@ -41,7 +44,6 @@ let ArbitrageExecution = {
                 });
                 ArbitrageExecution.balances = balances;
             })
-            .catch(err => logger.execution.error(JSON.parse(err.body).msg))
             .then(() => {
                 ArbitrageExecution.inProgressIds.delete(calculated.id);
             });
