@@ -28,6 +28,7 @@ let ArbitrageExecution = {
         ArbitrageExecution.orderHistory[calculated.id] = new Date().getTime();
 
         const before = new Date().getTime();
+        const initialBalances = ArbitrageExecution.balances;
         return ArbitrageExecution.getExecutionStrategy()(calculated)
             .then(results => {
                 logger.execution.info(`${CONFIG.TRADING.ENABLED ? 'Executed' : 'Test: Executed'} ${calculated.id} position in ${new Date().getTime() - before} ms`);
@@ -36,13 +37,12 @@ let ArbitrageExecution = {
             .catch(err => {
                 logger.execution.error(err.message);
             })
-            .then(BinanceApi.getBalances)
-            .then(balances => {
-                const differences = ArbitrageExecution.compareBalances(ArbitrageExecution.balances, balances);
-                Object.keys(differences).forEach(symbol => {
-                    logger.execution.info(`${symbol} delta: ${differences[symbol]}`);
+            .then(ArbitrageExecution.refreshBalances)
+            .then(() => {
+                const deltas = ArbitrageExecution.compareBalances(initialBalances, ArbitrageExecution.balances);
+                Object.entries(deltas).forEach(([symbol, delta]) => {
+                    logger.execution.info(`${symbol} delta: ${delta}`);
                 });
-                ArbitrageExecution.balances = balances;
             })
             .then(() => {
                 ArbitrageExecution.inProgressIds.delete(calculated.id);
@@ -64,10 +64,6 @@ let ArbitrageExecution = {
             differences[symbol] = difference;
         });
         return differences;
-    },
-
-    mostRecentTradeTime() {
-        return Object.values(ArbitrageExecution.orderHistory).reduce((a,b) => Math.max(a,b), 0);
     },
 
     tradesInXSeconds(seconds) {
