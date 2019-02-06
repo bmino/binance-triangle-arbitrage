@@ -16,12 +16,7 @@ const ArbitrageExecution = require('./ArbitrageExecution');
 if (CONFIG.TRADING.ENABLED) console.log(`WARNING! Order execution is enabled!`);
 else console.log(`Running in research mode.`);
 
-// Populate initial balances
-BinanceApi.getBalances()
-    .then(balances => {
-        // Initialize balances
-        ArbitrageExecution.balances = balances;
-    })
+ArbitrageExecution.refreshBalances()
     .then(BinanceApi.exchangeInfo)
     .then((exchangeInfo) => {
         let symbols = new Set();

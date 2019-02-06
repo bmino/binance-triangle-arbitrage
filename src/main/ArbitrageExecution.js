@@ -47,6 +47,11 @@ let ArbitrageExecution = {
             });
     },
 
+    refreshBalances() {
+        return BinanceApi.getBalances()
+            .then(balances => ArbitrageExecution.balances = balances);
+    },
+
     compareBalances(b1, b2, symbols = [...Object.keys(b1), ...Object.keys(b2)]) {
         let differences = {};
         new Set(symbols).forEach(symbol => {
