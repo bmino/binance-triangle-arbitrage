@@ -59,12 +59,13 @@ let BinanceApi = {
     },
 
     depthCache(tickers, limit=100, stagger=200) {
+        console.log(`Opening ${tickers.length} depth websockets ...`);
         return binance.websockets.depthCacheStaggered(tickers, processDepth, limit, stagger);
     }
 
 };
 
-function processDepth(symbol, depth) {
+function processDepth(ticker, depth) {
     depth.bids = binance.sortBids(depth.bids);
     depth.asks = binance.sortAsks(depth.asks);
     depth.time = new Date().getTime();

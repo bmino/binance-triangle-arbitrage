@@ -37,7 +37,6 @@ ArbitrageExecution.refreshBalances()
         }
 
         // Listen for depth updates
-        console.log(`Opening ${MarketCache.getTickerArray().length} depth websockets ...`);
         return BinanceApi.depthCache(MarketCache.getTickerArray(), CONFIG.DEPTH_SIZE, CONFIG.DEPTH_OPEN_INTERVAL);
     })
     .then(() => {
