@@ -10,7 +10,6 @@ const os = require('os');
 const MarketCache = require('./MarketCache');
 const HUD = require('./HUD');
 const BinanceApi = require('./BinanceApi');
-const MarketCalculation = require('./MarketCalculation');
 const ArbitrageExecution = require('./ArbitrageExecution');
 
 if (CONFIG.TRADING.ENABLED) console.log(`WARNING! Order execution is enabled!`);
@@ -18,26 +17,8 @@ else console.log(`Running in research mode.`);
 
 ArbitrageExecution.refreshBalances()
     .then(BinanceApi.exchangeInfo)
-    .then((exchangeInfo) => {
-        let symbols = new Set();
-        let tickers = [];
-        let tradingSymbolObjects = exchangeInfo.symbols.filter(symbolObj => symbolObj.status === 'TRADING');
-
-        console.log(`Found ${tradingSymbolObjects.length}/${exchangeInfo.symbols.length} currently trading tickers.`);
-
-        // Extract Symbols and Tickers
-        tradingSymbolObjects.forEach(symbolObj => {
-            if (CONFIG.TRADING.WHITELIST.length > 0 && !CONFIG.TRADING.WHITELIST.includes(symbolObj.baseAsset)) return;
-            symbols.add(symbolObj.baseAsset);
-            symbolObj.dustDecimals = Math.max(symbolObj.filters.filter(f => f.filterType === 'LOT_SIZE')[0].minQty.indexOf('1') - 1, 0);
-            tickers[symbolObj.symbol] = symbolObj;
-        });
-
-        // Initialize market cache
-        MarketCache.symbols = symbols;
-        MarketCache.tickers = tickers;
-        MarketCache.relationships = MarketCalculation.getRelationshipsFromSymbol(CONFIG.INVESTMENT.BASE);
-
+    .then(exchangeInfo => MarketCache.initialize(exchangeInfo, CONFIG.TRADING.WHITELIST, CONFIG.INVESTMENT.BASE))
+    .then(() => {
         // Ensure enough information is being watched
         if (MarketCache.relationships.length < 3) {
             const msg = `Watching ${MarketCache.relationships.length} relationship(s) is not sufficient to engage in triangle arbitrage`;
