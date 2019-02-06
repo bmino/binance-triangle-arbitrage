@@ -2,6 +2,7 @@ const pino = require('pino');
 
 const LOG_DIR = `${__dirname}/../../logs`;
 const PINO_OPTS = {
+    level: process.env.LOG_LEVEL || 'info',
     useLevelLabels: true,
     base: null
 };

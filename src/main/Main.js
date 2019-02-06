@@ -60,7 +60,7 @@ function calculateArbitrage() {
             .on('done', calculated => {
                 if (!calculated) return;
                 if (CONFIG.HUD.ENABLED) results[calculated.id] = calculated;
-                ArbitrageExecution.executeCalculatedPosition(calculated);
+                if (ArbitrageExecution.isSafeToExecute(calculated)) ArbitrageExecution.executeCalculatedPosition(calculated);
             });
     });
 

@@ -8,21 +8,6 @@ let ArbitrageExecution = {
     balances: {},
 
     executeCalculatedPosition(calculated) {
-        const ageInMilliseconds = new Date().getTime() - Math.min(calculated.times.ab, calculated.times.bc, calculated.times.ca);
-
-        if (Object.keys(ArbitrageExecution.orderHistory).length >= CONFIG.TRADING.EXECUTION_CAP &&
-            ArbitrageExecution.inProgressIds.size === 0) {
-            const msg = `Cannot exceed execution cap of ${CONFIG.TRADING.EXECUTION_CAP} execution`;
-            logger.execution.error(msg);
-            process.exit();
-        }
-
-        if (Object.keys(ArbitrageExecution.orderHistory).length >= CONFIG.TRADING.EXECUTION_CAP) return false;
-        if (calculated.percent < CONFIG.TRADING.PROFIT_THRESHOLD) return false;
-        if (ageInMilliseconds > CONFIG.TRADING.AGE_THRESHOLD) return false;
-        if (ArbitrageExecution.inProgressIds.has(calculated.id)) return false;
-        if (ArbitrageExecution.tradesInXSeconds(10) >= 3) return false;
-
         // Register trade id as being executed
         ArbitrageExecution.inProgressIds.add(calculated.id);
         ArbitrageExecution.orderHistory[calculated.id] = new Date().getTime();
@@ -47,6 +32,39 @@ let ArbitrageExecution = {
             .then(() => {
                 ArbitrageExecution.inProgressIds.delete(calculated.id);
             });
+    },
+
+    isSafeToExecute(calculated) {
+        const ageInMilliseconds = new Date().getTime() - Math.min(calculated.times.ab, calculated.times.bc, calculated.times.ca);
+
+        if (Object.keys(ArbitrageExecution.orderHistory).length >= CONFIG.TRADING.EXECUTION_CAP && ArbitrageExecution.inProgressIds.size === 0) {
+            const msg = `Cannot exceed execution cap of ${CONFIG.TRADING.EXECUTION_CAP} execution`;
+            logger.execution.error(msg);
+            process.exit();
+        }
+
+        if (Object.keys(ArbitrageExecution.orderHistory).length >= CONFIG.TRADING.EXECUTION_CAP) {
+            logger.execution.trace(`Blocking execution because ${Object.keys(ArbitrageExecution.orderHistory).length}/${CONFIG.TRADING.EXECUTION_CAP} executions have been attempted`);
+            return false;
+        }
+        if (calculated.percent < CONFIG.TRADING.PROFIT_THRESHOLD) {
+            logger.execution.trace(`Blocking execution because ${calculated.percent.toFixed(3)}% profit is below the configured threshold of ${CONFIG.TRADING.PROFIT_THRESHOLD}`);
+            return false;
+        }
+        if (ageInMilliseconds > CONFIG.TRADING.AGE_THRESHOLD) {
+            logger.execution.trace(`Blocking execution because an age of ${ageInMilliseconds} ms is above the configured threshold of ${CONFIG.TRADING.AGE_THRESHOLD}`);
+            return false;
+        }
+        if (ArbitrageExecution.inProgressIds.has(calculated.id)) {
+            logger.execution.trace(`Blocking execution because ${calculated.id} is already being executed`);
+            return false;
+        }
+        if (ArbitrageExecution.tradesInXSeconds(10) >= 3) {
+            logger.execution.trace(`Blocking execution because ${ArbitrageExecution.tradesInXSeconds(10)} trades have already been executed in the last 10 seconds`);
+            return false;
+        }
+
+        return true;
     },
 
     refreshBalances() {
