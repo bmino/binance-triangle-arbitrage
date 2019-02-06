@@ -18,24 +18,8 @@ else console.log(`Running in research mode.`);
 ArbitrageExecution.refreshBalances()
     .then(BinanceApi.exchangeInfo)
     .then(exchangeInfo => MarketCache.initialize(exchangeInfo, CONFIG.TRADING.WHITELIST, CONFIG.INVESTMENT.BASE))
+    .then(checkConfig)
     .then(() => {
-        // Ensure enough information is being watched
-        if (MarketCache.relationships.length < 3) {
-            const msg = `Watching ${MarketCache.relationships.length} relationship(s) is not sufficient to engage in triangle arbitrage`;
-            logger.execution.error(msg);
-            throw new Error(msg);
-        }
-        if (MarketCache.symbols.length < 3) {
-            const msg = `Watching ${MarketCache.symbols.length} symbol(s) is not sufficient to engage in triangle arbitrage`;
-            logger.execution.error(msg);
-            throw new Error(msg);
-        }
-        if (CONFIG.TRADING.WHITELIST.length > 0 && !CONFIG.TRADING.WHITELIST.includes(CONFIG.INVESTMENT.BASE)) {
-            const msg = `Whitelist must include the base symbol of ${CONFIG.INVESTMENT.BASE}`;
-            logger.execution.error(msg);
-            throw new Error(msg);
-        }
-
         // Listen for depth updates
         return BinanceApi.depthCache(MarketCache.getTickerArray(), CONFIG.DEPTH_SIZE, CONFIG.DEPTH_OPEN_INTERVAL);
     })
@@ -90,6 +74,29 @@ function calculateArbitrage() {
     });
 }
 
+function checkConfig() {
+    // Ensure enough information is being watched
+    if (MarketCache.relationships.length < 3) {
+        const msg = `Watching ${MarketCache.relationships.length} relationship(s) is not sufficient to engage in triangle arbitrage`;
+        logger.execution.error(msg);
+        throw new Error(msg);
+    }
+    if (MarketCache.symbols.length < 3) {
+        const msg = `Watching ${MarketCache.symbols.length} symbol(s) is not sufficient to engage in triangle arbitrage`;
+        logger.execution.error(msg);
+        throw new Error(msg);
+    }
+    if (CONFIG.TRADING.WHITELIST.length > 0 && !CONFIG.TRADING.WHITELIST.includes(CONFIG.INVESTMENT.BASE)) {
+        const msg = `Whitelist must include the base symbol of ${CONFIG.INVESTMENT.BASE}`;
+        logger.execution.error(msg);
+        throw new Error(msg);
+    }
+    if (CONFIG.TRADING.EXECUTION_STRATEGY.toUpperCase() === 'PARALLEL' && CONFIG.TRADING.WHITELIST.length === 0) {
+        const msg = `Parallel execution requires defining a whitelist`;
+        logger.execution.error(msg);
+        throw new Error(msg);
+    }
+}
 
 function refreshHUD(arbs) {
     const arbsToDisplay = Object.values(arbs)
