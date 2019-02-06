@@ -1,3 +1,4 @@
+const fs = require('fs');
 const pino = require('pino');
 
 const LOG_DIR = `${__dirname}/../../logs`;
@@ -8,8 +9,11 @@ const PINO_OPTS = {
     base: null
 };
 
-const now = new Date();
-const LOG_FILE_APPENDIX = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+// Ensure log directory exists
+if (!fs.existsSync(LOG_DIR)){
+    fs.mkdirSync(LOG_DIR);
+}
+
 
 module.exports = {
     'performance': pino(PINO_OPTS, pino.destination(`${LOG_DIR}/performance.log`)),
