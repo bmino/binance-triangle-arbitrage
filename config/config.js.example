@@ -18,10 +18,10 @@ module.exports = {
         ENABLED: false,
 
         // Execution strategy to use
-        // Valid Values: ['Parallel', 'Linear']
-        // Parallel: all three legs of the triangle arbitrage are executed in parallel
+        // Valid Values: ['Linear', 'Parallel']
         // Linear: the three legs of the triangle arbitrage are executed sequentially
-        EXECUTION_STRATEGY: 'Parallel',
+        // Parallel: all three legs of the triangle arbitrage are executed in parallel. Requires defining a whitelist.
+        EXECUTION_STRATEGY: 'Linear',
 
         // Maximum number of executions to attempt before shutting down
         // Defaults to unlimited when undefined

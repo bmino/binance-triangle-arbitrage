@@ -77,10 +77,10 @@ let ArbitrageExecution = {
 
     getExecutionStrategy() {
         switch (CONFIG.TRADING.EXECUTION_STRATEGY.toUpperCase()) {
-            case 'LINEAR':
-                return ArbitrageExecution.linearExecutionStrategy;
-            default:
+            case 'PARALLEL':
                 return ArbitrageExecution.parallelExecutionStrategy;
+            default:
+                return ArbitrageExecution.linearExecutionStrategy;
         }
     },
 
