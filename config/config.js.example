@@ -8,9 +8,15 @@ module.exports = {
     INVESTMENT: {
         // Symbol which all triangle trades must start and end with
         BASE: 'BTC',
-        MIN: 0.0,
-        MAX: 0.15,
-        STEP: 0.001
+
+        // Minimum investment amount of the base currency to consider
+        MIN: 0.015,
+
+        // Maximum investment amount of the base currency to consider
+        MAX: 0.1,
+
+        // Step size at which investment amounts are considered between the min and max
+        STEP: 0.005
     },
 
     TRADING: {
