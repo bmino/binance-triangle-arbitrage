@@ -1,13 +1,8 @@
-const CONFIG = require('../../config/config');
 const logger = require('./Loggers');
 const binance = require('node-binance-api')();
-binance.options({
-    APIKEY: CONFIG.KEYS.API,
-    APISECRET: CONFIG.KEYS.SECRET,
-    test: !CONFIG.TRADING.ENABLED
-});
 
-let BinanceApi = {
+module.exports = {
+
     exchangeInfo() {
         return new Promise((resolve, reject) => {
             binance.exchangeInfo((error, data) => {
@@ -51,24 +46,18 @@ let BinanceApi = {
     },
 
     marketBuyOrSell(method) {
-        return method.toUpperCase() === 'BUY' ? BinanceApi.marketBuy : BinanceApi.marketSell;
-    },
-
-    listenForUserData(balanceCallback, executionCallback) {
-        return binance.websockets.userData(balanceCallback, executionCallback);
+        return method.toUpperCase() === 'BUY' ? this.marketBuy : this.marketSell;
     },
 
     depthCache(tickers, limit=100, stagger=200) {
         console.log(`Opening ${tickers.length} depth websockets ...`);
-        return binance.websockets.depthCacheStaggered(tickers, processDepth, limit, stagger);
+        return binance.websockets.depthCacheStaggered(tickers, this.processDepth, limit, stagger);
+    },
+
+    processDepth(ticker, depth) {
+        depth.bids = binance.sortBids(depth.bids);
+        depth.asks = binance.sortAsks(depth.asks);
+        depth.time = new Date().getTime();
     }
 
 };
-
-function processDepth(ticker, depth) {
-    depth.bids = binance.sortBids(depth.bids);
-    depth.asks = binance.sortAsks(depth.asks);
-    depth.time = new Date().getTime();
-}
-
-module.exports = BinanceApi;

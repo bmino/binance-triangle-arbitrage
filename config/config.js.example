@@ -59,9 +59,6 @@ module.exports = {
     DEPTH_OPEN_INTERVAL: 50,
 
     // Delay (ms) after calculations are performed before starting another cycle
-    SCAN_DELAY: 50,
-
-    // Number of works processing calculations in the job pool
-    CALCULATION_POOL_WORKERS: 1
+    SCAN_DELAY: 50
 
 };
