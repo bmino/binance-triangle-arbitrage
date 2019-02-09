@@ -98,3 +98,5 @@ $RECYCLE.BIN/
 
 # Example Configuration
 !*.example
+
+src/sandbox/
