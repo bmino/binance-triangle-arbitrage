@@ -50,14 +50,7 @@ function calculateArbitrage() {
 
     MarketCache.relationships.forEach(relationship => {
         try {
-            let calculated = CalculationNode.calculation({
-                trade: relationship,
-                minInvestment: CONFIG.INVESTMENT.MIN,
-                maxInvestment: CONFIG.INVESTMENT.MAX,
-                stepSize: CONFIG.INVESTMENT.STEP,
-                marketCache: MarketCache.getSubsetFromTickers([relationship.ab.ticker, relationship.bc.ticker, relationship.ca.ticker])
-            });
-
+            let calculated = CalculationNode.optimize(relationship);
             if (calculated) {
                 if (CONFIG.HUD.ENABLED) results[calculated.id] = calculated;
                 if (ArbitrageExecution.isSafeToExecute(calculated)) ArbitrageExecution.executeCalculatedPosition(calculated);

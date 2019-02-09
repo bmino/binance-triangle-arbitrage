@@ -40,21 +40,6 @@ module.exports = {
             });
     },
 
-    getSubsetFromTickers(tickers) {
-        let tickersPartial = {};
-        let depthsPartial = {};
-
-        tickers.forEach(ticker => {
-            tickersPartial[ticker] = this.tickers[ticker];
-            depthsPartial[ticker] = binance.depthCache(ticker);
-        });
-
-        return {
-            tickers: tickersPartial,
-            depths: depthsPartial
-        };
-    },
-
     pruneDepthsAboveThreshold(threshold=100) {
         this.getTickerArray().forEach(ticker => {
             let depth = binance.depthCache(ticker);

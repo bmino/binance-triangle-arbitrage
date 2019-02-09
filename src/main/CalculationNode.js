@@ -1,12 +1,15 @@
+const CONFIG = require('../../config/config');
+const binance = require('node-binance-api')();
+const MarketCache = require('./MarketCache');
+
 module.exports = {
 
-    calculation(inputs) {
-        const {trade, minInvestment, maxInvestment, stepSize, marketCache} = inputs;
+    optimize(trade) {
         let quantity, calculation;
         let bestCalculation = null;
 
-        for (quantity = minInvestment || stepSize; quantity <= maxInvestment; quantity += stepSize) {
-            calculation = this.calculate(quantity, trade, marketCache);
+        for (quantity = CONFIG.INVESTMENT.MIN || CONFIG.INVESTMENT.STEP; quantity <= CONFIG.INVESTMENT.MAX; quantity += CONFIG.INVESTMENT.STEP) {
+            calculation = this.calculate(quantity, trade);
             if (!bestCalculation || calculation.percent > bestCalculation.percent) {
                 bestCalculation = calculation;
             }
@@ -15,7 +18,7 @@ module.exports = {
         return bestCalculation;
     },
 
-    calculate(investmentA, trade, marketCache) {
+    calculate(investmentA, trade) {
         let calculated = {
             id: `${trade.symbol.a}-${trade.symbol.b}-${trade.symbol.c}`,
             trade: trade,
@@ -40,9 +43,9 @@ module.exports = {
                 dust: 0
             },
             times: {
-                ab: marketCache.depths[trade.ab.ticker].time,
-                bc: marketCache.depths[trade.bc.ticker].time,
-                ca: marketCache.depths[trade.ca.ticker].time
+                ab: binance.depthCache(trade.ab.ticker).time,
+                bc: binance.depthCache(trade.bc.ticker).time,
+                ca: binance.depthCache(trade.ca.ticker).time
             },
             a: 0,
             b: 0,
@@ -50,37 +53,37 @@ module.exports = {
         };
     
         if (trade.ab.method === 'Buy') {
-            calculated.ab.total = this.orderBookConversion(calculated.start.total, trade.symbol.a, trade.symbol.b, trade.ab.ticker, marketCache);
-            calculated.ab.market = this.calculateDustless(trade.ab.ticker, calculated.ab.total, marketCache);
+            calculated.ab.total = this.orderBookConversion(calculated.start.total, trade.symbol.a, trade.symbol.b, trade.ab.ticker);
+            calculated.ab.market = this.calculateDustless(trade.ab.ticker, calculated.ab.total);
             calculated.b = calculated.ab.market;
-            calculated.start.market = this.orderBookConversion(calculated.ab.market, trade.symbol.b, trade.symbol.a, trade.ab.ticker, marketCache);
+            calculated.start.market = this.orderBookConversion(calculated.ab.market, trade.symbol.b, trade.symbol.a, trade.ab.ticker);
         } else {
             calculated.ab.total = calculated.start.total;
-            calculated.ab.market = this.calculateDustless(trade.ab.ticker, calculated.ab.total, marketCache);
-            calculated.b = this.orderBookConversion(calculated.ab.market, trade.symbol.a, trade.symbol.b, trade.ab.ticker, marketCache);
+            calculated.ab.market = this.calculateDustless(trade.ab.ticker, calculated.ab.total);
+            calculated.b = this.orderBookConversion(calculated.ab.market, trade.symbol.a, trade.symbol.b, trade.ab.ticker);
             calculated.start.market = calculated.ab.market;
         }
         calculated.ab.dust = 0;
     
         if (trade.bc.method === 'Buy') {
-            calculated.bc.total = this.orderBookConversion(calculated.b, trade.symbol.b, trade.symbol.c, trade.bc.ticker, marketCache);
-            calculated.bc.market = this.calculateDustless(trade.bc.ticker, calculated.bc.total, marketCache);
+            calculated.bc.total = this.orderBookConversion(calculated.b, trade.symbol.b, trade.symbol.c, trade.bc.ticker);
+            calculated.bc.market = this.calculateDustless(trade.bc.ticker, calculated.bc.total);
             calculated.c = calculated.bc.market;
         } else {
             calculated.bc.total = calculated.b;
-            calculated.bc.market = this.calculateDustless(trade.bc.ticker, calculated.bc.total, marketCache);
-            calculated.c = this.orderBookConversion(calculated.bc.market, trade.symbol.b, trade.symbol.c, trade.bc.ticker, marketCache);
+            calculated.bc.market = this.calculateDustless(trade.bc.ticker, calculated.bc.total);
+            calculated.c = this.orderBookConversion(calculated.bc.market, trade.symbol.b, trade.symbol.c, trade.bc.ticker);
         }
         calculated.bc.dust = calculated.bc.total - calculated.bc.market;
     
         if (trade.ca.method === 'Buy') {
-            calculated.ca.total = this.orderBookConversion(calculated.c, trade.symbol.c, trade.symbol.a, trade.ca.ticker, marketCache);
-            calculated.ca.market = this.calculateDustless(trade.ca.ticker, calculated.ca.total, marketCache);
+            calculated.ca.total = this.orderBookConversion(calculated.c, trade.symbol.c, trade.symbol.a, trade.ca.ticker);
+            calculated.ca.market = this.calculateDustless(trade.ca.ticker, calculated.ca.total);
             calculated.a = calculated.ca.market;
         } else {
             calculated.ca.total = calculated.c;
-            calculated.ca.market = this.calculateDustless(trade.ca.ticker, calculated.ca.total, marketCache);
-            calculated.a = this.orderBookConversion(calculated.ca.market, trade.symbol.c, trade.symbol.a, trade.ca.ticker, marketCache);
+            calculated.ca.market = this.calculateDustless(trade.ca.ticker, calculated.ca.total);
+            calculated.a = this.orderBookConversion(calculated.ca.market, trade.symbol.c, trade.symbol.a, trade.ca.ticker);
         }
         calculated.ca.dust = calculated.ca.total - calculated.ca.market;
     
@@ -90,9 +93,9 @@ module.exports = {
         return calculated;
     },
     
-    orderBookConversion(amountFrom, symbolFrom, symbolTo, ticker, marketCache) {
+    orderBookConversion(amountFrom, symbolFrom, symbolTo, ticker) {
         let i, j, rates, rate, quantity, exchangeableAmount;
-        let orderBook = marketCache.depths[ticker] || {};
+        let orderBook = binance.depthCache(ticker) || {};
         let amountTo = 0;
     
         if (amountFrom === 0) return 0;
@@ -129,10 +132,10 @@ module.exports = {
         throw new Error(`Depth (${rates.length}) too shallow to convert ${amountFrom} ${symbolFrom} to ${symbolTo} using ${ticker}`);
     },
     
-    calculateDustless(ticker, amount, marketCache) {
+    calculateDustless(ticker, amount) {
         if (Number.isInteger(amount)) return amount;
         const amountString = amount.toFixed(12);
-        const decimals = marketCache.tickers[ticker].dustDecimals;
+        const decimals = MarketCache.tickers[ticker].dustDecimals;
         const decimalIndex = amountString.indexOf('.');
         return parseFloat(amountString.slice(0, decimalIndex + decimals + 1));
     }
