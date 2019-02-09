@@ -1,11 +1,18 @@
 const CONFIG = require('../../config/config');
 const logger = require('./Loggers');
+const binance = require('node-binance-api')();
 const os = require('os');
 const MarketCache = require('./MarketCache');
 const HUD = require('./HUD');
 const BinanceApi = require('./BinanceApi');
 const ArbitrageExecution = require('./ArbitrageExecution');
 const CalculationNode = require('./CalculationNode');
+
+binance.options({
+    APIKEY: CONFIG.KEYS.API,
+    APISECRET: CONFIG.KEYS.SECRET,
+    test: !CONFIG.TRADING.ENABLED
+});
 
 if (CONFIG.TRADING.ENABLED) console.log(`WARNING! Order execution is enabled!`);
 else console.log(`Running in research mode.`);

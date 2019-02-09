@@ -1,11 +1,5 @@
-const CONFIG = require('../../config/config');
 const logger = require('./Loggers');
 const binance = require('node-binance-api')();
-binance.options({
-    APIKEY: CONFIG.KEYS.API,
-    APISECRET: CONFIG.KEYS.SECRET,
-    test: !CONFIG.TRADING.ENABLED
-});
 
 module.exports = {
 
@@ -53,10 +47,6 @@ module.exports = {
 
     marketBuyOrSell(method) {
         return method.toUpperCase() === 'BUY' ? this.marketBuy : this.marketSell;
-    },
-
-    listenForUserData(balanceCallback, executionCallback) {
-        return binance.websockets.userData(balanceCallback, executionCallback);
     },
 
     depthCache(tickers, limit=100, stagger=200) {
