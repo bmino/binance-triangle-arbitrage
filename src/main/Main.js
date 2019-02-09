@@ -1,16 +1,11 @@
 const CONFIG = require('../../config/config');
-const threads = require('threads');
-threads.config.set({
-    basepath: {
-        node: __dirname
-    }
-});
 const logger = require('./Loggers');
 const os = require('os');
 const MarketCache = require('./MarketCache');
 const HUD = require('./HUD');
 const BinanceApi = require('./BinanceApi');
 const ArbitrageExecution = require('./ArbitrageExecution');
+const CalculationNode = require('./CalculationNode');
 
 if (CONFIG.TRADING.ENABLED) console.log(`WARNING! Order execution is enabled!`);
 else console.log(`Running in research mode.`);
@@ -40,8 +35,6 @@ ArbitrageExecution.refreshBalances()
 
 function calculateArbitrage() {
     const before = new Date().getTime();
-    const pool = new threads.Pool(CONFIG.CALCULATION_POOL_WORKERS);
-    const job = pool.run('CalculationNode.js');
 
     let errorCount = 0;
     let results = {};
@@ -49,29 +42,30 @@ function calculateArbitrage() {
     MarketCache.pruneDepthsAboveThreshold(CONFIG.DEPTH_SIZE);
 
     MarketCache.relationships.forEach(relationship => {
-        job.send({
-            trade: relationship,
-            minInvestment: CONFIG.INVESTMENT.MIN,
-            maxInvestment: CONFIG.INVESTMENT.MAX,
-            stepSize: CONFIG.INVESTMENT.STEP,
-            marketCache: MarketCache.getSubsetFromTickers([relationship.ab.ticker, relationship.bc.ticker, relationship.ca.ticker])
-        })
-            .on('error', error => errorCount++)
-            .on('done', calculated => {
-                if (!calculated) return;
+        try {
+            let calculated = CalculationNode.calculate({
+                trade: relationship,
+                minInvestment: CONFIG.INVESTMENT.MIN,
+                maxInvestment: CONFIG.INVESTMENT.MAX,
+                stepSize: CONFIG.INVESTMENT.STEP,
+                marketCache: MarketCache.getSubsetFromTickers([relationship.ab.ticker, relationship.bc.ticker, relationship.ca.ticker])
+            });
+
+            if (calculated) {
                 if (CONFIG.HUD.ENABLED) results[calculated.id] = calculated;
                 if (ArbitrageExecution.isSafeToExecute(calculated)) ArbitrageExecution.executeCalculatedPosition(calculated);
-            });
+            }
+        } catch (error) {
+            logger.performance.debug(error.message);
+            errorCount++;
+        }
     });
 
-    pool.on('finished', () => {
-        const total = MarketCache.relationships.length;
-        const completed = total - errorCount;
-        logger.performance.info(`Completed ${completed}/${total} (${((completed/total)*100).toFixed(0)}%) calculations in ${new Date().getTime() - before} ms`);
-        pool.killAll();
-        if (CONFIG.HUD.ENABLED) refreshHUD(results);
-        setTimeout(calculateArbitrage, CONFIG.SCAN_DELAY);
-    });
+    const total = MarketCache.relationships.length;
+    const completed = total - errorCount;
+    logger.performance.info(`Completed ${completed}/${total} (${((completed/total)*100).toFixed(0)}%) calculations in ${new Date().getTime() - before} ms`);
+    if (CONFIG.HUD.ENABLED) refreshHUD(results);
+    setTimeout(calculateArbitrage, CONFIG.SCAN_DELAY);
 }
 
 function checkConfig() {
