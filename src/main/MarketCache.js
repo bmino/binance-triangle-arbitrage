@@ -1,6 +1,7 @@
 const binance = require('node-binance-api')();
 
-let MarketCache = {
+module.exports = {
+
     symbols: [],
     tickers: {},
     relationships: [],
@@ -21,17 +22,17 @@ let MarketCache = {
         });
 
         // Initialize market cache
-        MarketCache.symbols = symbols;
-        MarketCache.tickers = tickers;
-        MarketCache.relationships = MarketCache.getTradesFromSymbol(baseSymbol);
+        this.symbols = symbols;
+        this.tickers = tickers;
+        this.relationships = this.getTradesFromSymbol(baseSymbol);
     },
 
     getTickerArray() {
-        return Object.keys(MarketCache.tickers);
+        return Object.keys(this.tickers);
     },
 
     getDepthCache() {
-        return MarketCache.getTickerArray()
+        return this.getTickerArray()
             .map(ticker => {
                 let depth = binance.depthCache(ticker);
                 depth.ticker = ticker;
@@ -44,7 +45,7 @@ let MarketCache = {
         let depthsPartial = {};
 
         tickers.forEach(ticker => {
-            tickersPartial[ticker] = MarketCache.tickers[ticker];
+            tickersPartial[ticker] = this.tickers[ticker];
             depthsPartial[ticker] = binance.depthCache(ticker);
         });
 
@@ -55,7 +56,7 @@ let MarketCache = {
     },
 
     pruneDepthsAboveThreshold(threshold=100) {
-        MarketCache.getTickerArray().forEach(ticker => {
+        this.getTickerArray().forEach(ticker => {
             let depth = binance.depthCache(ticker);
             Object.keys(depth.bids).forEach((bid, index) => {
                 index >= threshold && delete depth.bids[bid];
@@ -68,9 +69,9 @@ let MarketCache = {
 
     getTradesFromSymbol(symbol1) {
         let trades = [];
-        MarketCache.symbols.forEach(function(symbol2) {
-            MarketCache.symbols.forEach(function(symbol3) {
-                const trade = MarketCache.createTrade(symbol1, symbol2, symbol3);
+        this.symbols.forEach(symbol2 => {
+            this.symbols.forEach(symbol3 => {
+                const trade = this.createTrade(symbol1, symbol2, symbol3);
                 if (trade) trades.push(trade);
             });
         });
@@ -78,13 +79,13 @@ let MarketCache = {
     },
 
     createTrade(a, b, c) {
-        const ab = MarketCache.getRelationship(a, b);
+        const ab = this.getRelationship(a, b);
         if (!ab) return;
 
-        const bc = MarketCache.getRelationship(b, c);
+        const bc = this.getRelationship(b, c);
         if (!bc) return;
 
-        const ca = MarketCache.getRelationship(c, a);
+        const ca = this.getRelationship(c, a);
         if (!ca) return;
 
         return {
@@ -104,39 +105,15 @@ let MarketCache = {
         a = a.toUpperCase();
         b = b.toUpperCase();
 
-        if (MarketCache.tickers[a+b]) return {
+        if (this.tickers[a+b]) return {
             method: 'Sell',
             ticker: a+b
         };
-        if (MarketCache.tickers[b+a]) return {
+        if (this.tickers[b+a]) return {
             method: 'Buy',
             ticker: b+a
         };
         return null;
-    },
-
-    getDepthsBelowThreshold(threshold) {
-        let outputBuffer = [];
-        MarketCache.getTickerArray().forEach(ticker => {
-            const depth = binance.depthCache(ticker);
-            const bidCount = Object.keys(depth.bids).length;
-            const askCount = Object.keys(depth.asks).length;
-            if (bidCount < threshold || askCount < threshold) outputBuffer.push(`${ticker}: ${bidCount}/${askCount}`);
-        });
-        return outputBuffer;
-    },
-
-    getDepthsAboveThreshold(threshold) {
-        let outputBuffer = [];
-        MarketCache.getTickerArray().forEach(ticker => {
-            const depth = binance.depthCache(ticker);
-            const bidCount = Object.keys(depth.bids).length;
-            const askCount = Object.keys(depth.asks).length;
-            if (bidCount > threshold || askCount > threshold) outputBuffer.push(`${ticker}: ${bidCount}/${askCount}`);
-        });
-        return outputBuffer;
     }
 
 };
-
-module.exports = MarketCache;

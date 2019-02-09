@@ -43,7 +43,7 @@ function calculateArbitrage() {
 
     MarketCache.relationships.forEach(relationship => {
         try {
-            let calculated = CalculationNode.calculate({
+            let calculated = CalculationNode.calculation({
                 trade: relationship,
                 minInvestment: CONFIG.INVESTMENT.MIN,
                 maxInvestment: CONFIG.INVESTMENT.MAX,

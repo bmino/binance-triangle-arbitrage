@@ -1,8 +1,7 @@
 const MarketCache = require('./MarketCache');
 const blessed = require('blessed');
 
-
-let HUD = {
+module.exports = {
 
     screen: null,
     objects: {
@@ -15,16 +14,16 @@ let HUD = {
     },
 
     initScreen() {
-        if (HUD.screen) return;
-        HUD.screen = blessed.screen({
+        if (this.screen) return;
+        this.screen = blessed.screen({
             smartCSR: true
         });
     },
 
     displayArbs(arbs) {
-        HUD.initScreen();
-        if (!HUD.objects.arbTable) {
-            HUD.objects.arbTable = blessed.table({
+        this.initScreen();
+        if (!this.objects.arbTable) {
+            this.objects.arbTable = blessed.table({
                 top: '0',
                 left: 'center',
                 width: '50%',
@@ -40,12 +39,12 @@ let HUD = {
                 }
             });
 
-            HUD.screen.append(HUD.objects.arbTable);
+            this.screen.append(this.objects.arbTable);
         }
 
         const now = new Date().getTime();
 
-        let tableData = [HUD.headers.arb];
+        let tableData = [this.headers.arb];
         arbs.forEach(arb => {
             tableData.push([
                 `${arb.id}`,
@@ -57,14 +56,14 @@ let HUD = {
             ]);
         });
 
-        HUD.objects.arbTable.setData(tableData);
-        HUD.screen.render();
+        this.objects.arbTable.setData(tableData);
+        this.screen.render();
     },
 
     displayDepths() {
-        HUD.initScreen();
-        if (!HUD.objects.depthTable) {
-            HUD.objects.depthTable = blessed.table({
+        this.initScreen();
+        if (!this.objects.depthTable) {
+            this.objects.depthTable = blessed.table({
                 top: '0',
                 left: 'center',
                 width: '50%',
@@ -80,10 +79,10 @@ let HUD = {
                 }
             });
 
-            HUD.screen.append(HUD.objects.depthTable);
+            this.screen.append(this.objects.depthTable);
         }
 
-        let tableData = [HUD.headers.depth];
+        let tableData = [this.headers.depth];
         MarketCache.getDepthCache().forEach(depth => {
             tableData.push([
                 `${depth.ticker}`,
@@ -92,10 +91,8 @@ let HUD = {
             ]);
         });
 
-        HUD.objects.depthTable.setData(tableData);
-        HUD.screen.render();
+        this.objects.depthTable.setData(tableData);
+        this.screen.render();
     }
 
 };
-
-module.exports = HUD;
