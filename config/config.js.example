@@ -37,7 +37,7 @@ module.exports = {
         PROFIT_THRESHOLD: 0.5,
 
         // Maximum time (ms) since the oldest depth tick involved in the position
-        AGE_THRESHOLD: 400,
+        AGE_THRESHOLD: 150,
 
         // Symbols to include when searching for triangle arbitrage
         // Defaults to all symbols when left empty
