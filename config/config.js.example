@@ -51,6 +51,10 @@ module.exports = {
         ARB_COUNT: 10
     },
 
+    // Log level to configure how verbose logging messages are
+    // Valid Values: ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']
+    LOG_LEVEL: 'info',
+
     // Order book depth to maintain on each ticker
     // Valid Values: [5, 10, 20, 50, 100, 500, 1000]
     DEPTH_SIZE: 100,

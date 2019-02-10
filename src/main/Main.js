@@ -30,6 +30,7 @@ ArbitrageExecution.refreshBalances()
         console.log(`Running on ${os.type()} with ${os.cpus().length} cores @ [${os.cpus().map(cpu => cpu.speed)}] MHz`);
         console.log(`Investing up to ${CONFIG.INVESTMENT.MAX} ${CONFIG.INVESTMENT.BASE}`);
         console.log(`Execution criteria:\n\tProfit > ${CONFIG.TRADING.PROFIT_THRESHOLD}%\n\tAge < ${CONFIG.TRADING.AGE_THRESHOLD} ms`);
+        console.log(`Log Levels:\n\tExecution:  \t${logger.execution.level}\n\tPerformance:\t${logger.performance.level}`);
         console.log(`Will not exceed ${CONFIG.TRADING.EXECUTION_CAP} execution(s)`);
         console.log(`Using ${CONFIG.TRADING.EXECUTION_STRATEGY} strategy`);
         console.log();

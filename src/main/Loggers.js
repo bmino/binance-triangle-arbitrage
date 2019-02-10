@@ -1,9 +1,10 @@
+const CONFIG = require('../../config/config');
 const fs = require('fs');
 const pino = require('pino');
 
 const LOG_DIR = `${__dirname}/../../logs`;
 const PINO_OPTS = {
-    level: process.env.LOG_LEVEL || 'info',
+    level: CONFIG.LOG_LEVEL.toLowerCase(),
     timestamp: () => `,"time":"${new Date().toLocaleString()}"`,
     useLevelLabels: true,
     base: null
