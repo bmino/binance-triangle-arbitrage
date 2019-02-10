@@ -23,7 +23,9 @@ ArbitrageExecution.refreshBalances()
     .then(checkConfig)
     .then(() => {
         // Listen for depth updates
-        return BinanceApi.depthCache(MarketCache.getTickerArray(), CONFIG.DEPTH_SIZE, CONFIG.DEPTH_OPEN_INTERVAL);
+        const tickers = MarketCache.getTickerArray();
+        console.log(`Opening ${tickers.length} depth websockets ...`);
+        return BinanceApi.depthCache(tickers, CONFIG.DEPTH_SIZE, CONFIG.DEPTH_OPEN_INTERVAL);
     })
     .then(() => {
         console.log();
@@ -64,12 +66,21 @@ function calculateArbitrage() {
 
     const total = MarketCache.relationships.length;
     const completed = total - errorCount;
-    logger.performance.info(`Completed ${completed}/${total} (${((completed/total)*100).toFixed(0)}%) calculations in ${new Date().getTime() - before} ms`);
+    logger.performance.info(`Completed ${completed}/${total} (${((completed/total)*100).toFixed(1)}%) calculations in ${new Date().getTime() - before} ms`);
     if (CONFIG.HUD.ENABLED) refreshHUD(results);
     setTimeout(calculateArbitrage, CONFIG.SCAN_DELAY);
 }
 
 function checkConfig() {
+    console.log(`Checking configuration ...`);
+
+    const VALID_VALUES = {
+        TRADING: {
+            EXECUTION_STRATEGY: ['linear', 'parallel']
+        },
+        DEPTH_SIZE: [5, 10, 20, 50, 100, 500, 1000]
+    };
+
     // Ensure enough information is being watched
     if (MarketCache.relationships.length < 3) {
         const msg = `Watching ${MarketCache.relationships.length} relationship(s) is not sufficient to engage in triangle arbitrage`;
@@ -86,8 +97,23 @@ function checkConfig() {
         logger.execution.error(msg);
         throw new Error(msg);
     }
-    if (CONFIG.TRADING.EXECUTION_STRATEGY.toUpperCase() === 'PARALLEL' && CONFIG.TRADING.WHITELIST.length === 0) {
+    if (CONFIG.TRADING.EXECUTION_STRATEGY.toLowerCase() === 'parallel' && CONFIG.TRADING.WHITELIST.length === 0) {
         const msg = `Parallel execution requires defining a whitelist`;
+        logger.execution.error(msg);
+        throw new Error(msg);
+    }
+    if (!VALID_VALUES.TRADING.EXECUTION_STRATEGY.includes(CONFIG.TRADING.EXECUTION_STRATEGY.toLowerCase())) {
+        const msg = `Parallel execution requires defining a whitelist`;
+        logger.execution.error(msg);
+        throw new Error(msg);
+    }
+    if (CONFIG.DEPTH_SIZE > 100 && CONFIG.TRADING.WHITELIST.length === 0) {
+        const msg = `Using a depth size higher than 100 requires defining a whitelist`;
+        logger.execution.error(msg);
+        throw new Error(msg);
+    }
+    if (!VALID_VALUES.DEPTH_SIZE.includes(CONFIG.DEPTH_SIZE)) {
+        const msg = `Depth size can only contain one of the following values: ${VALID_VALUES.DEPTH_SIZE}`;
         logger.execution.error(msg);
         throw new Error(msg);
     }

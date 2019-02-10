@@ -24,10 +24,10 @@ module.exports = {
         ENABLED: false,
 
         // Execution strategy to use
-        // Valid Values: ['Linear', 'Parallel']
+        // Valid Values: ['linear', 'parallel']
         // Linear: the three legs of the triangle arbitrage are executed sequentially
-        // Parallel: all three legs of the triangle arbitrage are executed in parallel. Requires defining a whitelist.
-        EXECUTION_STRATEGY: 'Linear',
+        // Parallel: all three legs of the triangle arbitrage are executed at the same time. Requires defining a whitelist.
+        EXECUTION_STRATEGY: 'linear',
 
         // Maximum number of executions to attempt before shutting down
         // Defaults to unlimited when undefined
@@ -57,6 +57,7 @@ module.exports = {
 
     // Order book depth to maintain on each ticker
     // Valid Values: [5, 10, 20, 50, 100, 500, 1000]
+    // Warning: DO NOT CHANGE THIS WITHOUT KNOWING WHAT YOU ARE DOING! Higher values can cause temporary bans
     DEPTH_SIZE: 100,
 
     // Delay (ms) between the opening of each depth websocket
