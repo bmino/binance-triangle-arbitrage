@@ -91,8 +91,8 @@ module.exports = {
     },
 
     getExecutionStrategy() {
-        switch (CONFIG.TRADING.EXECUTION_STRATEGY.toUpperCase()) {
-            case 'PARALLEL':
+        switch (CONFIG.TRADING.EXECUTION_STRATEGY.toLowerCase()) {
+            case 'parallel':
                 return this.parallelExecutionStrategy;
             default:
                 return this.linearExecutionStrategy;

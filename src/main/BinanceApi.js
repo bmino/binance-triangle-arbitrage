@@ -50,7 +50,6 @@ module.exports = {
     },
 
     depthCache(tickers, limit=100, stagger=200) {
-        console.log(`Opening ${tickers.length} depth websockets ...`);
         return binance.websockets.depthCacheStaggered(tickers, this.processDepth, limit, stagger);
     },
 

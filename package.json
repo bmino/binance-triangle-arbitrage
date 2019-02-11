@@ -1,6 +1,6 @@
 {
   "name": "binance-triangle-arbitrage",
-  "version": "4.2.0",
+  "version": "4.3.0",
   "private": true,
   "engines": {
     "node": "11.8.0",
@@ -14,5 +14,7 @@
     "node-binance-api": "^0.9.0",
     "pino": "^5.11.1"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "pino-pretty": "^2.5.0"
+  }
 }

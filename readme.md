@@ -74,15 +74,10 @@ There are two different methods of executing an identified triangle arbitrage op
 
 
 ## Logging
-All logs are stored in the `/logs` directory.
+All logs are stored in the `/logs` directory. The log level is set via the `LOG_LEVEL` configuration property.
 
 * **performance.log** - Data about performance and speed.
 * **execution.log** - Market interactions and profits.
-
-To change the log level, set an environment variable named `LOG_LEVEL`
-```
-LOG_LEVEL=debug
-```
 
 
 ## Authors
