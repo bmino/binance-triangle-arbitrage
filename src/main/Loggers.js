@@ -4,8 +4,9 @@ const pino = require('pino');
 
 const LOG_DIR = `${__dirname}/../../logs`;
 const PINO_OPTS = {
-    level: CONFIG.LOG_LEVEL.toLowerCase(),
+    level: CONFIG.LOG.LEVEL.toLowerCase(),
     timestamp: () => `,"time":"${new Date().toLocaleString()}"`,
+    prettyPrint: CONFIG.LOG.PRETTY_PRINT,
     useLevelLabels: true,
     base: null
 };

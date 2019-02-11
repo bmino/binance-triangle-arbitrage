@@ -51,9 +51,15 @@ module.exports = {
         ARB_COUNT: 10
     },
 
-    // Log level to configure how verbose logging messages are
-    // Valid Values: ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']
-    LOG_LEVEL: 'info',
+    LOG: {
+        // Log level to configure how verbose logging messages are
+        // Valid Values: ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']
+        LEVEL: 'info',
+
+        // Enable to format the logs with pino-pretty
+        // You might want to disable this if you view the raw .log files
+        PRETTY_PRINT: true
+    },
 
     // Order book depth to maintain on each ticker
     // Valid Values: [5, 10, 20, 50, 100, 500, 1000]
