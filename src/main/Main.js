@@ -64,9 +64,10 @@ function calculateArbitrage() {
         }
     });
 
-    const total = MarketCache.relationships.length;
-    const completed = total - errorCount;
-    logger.performance.info(`Completed ${completed}/${total} (${((completed/total)*100).toFixed(1)}%) calculations in ${new Date().getTime() - before} ms`);
+    const totalCalculations = MarketCache.relationships.length;
+    const completedCalculations = totalCalculations - errorCount;
+    const calculationTime = new Date().getTime() - before;
+    logger.performance.info(`Completed ${completedCalculations}/${totalCalculations} (${((completedCalculations/totalCalculations)*100).toFixed(1)}%) calculations in ${calculationTime} ms`);
     if (CONFIG.HUD.ENABLED) refreshHUD(results);
     setTimeout(calculateArbitrage, CONFIG.SCAN_DELAY);
 }
