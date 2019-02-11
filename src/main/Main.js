@@ -67,8 +67,12 @@ function calculateArbitrage() {
     const totalCalculations = MarketCache.relationships.length;
     const completedCalculations = totalCalculations - errorCount;
     const calculationTime = new Date().getTime() - before;
-    logger.performance.info(`Completed ${completedCalculations}/${totalCalculations} (${((completedCalculations/totalCalculations)*100).toFixed(1)}%) calculations in ${calculationTime} ms`);
+
+    const msg = `Completed ${completedCalculations}/${totalCalculations} (${((completedCalculations/totalCalculations)*100).toFixed(1)}%) calculations in ${calculationTime} ms`;
+    (errorCount > 0) ? logger.performance.info(msg) : logger.performance.debug(msg);
+
     if (CONFIG.HUD.ENABLED) refreshHUD(results);
+
     setTimeout(calculateArbitrage, CONFIG.SCAN_DELAY);
 }
 
