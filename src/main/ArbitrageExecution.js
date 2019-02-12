@@ -38,13 +38,13 @@ module.exports = {
     isSafeToExecute(calculated) {
         const ageInMilliseconds = new Date().getTime() - Math.min(calculated.times.ab, calculated.times.bc, calculated.times.ca);
 
-        if (Object.keys(this.orderHistory).length >= CONFIG.TRADING.EXECUTION_CAP && this.inProgressIds.size === 0) {
+        if (CONFIG.TRADING.EXECUTION_CAP && Object.keys(this.orderHistory).length >= CONFIG.TRADING.EXECUTION_CAP && this.inProgressIds.size === 0) {
             const msg = `Cannot exceed execution cap of ${CONFIG.TRADING.EXECUTION_CAP} execution`;
             logger.execution.error(msg);
             process.exit();
         }
 
-        if (Object.keys(this.orderHistory).length >= CONFIG.TRADING.EXECUTION_CAP) {
+        if (CONFIG.TRADING.EXECUTION_CAP && Object.keys(this.orderHistory).length >= CONFIG.TRADING.EXECUTION_CAP) {
             logger.execution.trace(`Blocking execution because ${Object.keys(this.orderHistory).length}/${CONFIG.TRADING.EXECUTION_CAP} executions have been attempted`);
             return false;
         }

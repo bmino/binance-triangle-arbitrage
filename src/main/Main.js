@@ -25,7 +25,7 @@ ArbitrageExecution.refreshBalances()
         // Listen for depth updates
         const tickers = MarketCache.getTickerArray();
         console.log(`Opening ${tickers.length} depth websockets ...`);
-        return BinanceApi.depthCache(tickers, CONFIG.DEPTH_SIZE, CONFIG.DEPTH_OPEN_INTERVAL);
+        return BinanceApi.depthCache(tickers, CONFIG.DEPTH.SIZE, CONFIG.DEPTH.INITIALIZATION_INTERVAL);
     })
     .then(() => {
         console.log();
@@ -49,7 +49,7 @@ function calculateArbitrage() {
     let errorCount = 0;
     let results = {};
 
-    MarketCache.pruneDepthsAboveThreshold(CONFIG.DEPTH_SIZE);
+    MarketCache.pruneDepthsAboveThreshold(CONFIG.DEPTH.SIZE);
 
     MarketCache.relationships.forEach(relationship => {
         try {
@@ -73,7 +73,7 @@ function calculateArbitrage() {
 
     if (CONFIG.HUD.ENABLED) refreshHUD(results);
 
-    setTimeout(calculateArbitrage, CONFIG.SCAN_DELAY);
+    setTimeout(calculateArbitrage, CONFIG.CALCULATION_COOLDOWN);
 }
 
 function checkConfig() {
@@ -83,7 +83,9 @@ function checkConfig() {
         TRADING: {
             EXECUTION_STRATEGY: ['linear', 'parallel']
         },
-        DEPTH_SIZE: [5, 10, 20, 50, 100, 500, 1000]
+        DEPTH: {
+            SIZE: [5, 10, 20, 50, 100, 500, 1000]
+        }
     };
 
     // Ensure enough information is being watched
@@ -112,13 +114,13 @@ function checkConfig() {
         logger.execution.error(msg);
         throw new Error(msg);
     }
-    if (CONFIG.DEPTH_SIZE > 100 && CONFIG.TRADING.WHITELIST.length === 0) {
+    if (CONFIG.DEPTH.SIZE > 100 && CONFIG.TRADING.WHITELIST.length === 0) {
         const msg = `Using a depth size higher than 100 requires defining a whitelist`;
         logger.execution.error(msg);
         throw new Error(msg);
     }
-    if (!VALID_VALUES.DEPTH_SIZE.includes(CONFIG.DEPTH_SIZE)) {
-        const msg = `Depth size can only contain one of the following values: ${VALID_VALUES.DEPTH_SIZE}`;
+    if (!VALID_VALUES.DEPTH.SIZE.includes(CONFIG.DEPTH.SIZE)) {
+        const msg = `Depth size can only contain one of the following values: ${VALID_VALUES.DEPTH.SIZE}`;
         logger.execution.error(msg);
         throw new Error(msg);
     }

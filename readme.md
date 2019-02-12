@@ -41,7 +41,7 @@ The following dependencies are recommended to run an instance:
 
 ### Configuration
 All configuration is done inside the `/config` directory.
-To setup your configuration for the first time, duplicate the `config.js.example` file and remove the ".example" extension.
+To setup your configuration for the first time, duplicate the `config.json.example` file and remove the ".example" extension.
 This process must be done before deploying the app for the first time and redone after each major version update where the configuration has changed.
 
 
