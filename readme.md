@@ -12,7 +12,7 @@ arbitrage opportunities. To disable the HUD, set `HUD.ENABLED` to false.
 
 
 ### Reading the HUD
-* **Trade** - Symbols involved in the triangle arbitrage. The first must be converted into the second, which must be converted into the third, and then back to the first.
+* **Trade** - Three symbols related by exchange rates that are involved in the triangle arbitrage.
 * **Profit** - Percent profit or loss from executing the triangle arbitrage. This does not include trading fees.
 * **AB Age** - Time in seconds since the most recent update of the market ticker relating the first and second symbols in the arbitrage.
 * **BC Age** - Time in seconds since the most recent update of the market ticker relating the second and third symbols in the arbitrage.
@@ -60,17 +60,10 @@ This process must be done before deploying the app for the first time and redone
 
 
 ## Execution strategies
-There are two different methods of executing an identified triangle arbitrage opportunity.
+There are two supported methods of executing an identified triangle arbitrage opportunity.
 
 * **Linear** - Three trades are executed sequentially with each being initiated after the first has completed.
-    
-    This is easiest to implement and has no special requirements.
-    
 * **Parallel** - Three trades are executed in tandem with each being initiated at the same time
-
-    This requires `TRADING.WHITELIST` to contain symbols that will be considered for the three symbols.
-    Because all trades are executed synchronously, you must hold a balance of every symbol in the whitelist.
-    The balance of each symbol should be equivalent or greater than `INVESTMENT.MAX` in terms of the base symbol.
 
 
 ## Logging
