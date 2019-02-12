@@ -37,6 +37,8 @@ ArbitrageExecution.refreshBalances()
         console.log(`Using ${CONFIG.TRADING.EXECUTION_STRATEGY} strategy`);
         console.log();
 
+        logger.execution.debug({configuration: CONFIG});
+
         // Allow time to read output before starting calculation cycles
         setTimeout(calculateArbitrage, 3000);
     })
