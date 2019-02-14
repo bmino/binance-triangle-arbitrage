@@ -43,6 +43,7 @@ The following dependencies are recommended to run an instance:
 All configuration is done inside the `/config` directory.
 To setup your configuration for the first time, duplicate the `config.json.example` file and remove the ".example" extension.
 This process must be done before deploying the app for the first time and redone after each major version update where the configuration has changed.
+More details can be found [here](config/readme.md).
 
 
 ### Deployment
@@ -60,17 +61,17 @@ This process must be done before deploying the app for the first time and redone
 
 
 ## Execution strategies
-There are two supported methods of executing an identified triangle arbitrage opportunity.
+There are two supported methods of executing an identified triangle arbitrage opportunity. More details [here](src/resources/docs/strategies.md)
 
-* **Linear** - Three trades are executed sequentially with each being initiated after the first has completed.
-* **Parallel** - Three trades are executed in tandem with each being initiated at the same time
+* **Linear** - Three trades are executed sequentially with each being initiated after the first has completed
+* **Parallel** - Three trades are executed asynchronously with each being initiated at the same time
 
 
 ## Logging
 All logs are stored in the `/logs` directory. The log level is set via the `LOG.LEVEL` configuration property.
 
-* **performance.log** - Data about performance and speed.
-* **execution.log** - Market interactions and profits.
+* **performance.log** - Data about performance and speed
+* **execution.log** - Market interactions and profits
 
 
 ## Authors
