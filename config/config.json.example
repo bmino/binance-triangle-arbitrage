@@ -8,16 +8,16 @@
     "INVESTMENT": {
         "BASE": "BTC",
         "MIN": 0.015,
-        "MAX": 0.1,
+        "MAX": 0.035,
         "STEP": 0.005
     },
 
     "TRADING": {
         "ENABLED": false,
         "EXECUTION_STRATEGY": "linear",
-        "EXECUTION_CAP": null,
-        "PROFIT_THRESHOLD": 0.5,
-        "AGE_THRESHOLD": 150,
+        "EXECUTION_CAP": 1,
+        "PROFIT_THRESHOLD": 0.3,
+        "AGE_THRESHOLD": 300,
         "WHITELIST": []
     },
 
@@ -32,10 +32,10 @@
     },
 
     "DEPTH": {
-        "SIZE": 100,
+        "SIZE": 50,
         "INITIALIZATION_INTERVAL": 50
     },
 
-    "CALCULATION_COOLDOWN": 50
+    "CALCULATION_COOLDOWN": 100
 
 }

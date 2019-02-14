@@ -34,7 +34,7 @@ Upon each version update you should copy the new syntax from `config.json.exampl
 * Description: Minimum investment amount of the base currency to consider
     
 #### `INVESTMENT.MAX` (Number)
-* Default: `0.1`
+* Default: `0.035`
 * Description: Maximum investment amount of the base currency to consider
 
 #### `INVESTMENT.STEP` (Number)
@@ -60,17 +60,17 @@ Upon each version update you should copy the new syntax from `config.json.exampl
     * `"parallel"` - all three trades of the triangle arbitrage are executed at the same time
 
 #### `TRADING.EXECUTION_CAP` (Number)
-* Default: `0`
+* Default: `1`
 * Description: Maximum number of executions to attempt before shutting down
 * Special Values:
     * `0` - No limit on executions
 
 #### `TRADING.PROFIT_THRESHOLD` (Number)
-* Default: `0.5`
+* Default: `0.3`
 * Description: Minimum profit (percent) required to consider executing a position
 
 #### `TRADING.AGE_THRESHOLD` (Number)
-* Default: `150`
+* Default: `300`
 * Description: Maximum time (ms) since the oldest depth tick involved in the position
 
 #### `TRADING.WHITELIST` (Array | String)
@@ -120,7 +120,7 @@ Upon each version update you should copy the new syntax from `config.json.exampl
 ### `DEPTH`
 
 #### `DEPTH.SIZE` (Number)
-* Default: `100`
+* Default: `50`
 * Description: Order book depth to maintain locally on each ticker
 * [Extended Documentation](../src/resources/docs/depths.md)
 * Values:
@@ -141,5 +141,5 @@ Upon each version update you should copy the new syntax from `config.json.exampl
 
 
 #### `CALCULATION_DELAY` (Number)
-* Default: `50`
+* Default: `100`
 * Description: Delay (ms) after calculations are performed before starting another cycle
