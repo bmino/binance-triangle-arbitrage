@@ -1,6 +1,7 @@
 const CONFIG = require('../../config/config');
 const logger = require('./Loggers');
 const BinanceApi = require('./BinanceApi');
+const _ = require ('lodash');
 
 module.exports = {
 
@@ -14,7 +15,7 @@ module.exports = {
         this.orderHistory[calculated.id] = new Date().getTime();
 
         const before = new Date().getTime();
-        const initialBalances = this.balances;
+        const initialBalances = _.cloneDeep(this.balances);
         return this.getExecutionStrategy()(calculated)
             .then(results => {
                 logger.execution.info(`${CONFIG.TRADING.ENABLED ? 'Executed' : 'Test: Executed'} ${calculated.id} position in ${new Date().getTime() - before} ms`);
@@ -24,8 +25,8 @@ module.exports = {
                 logger.execution.error(err.message);
             })
             .then(this.refreshBalances)
-            .then(() => {
-                const deltas = this.compareBalances(initialBalances, this.balances);
+            .then((newBalances) => {
+                const deltas = this.compareBalances(initialBalances, newBalances);
                 Object.entries(deltas).forEach(([symbol, delta]) => {
                     logger.execution.info(`${symbol} delta: ${delta}`);
                 });
