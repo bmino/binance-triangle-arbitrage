@@ -12,7 +12,7 @@ arbitrage opportunities. To disable the HUD, set `HUD.ENABLED` to false.
 
 
 ### Reading the HUD
-* **Trade** - Symbols involved in the triangle arbitrage. The first must be converted into the second, which must be converted into the third, and then back to the first.
+* **Trade** - Three symbols related by exchange rates that are involved in the triangle arbitrage.
 * **Profit** - Percent profit or loss from executing the triangle arbitrage. This does not include trading fees.
 * **AB Age** - Time in seconds since the most recent update of the market ticker relating the first and second symbols in the arbitrage.
 * **BC Age** - Time in seconds since the most recent update of the market ticker relating the second and third symbols in the arbitrage.
@@ -41,8 +41,9 @@ The following dependencies are recommended to run an instance:
 
 ### Configuration
 All configuration is done inside the `/config` directory.
-To setup your configuration for the first time, duplicate the `config.js.example` file and remove the ".example" extension.
+To setup your configuration for the first time, duplicate the `config.json.example` file and remove the ".example" extension.
 This process must be done before deploying the app for the first time and redone after each major version update where the configuration has changed.
+More details can be found [here](config/readme.md).
 
 
 ### Deployment
@@ -60,24 +61,17 @@ This process must be done before deploying the app for the first time and redone
 
 
 ## Execution strategies
-There are two different methods of executing an identified triangle arbitrage opportunity.
+There are two supported methods of executing an identified triangle arbitrage opportunity. More details [here](src/resources/docs/strategies.md)
 
-* **Linear** - Three trades are executed sequentially with each being initiated after the first has completed.
-    
-    This is easiest to implement and has no special requirements.
-    
-* **Parallel** - Three trades are executed in tandem with each being initiated at the same time
-
-    This requires `TRADING.WHITELIST` to contain symbols that will be considered for the three symbols.
-    Because all trades are executed synchronously, you must hold a balance of every symbol in the whitelist.
-    The balance of each symbol should be equivalent or greater than `INVESTMENT.MAX` in terms of the base symbol.
+* **Linear** - Three trades are executed sequentially with each being initiated after the first has completed
+* **Parallel** - Three trades are executed asynchronously with each being initiated at the same time
 
 
 ## Logging
 All logs are stored in the `/logs` directory. The log level is set via the `LOG.LEVEL` configuration property.
 
-* **performance.log** - Data about performance and speed.
-* **execution.log** - Market interactions and profits.
+* **performance.log** - Data about performance and speed
+* **execution.log** - Market interactions and profits
 
 
 ## Authors

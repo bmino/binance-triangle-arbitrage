@@ -1,6 +1,7 @@
 const CONFIG = require('../../config/config');
 const logger = require('./Loggers');
 const BinanceApi = require('./BinanceApi');
+const _ = require ('lodash');
 
 module.exports = {
 
@@ -14,7 +15,7 @@ module.exports = {
         this.orderHistory[calculated.id] = new Date().getTime();
 
         const before = new Date().getTime();
-        const initialBalances = this.balances;
+        const initialBalances = _.cloneDeep(this.balances);
         return this.getExecutionStrategy()(calculated)
             .then(results => {
                 logger.execution.info(`${CONFIG.TRADING.ENABLED ? 'Executed' : 'Test: Executed'} ${calculated.id} position in ${new Date().getTime() - before} ms`);
@@ -24,8 +25,8 @@ module.exports = {
                 logger.execution.error(err.message);
             })
             .then(this.refreshBalances)
-            .then(() => {
-                const deltas = this.compareBalances(initialBalances, this.balances);
+            .then((newBalances) => {
+                const deltas = this.compareBalances(initialBalances, newBalances);
                 Object.entries(deltas).forEach(([symbol, delta]) => {
                     logger.execution.info(`${symbol} delta: ${delta}`);
                 });
@@ -38,13 +39,13 @@ module.exports = {
     isSafeToExecute(calculated) {
         const ageInMilliseconds = new Date().getTime() - Math.min(calculated.times.ab, calculated.times.bc, calculated.times.ca);
 
-        if (Object.keys(this.orderHistory).length >= CONFIG.TRADING.EXECUTION_CAP && this.inProgressIds.size === 0) {
+        if (CONFIG.TRADING.EXECUTION_CAP && Object.keys(this.orderHistory).length >= CONFIG.TRADING.EXECUTION_CAP && this.inProgressIds.size === 0) {
             const msg = `Cannot exceed execution cap of ${CONFIG.TRADING.EXECUTION_CAP} execution`;
             logger.execution.error(msg);
             process.exit();
         }
 
-        if (Object.keys(this.orderHistory).length >= CONFIG.TRADING.EXECUTION_CAP) {
+        if (CONFIG.TRADING.EXECUTION_CAP && Object.keys(this.orderHistory).length >= CONFIG.TRADING.EXECUTION_CAP) {
             logger.execution.trace(`Blocking execution because ${Object.keys(this.orderHistory).length}/${CONFIG.TRADING.EXECUTION_CAP} executions have been attempted`);
             return false;
         }

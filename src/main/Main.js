@@ -14,8 +14,7 @@ binance.options({
     test: !CONFIG.TRADING.ENABLED
 });
 
-if (CONFIG.TRADING.ENABLED) console.log(`WARNING! Order execution is enabled!`);
-else console.log(`Running in research mode.`);
+if (CONFIG.TRADING.ENABLED) console.log(`WARNING! Order execution is enabled!\n`);
 
 ArbitrageExecution.refreshBalances()
     .then(BinanceApi.exchangeInfo)
@@ -25,17 +24,22 @@ ArbitrageExecution.refreshBalances()
         // Listen for depth updates
         const tickers = MarketCache.getTickerArray();
         console.log(`Opening ${tickers.length} depth websockets ...`);
-        return BinanceApi.depthCache(tickers, CONFIG.DEPTH_SIZE, CONFIG.DEPTH_OPEN_INTERVAL);
+        return BinanceApi.depthCache(tickers, CONFIG.DEPTH.SIZE, CONFIG.DEPTH.INITIALIZATION_INTERVAL);
     })
     .then(() => {
         console.log();
-        console.log(`Running on ${os.type()} with ${os.cpus().length} cores @ [${os.cpus().map(cpu => cpu.speed)}] MHz`);
-        console.log(`Investing up to ${CONFIG.INVESTMENT.MAX} ${CONFIG.INVESTMENT.BASE}`);
-        console.log(`Execution criteria:\n\tProfit > ${CONFIG.TRADING.PROFIT_THRESHOLD}%\n\tAge < ${CONFIG.TRADING.AGE_THRESHOLD} ms`);
-        console.log(`Log Levels:\n\tExecution:  \t${logger.execution.level}\n\tPerformance:\t${logger.performance.level}`);
-        console.log(`Will not exceed ${CONFIG.TRADING.EXECUTION_CAP} execution(s)`);
-        console.log(`Using ${CONFIG.TRADING.EXECUTION_STRATEGY} strategy`);
+        console.log(`Execution Strategy:     ${CONFIG.TRADING.EXECUTION_STRATEGY}`);
+        console.log(`Optimization Ticks:     ${((CONFIG.INVESTMENT.MAX - CONFIG.INVESTMENT.MIN) / CONFIG.INVESTMENT.STEP).toFixed(0)}`);
+        console.log(`Execution Limit:        ${CONFIG.TRADING.EXECUTION_CAP} execution(s)`);
+        console.log(`Profit Threshold:       ${CONFIG.TRADING.PROFIT_THRESHOLD.toFixed(2)}%`);
+        console.log(`Age Threshold:          ${CONFIG.TRADING.AGE_THRESHOLD} ms`);
+        console.log(`Log Level:              ${CONFIG.LOG.LEVEL}`);
         console.log();
+
+        logger.performance.debug(`Operating System: ${os.type()}`);
+        logger.performance.debug(`Cores Speeds: [${os.cpus().map(cpu => cpu.speed)}] MHz`);
+
+        logger.execution.debug({configuration: CONFIG});
 
         // Allow time to read output before starting calculation cycles
         setTimeout(calculateArbitrage, 3000);
@@ -49,7 +53,7 @@ function calculateArbitrage() {
     let errorCount = 0;
     let results = {};
 
-    MarketCache.pruneDepthsAboveThreshold(CONFIG.DEPTH_SIZE);
+    MarketCache.pruneDepthsAboveThreshold(CONFIG.DEPTH.SIZE);
 
     MarketCache.relationships.forEach(relationship => {
         try {
@@ -73,7 +77,7 @@ function calculateArbitrage() {
 
     if (CONFIG.HUD.ENABLED) refreshHUD(results);
 
-    setTimeout(calculateArbitrage, CONFIG.SCAN_DELAY);
+    setTimeout(calculateArbitrage, CONFIG.CALCULATION_COOLDOWN);
 }
 
 function checkConfig() {
@@ -83,7 +87,9 @@ function checkConfig() {
         TRADING: {
             EXECUTION_STRATEGY: ['linear', 'parallel']
         },
-        DEPTH_SIZE: [5, 10, 20, 50, 100, 500, 1000]
+        DEPTH: {
+            SIZE: [5, 10, 20, 50, 100, 500, 1000]
+        }
     };
 
     // Ensure enough information is being watched
@@ -112,13 +118,13 @@ function checkConfig() {
         logger.execution.error(msg);
         throw new Error(msg);
     }
-    if (CONFIG.DEPTH_SIZE > 100 && CONFIG.TRADING.WHITELIST.length === 0) {
+    if (CONFIG.DEPTH.SIZE > 100 && CONFIG.TRADING.WHITELIST.length === 0) {
         const msg = `Using a depth size higher than 100 requires defining a whitelist`;
         logger.execution.error(msg);
         throw new Error(msg);
     }
-    if (!VALID_VALUES.DEPTH_SIZE.includes(CONFIG.DEPTH_SIZE)) {
-        const msg = `Depth size can only contain one of the following values: ${VALID_VALUES.DEPTH_SIZE}`;
+    if (!VALID_VALUES.DEPTH.SIZE.includes(CONFIG.DEPTH.SIZE)) {
+        const msg = `Depth size can only contain one of the following values: ${VALID_VALUES.DEPTH.SIZE}`;
         logger.execution.error(msg);
         throw new Error(msg);
     }

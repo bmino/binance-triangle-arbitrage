@@ -6,6 +6,10 @@ const LOG_DIR = `${__dirname}/../../logs`;
 const PINO_OPTS = {
     level: CONFIG.LOG.LEVEL.toLowerCase(),
     timestamp: () => `,"time":"${new Date().toLocaleString()}"`,
+    redact: {
+        paths: ['[*].KEYS.API','[*].KEYS.SECRET'],
+        censor: '**********'
+    },
     prettyPrint: CONFIG.LOG.PRETTY_PRINT,
     useLevelLabels: true,
     base: null
