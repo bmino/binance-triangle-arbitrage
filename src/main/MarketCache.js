@@ -74,7 +74,6 @@ module.exports = {
         if (!ca) return;
 
         return {
-            id: `${a}-${b}-${c}`,
             ab: ab,
             bc: bc,
             ca: ca,

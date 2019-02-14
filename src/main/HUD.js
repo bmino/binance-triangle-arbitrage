@@ -47,7 +47,7 @@ module.exports = {
         let tableData = [this.headers.arb];
         arbs.forEach(arb => {
             tableData.push([
-                `${arb.id}`,
+                `${arb.symbol.a}-${arb.symbol.b}-${arb.symbol.c}`,
                 `${arb.percent.toFixed(4)}%`,
                 `${((now - arb.times.ab)/1000).toFixed(2)}`,
                 `${((now - arb.times.bc)/1000).toFixed(2)}`,
