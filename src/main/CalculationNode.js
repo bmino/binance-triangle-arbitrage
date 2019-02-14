@@ -24,23 +24,19 @@ module.exports = {
             trade: trade,
             start: {
                 total: investmentA,
-                market: 0,
-                dust: 0
+                market: 0
             },
             ab: {
                 total: 0,
-                market: 0,
-                dust: 0
+                market: 0
             },
             bc: {
                 total: 0,
-                market: 0,
-                dust: 0
+                market: 0
             },
             ca: {
                 total: 0,
-                market: 0,
-                dust: 0
+                market: 0
             },
             times: {
                 ab: binance.depthCache(trade.ab.ticker).time,
@@ -63,7 +59,6 @@ module.exports = {
             calculated.b = this.orderBookConversion(calculated.ab.market, trade.symbol.a, trade.symbol.b, trade.ab.ticker);
             calculated.start.market = calculated.ab.market;
         }
-        calculated.ab.dust = 0;
     
         if (trade.bc.method === 'Buy') {
             calculated.bc.total = this.orderBookConversion(calculated.b, trade.symbol.b, trade.symbol.c, trade.bc.ticker);
@@ -74,7 +69,6 @@ module.exports = {
             calculated.bc.market = this.calculateDustless(trade.bc.ticker, calculated.bc.total);
             calculated.c = this.orderBookConversion(calculated.bc.market, trade.symbol.b, trade.symbol.c, trade.bc.ticker);
         }
-        calculated.bc.dust = calculated.bc.total - calculated.bc.market;
     
         if (trade.ca.method === 'Buy') {
             calculated.ca.total = this.orderBookConversion(calculated.c, trade.symbol.c, trade.symbol.a, trade.ca.ticker);
@@ -85,7 +79,6 @@ module.exports = {
             calculated.ca.market = this.calculateDustless(trade.ca.ticker, calculated.ca.total);
             calculated.a = this.orderBookConversion(calculated.ca.market, trade.symbol.c, trade.symbol.a, trade.ca.ticker);
         }
-        calculated.ca.dust = calculated.ca.total - calculated.ca.market;
     
         calculated.percent = (calculated.a - calculated.start.total) / calculated.start.total * 100;
         if (!calculated.percent) calculated.percent = 0;
