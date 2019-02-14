@@ -16,6 +16,7 @@ module.exports = {
 
         const before = new Date().getTime();
         const initialBalances = _.cloneDeep(this.balances);
+
         return this.getExecutionStrategy()(calculated)
             .then(results => {
                 logger.execution.info(`${CONFIG.TRADING.ENABLED ? 'Executed' : 'Test: Executed'} ${calculated.id} position in ${new Date().getTime() - before} ms`);
@@ -37,24 +38,18 @@ module.exports = {
     },
 
     isSafeToExecute(calculated) {
+        if (calculated.percent < CONFIG.TRADING.PROFIT_THRESHOLD) return false;
+
         const ageInMilliseconds = new Date().getTime() - Math.min(calculated.times.ab, calculated.times.bc, calculated.times.ca);
+        if (ageInMilliseconds > CONFIG.TRADING.AGE_THRESHOLD) return false;
 
         if (CONFIG.TRADING.EXECUTION_CAP && Object.keys(this.orderHistory).length >= CONFIG.TRADING.EXECUTION_CAP && this.inProgressIds.size === 0) {
             const msg = `Cannot exceed execution cap of ${CONFIG.TRADING.EXECUTION_CAP} execution`;
             logger.execution.error(msg);
             process.exit();
         }
-
         if (CONFIG.TRADING.EXECUTION_CAP && Object.keys(this.orderHistory).length >= CONFIG.TRADING.EXECUTION_CAP) {
             logger.execution.trace(`Blocking execution because ${Object.keys(this.orderHistory).length}/${CONFIG.TRADING.EXECUTION_CAP} executions have been attempted`);
-            return false;
-        }
-        if (calculated.percent < CONFIG.TRADING.PROFIT_THRESHOLD) {
-            logger.execution.trace(`Blocking execution because ${calculated.percent.toFixed(3)}% profit is below the configured threshold of ${CONFIG.TRADING.PROFIT_THRESHOLD}`);
-            return false;
-        }
-        if (ageInMilliseconds > CONFIG.TRADING.AGE_THRESHOLD) {
-            logger.execution.trace(`Blocking execution because an age of ${ageInMilliseconds} ms is above the configured threshold of ${CONFIG.TRADING.AGE_THRESHOLD}`);
             return false;
         }
         if (this.inProgressIds.has(calculated.id)) {
