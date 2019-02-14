@@ -14,8 +14,7 @@ binance.options({
     test: !CONFIG.TRADING.ENABLED
 });
 
-if (CONFIG.TRADING.ENABLED) console.log(`WARNING! Order execution is enabled!`);
-else console.log(`Running in research mode.`);
+if (CONFIG.TRADING.ENABLED) console.log(`WARNING! Order execution is enabled!\n`);
 
 ArbitrageExecution.refreshBalances()
     .then(BinanceApi.exchangeInfo)
@@ -29,13 +28,16 @@ ArbitrageExecution.refreshBalances()
     })
     .then(() => {
         console.log();
-        console.log(`Running on ${os.type()} with ${os.cpus().length} cores @ [${os.cpus().map(cpu => cpu.speed)}] MHz`);
-        console.log(`Investing up to ${CONFIG.INVESTMENT.MAX} ${CONFIG.INVESTMENT.BASE}`);
-        console.log(`Execution criteria:\n\tProfit > ${CONFIG.TRADING.PROFIT_THRESHOLD}%\n\tAge < ${CONFIG.TRADING.AGE_THRESHOLD} ms`);
-        console.log(`Log Levels:\n\tExecution:  \t${logger.execution.level}\n\tPerformance:\t${logger.performance.level}`);
-        console.log(`Will not exceed ${CONFIG.TRADING.EXECUTION_CAP} execution(s)`);
-        console.log(`Using ${CONFIG.TRADING.EXECUTION_STRATEGY} strategy`);
+        console.log(`Execution Strategy:     ${CONFIG.TRADING.EXECUTION_STRATEGY}`);
+        console.log(`Optimization Ticks:     ${((CONFIG.INVESTMENT.MAX - CONFIG.INVESTMENT.MIN) / CONFIG.INVESTMENT.STEP).toFixed(0)}`);
+        console.log(`Execution Limit:        ${CONFIG.TRADING.EXECUTION_CAP} execution(s)`);
+        console.log(`Profit Threshold:       ${CONFIG.TRADING.PROFIT_THRESHOLD.toFixed(2)}%`);
+        console.log(`Age Threshold:          ${CONFIG.TRADING.AGE_THRESHOLD} ms`);
+        console.log(`Log Level:              ${CONFIG.LOG.LEVEL}`);
         console.log();
+
+        logger.performance.debug(`Operating System: ${os.type()}`);
+        logger.performance.debug(`Cores Speeds: [${os.cpus().map(cpu => cpu.speed)}] MHz`);
 
         logger.execution.debug({configuration: CONFIG});
 
