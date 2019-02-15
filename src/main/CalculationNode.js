@@ -2,14 +2,14 @@ const CONFIG = require('../../config/config');
 const binance = require('node-binance-api')();
 const MarketCache = require('./MarketCache');
 
-module.exports = {
+const CalculationNode = {
 
     optimize(trade) {
         let quantity, calculation;
         let bestCalculation = null;
 
         for (quantity = CONFIG.INVESTMENT.MIN || CONFIG.INVESTMENT.STEP; quantity <= CONFIG.INVESTMENT.MAX; quantity += CONFIG.INVESTMENT.STEP) {
-            calculation = this.calculate(quantity, trade);
+            calculation = CalculationNode.calculate(quantity, trade);
             if (!bestCalculation || calculation.percent > bestCalculation.percent) {
                 bestCalculation = calculation;
             }
@@ -49,35 +49,35 @@ module.exports = {
         };
     
         if (trade.ab.method === 'Buy') {
-            calculated.ab.total = this.orderBookConversion(calculated.start.total, trade.symbol.a, trade.symbol.b, trade.ab.ticker);
-            calculated.ab.market = this.calculateDustless(trade.ab.ticker, calculated.ab.total);
+            calculated.ab.total = CalculationNode.orderBookConversion(calculated.start.total, trade.symbol.a, trade.symbol.b, trade.ab.ticker);
+            calculated.ab.market = CalculationNode.calculateDustless(trade.ab.ticker, calculated.ab.total);
             calculated.b = calculated.ab.market;
-            calculated.start.market = this.orderBookConversion(calculated.ab.market, trade.symbol.b, trade.symbol.a, trade.ab.ticker);
+            calculated.start.market = CalculationNode.orderBookConversion(calculated.ab.market, trade.symbol.b, trade.symbol.a, trade.ab.ticker);
         } else {
             calculated.ab.total = calculated.start.total;
-            calculated.ab.market = this.calculateDustless(trade.ab.ticker, calculated.ab.total);
-            calculated.b = this.orderBookConversion(calculated.ab.market, trade.symbol.a, trade.symbol.b, trade.ab.ticker);
+            calculated.ab.market = CalculationNode.calculateDustless(trade.ab.ticker, calculated.ab.total);
+            calculated.b = CalculationNode.orderBookConversion(calculated.ab.market, trade.symbol.a, trade.symbol.b, trade.ab.ticker);
             calculated.start.market = calculated.ab.market;
         }
     
         if (trade.bc.method === 'Buy') {
-            calculated.bc.total = this.orderBookConversion(calculated.b, trade.symbol.b, trade.symbol.c, trade.bc.ticker);
-            calculated.bc.market = this.calculateDustless(trade.bc.ticker, calculated.bc.total);
+            calculated.bc.total = CalculationNode.orderBookConversion(calculated.b, trade.symbol.b, trade.symbol.c, trade.bc.ticker);
+            calculated.bc.market = CalculationNode.calculateDustless(trade.bc.ticker, calculated.bc.total);
             calculated.c = calculated.bc.market;
         } else {
             calculated.bc.total = calculated.b;
-            calculated.bc.market = this.calculateDustless(trade.bc.ticker, calculated.bc.total);
-            calculated.c = this.orderBookConversion(calculated.bc.market, trade.symbol.b, trade.symbol.c, trade.bc.ticker);
+            calculated.bc.market = CalculationNode.calculateDustless(trade.bc.ticker, calculated.bc.total);
+            calculated.c = CalculationNode.orderBookConversion(calculated.bc.market, trade.symbol.b, trade.symbol.c, trade.bc.ticker);
         }
     
         if (trade.ca.method === 'Buy') {
-            calculated.ca.total = this.orderBookConversion(calculated.c, trade.symbol.c, trade.symbol.a, trade.ca.ticker);
-            calculated.ca.market = this.calculateDustless(trade.ca.ticker, calculated.ca.total);
+            calculated.ca.total = CalculationNode.orderBookConversion(calculated.c, trade.symbol.c, trade.symbol.a, trade.ca.ticker);
+            calculated.ca.market = CalculationNode.calculateDustless(trade.ca.ticker, calculated.ca.total);
             calculated.a = calculated.ca.market;
         } else {
             calculated.ca.total = calculated.c;
-            calculated.ca.market = this.calculateDustless(trade.ca.ticker, calculated.ca.total);
-            calculated.a = this.orderBookConversion(calculated.ca.market, trade.symbol.c, trade.symbol.a, trade.ca.ticker);
+            calculated.ca.market = CalculationNode.calculateDustless(trade.ca.ticker, calculated.ca.total);
+            calculated.a = CalculationNode.orderBookConversion(calculated.ca.market, trade.symbol.c, trade.symbol.a, trade.ca.ticker);
         }
     
         calculated.percent = (calculated.a - calculated.start.total) / calculated.start.total * 100;
@@ -134,3 +134,5 @@ module.exports = {
     }
 
 };
+
+module.exports = CalculationNode;

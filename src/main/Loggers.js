@@ -21,7 +21,9 @@ if (!fs.existsSync(LOG_DIR)){
 }
 
 
-module.exports = {
+const Loggers = {
     'performance': pino(PINO_OPTS, pino.destination(`${LOG_DIR}/performance.log`)),
     'execution': pino(PINO_OPTS, pino.destination(`${LOG_DIR}/execution.log`))
 };
+
+module.exports = Loggers;

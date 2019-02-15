@@ -3,7 +3,7 @@ const logger = require('./Loggers');
 const BinanceApi = require('./BinanceApi');
 const _ = require ('lodash');
 
-module.exports = {
+const ArbitrageExecution = {
 
     inProgressIds: new Set(),
     orderHistory: {},
@@ -11,29 +11,29 @@ module.exports = {
 
     executeCalculatedPosition(calculated) {
         // Register trade id as being executed
-        this.inProgressIds.add(calculated.id);
-        this.orderHistory[calculated.id] = new Date().getTime();
+        ArbitrageExecution.inProgressIds.add(calculated.id);
+        ArbitrageExecution.orderHistory[calculated.id] = new Date().getTime();
 
         const before = new Date().getTime();
-        const initialBalances = _.cloneDeep(this.balances);
+        const initialBalances = _.cloneDeep(ArbitrageExecution.balances);
 
-        return this.execute(calculated)
+        return ArbitrageExecution.execute(calculated)
             .then(results => {
                 logger.execution.info(`${CONFIG.TRADING.ENABLED ? 'Executed' : 'Test: Executed'} ${calculated.id} position in ${new Date().getTime() - before} ms`);
-                logger.execution.debug({trade: calculated});
+                logger.execution.trace({trade: calculated});
             })
             .catch(err => {
                 logger.execution.error(err.message);
             })
-            .then(this.refreshBalances)
+            .then(ArbitrageExecution.refreshBalances)
             .then((newBalances) => {
-                const deltas = this.compareBalances(initialBalances, newBalances);
+                const deltas = ArbitrageExecution.compareBalances(initialBalances, newBalances);
                 Object.entries(deltas).forEach(([symbol, delta]) => {
                     logger.execution.info(`${symbol} delta: ${delta}`);
                 });
             })
             .then(() => {
-                this.inProgressIds.delete(calculated.id);
+                ArbitrageExecution.inProgressIds.delete(calculated.id);
             });
     },
 
@@ -43,21 +43,21 @@ module.exports = {
         const ageInMilliseconds = new Date().getTime() - Math.min(calculated.times.ab, calculated.times.bc, calculated.times.ca);
         if (ageInMilliseconds > CONFIG.TRADING.AGE_THRESHOLD) return false;
 
-        if (CONFIG.TRADING.EXECUTION_CAP && Object.keys(this.orderHistory).length >= CONFIG.TRADING.EXECUTION_CAP && this.inProgressIds.size === 0) {
+        if (CONFIG.TRADING.EXECUTION_CAP && Object.keys(ArbitrageExecution.orderHistory).length >= CONFIG.TRADING.EXECUTION_CAP && ArbitrageExecution.inProgressIds.size === 0) {
             const msg = `Cannot exceed execution cap of ${CONFIG.TRADING.EXECUTION_CAP} execution`;
             logger.execution.error(msg);
             process.exit();
         }
-        if (CONFIG.TRADING.EXECUTION_CAP && Object.keys(this.orderHistory).length >= CONFIG.TRADING.EXECUTION_CAP) {
-            logger.execution.trace(`Blocking execution because ${Object.keys(this.orderHistory).length}/${CONFIG.TRADING.EXECUTION_CAP} executions have been attempted`);
+        if (CONFIG.TRADING.EXECUTION_CAP && Object.keys(ArbitrageExecution.orderHistory).length >= CONFIG.TRADING.EXECUTION_CAP) {
+            logger.execution.trace(`Blocking execution because ${Object.keys(ArbitrageExecution.orderHistory).length}/${CONFIG.TRADING.EXECUTION_CAP} executions have been attempted`);
             return false;
         }
-        if (this.inProgressIds.has(calculated.id)) {
+        if (ArbitrageExecution.inProgressIds.has(calculated.id)) {
             logger.execution.trace(`Blocking execution because ${calculated.id} is already being executed`);
             return false;
         }
-        if (this.tradesInXSeconds(10) >= 3) {
-            logger.execution.trace(`Blocking execution because ${this.tradesInXSeconds(10)} trades have already been executed in the last 10 seconds`);
+        if (ArbitrageExecution.tradesInXSeconds(10) >= 3) {
+            logger.execution.trace(`Blocking execution because ${ArbitrageExecution.tradesInXSeconds(10)} trades have already been executed in the last 10 seconds`);
             return false;
         }
 
@@ -66,7 +66,7 @@ module.exports = {
 
     refreshBalances() {
         return BinanceApi.getBalances()
-            .then(balances => this.balances = balances);
+            .then(balances => ArbitrageExecution.balances = balances);
     },
 
     compareBalances(b1, b2, symbols = [...Object.keys(b1), ...Object.keys(b2)]) {
@@ -83,19 +83,19 @@ module.exports = {
 
     tradesInXSeconds(seconds) {
         const timeFloor = new Date().getTime() - (seconds * 1000);
-        return Object.values(this.orderHistory).filter(time => time > timeFloor).length;
+        return Object.values(ArbitrageExecution.orderHistory).filter(time => time > timeFloor).length;
     },
 
     execute(calculated) {
-        return this.getExecutionStrategy()(calculated);
+        return ArbitrageExecution.getExecutionStrategy()(calculated);
     },
 
     getExecutionStrategy() {
         switch (CONFIG.TRADING.EXECUTION_STRATEGY.toLowerCase()) {
             case 'parallel':
-                return this.parallelExecutionStrategy;
+                return ArbitrageExecution.parallelExecutionStrategy;
             default:
-                return this.linearExecutionStrategy;
+                return ArbitrageExecution.linearExecutionStrategy;
         }
     },
 
@@ -118,3 +118,5 @@ module.exports = {
     }
 
 };
+
+module.exports = ArbitrageExecution;
