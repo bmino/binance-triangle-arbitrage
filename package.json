@@ -1,6 +1,6 @@
 {
   "name": "binance-triangle-arbitrage",
-  "version": "4.4.0",
+  "version": "4.4.1",
   "private": true,
   "engines": {
     "node": "11.8.0",

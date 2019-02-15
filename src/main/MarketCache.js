@@ -1,6 +1,6 @@
 const binance = require('node-binance-api')();
 
-module.exports = {
+const MarketCache = {
 
     symbols: [],
     tickers: {},
@@ -22,17 +22,17 @@ module.exports = {
         });
 
         // Initialize market cache
-        this.symbols = symbols;
-        this.tickers = tickers;
-        this.relationships = this.getTradesFromSymbol(baseSymbol);
+        MarketCache.symbols = symbols;
+        MarketCache.tickers = tickers;
+        MarketCache.relationships = MarketCache.getTradesFromSymbol(baseSymbol);
     },
 
     getTickerArray() {
-        return Object.keys(this.tickers);
+        return Object.keys(MarketCache.tickers);
     },
 
     getDepthCache() {
-        return this.getTickerArray()
+        return MarketCache.getTickerArray()
             .map(ticker => {
                 let depth = binance.depthCache(ticker);
                 depth.ticker = ticker;
@@ -41,7 +41,7 @@ module.exports = {
     },
 
     pruneDepthsAboveThreshold(threshold=100) {
-        this.getTickerArray().forEach(ticker => {
+        MarketCache.getTickerArray().forEach(ticker => {
             let depth = binance.depthCache(ticker);
             Object.keys(depth.bids).forEach((bid, index) => {
                 index >= threshold && delete depth.bids[bid];
@@ -54,9 +54,9 @@ module.exports = {
 
     getTradesFromSymbol(symbol1) {
         let trades = [];
-        this.symbols.forEach(symbol2 => {
-            this.symbols.forEach(symbol3 => {
-                const trade = this.createTrade(symbol1, symbol2, symbol3);
+        MarketCache.symbols.forEach(symbol2 => {
+            MarketCache.symbols.forEach(symbol3 => {
+                const trade = MarketCache.createTrade(symbol1, symbol2, symbol3);
                 if (trade) trades.push(trade);
             });
         });
@@ -64,17 +64,16 @@ module.exports = {
     },
 
     createTrade(a, b, c) {
-        const ab = this.getRelationship(a, b);
+        const ab = MarketCache.getRelationship(a, b);
         if (!ab) return;
 
-        const bc = this.getRelationship(b, c);
+        const bc = MarketCache.getRelationship(b, c);
         if (!bc) return;
 
-        const ca = this.getRelationship(c, a);
+        const ca = MarketCache.getRelationship(c, a);
         if (!ca) return;
 
         return {
-            id: `${a}-${b}-${c}`,
             ab: ab,
             bc: bc,
             ca: ca,
@@ -90,11 +89,11 @@ module.exports = {
         a = a.toUpperCase();
         b = b.toUpperCase();
 
-        if (this.tickers[a+b]) return {
+        if (MarketCache.tickers[a+b]) return {
             method: 'Sell',
             ticker: a+b
         };
-        if (this.tickers[b+a]) return {
+        if (MarketCache.tickers[b+a]) return {
             method: 'Buy',
             ticker: b+a
         };
@@ -102,3 +101,5 @@ module.exports = {
     }
 
 };
+
+module.exports = MarketCache;

@@ -1,7 +1,7 @@
 const logger = require('./Loggers');
 const binance = require('node-binance-api')();
 
-module.exports = {
+const BinanceApi = {
 
     exchangeInfo() {
         return new Promise((resolve, reject) => {
@@ -46,11 +46,11 @@ module.exports = {
     },
 
     marketBuyOrSell(method) {
-        return method.toUpperCase() === 'BUY' ? this.marketBuy : this.marketSell;
+        return method.toUpperCase() === 'BUY' ? BinanceApi.marketBuy : BinanceApi.marketSell;
     },
 
     depthCache(tickers, limit=100, stagger=200) {
-        return binance.websockets.depthCacheStaggered(tickers, this.processDepth, limit, stagger);
+        return binance.websockets.depthCacheStaggered(tickers, BinanceApi.processDepth, limit, stagger);
     },
 
     processDepth(ticker, depth) {
@@ -60,3 +60,5 @@ module.exports = {
     }
 
 };
+
+module.exports = BinanceApi;

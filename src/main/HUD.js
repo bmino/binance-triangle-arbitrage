@@ -1,7 +1,7 @@
 const MarketCache = require('./MarketCache');
 const blessed = require('blessed');
 
-module.exports = {
+const HUD = {
 
     screen: null,
     objects: {
@@ -14,16 +14,16 @@ module.exports = {
     },
 
     initScreen() {
-        if (this.screen) return;
-        this.screen = blessed.screen({
+        if (HUD.screen) return;
+        HUD.screen = blessed.screen({
             smartCSR: true
         });
     },
 
     displayArbs(arbs) {
-        this.initScreen();
-        if (!this.objects.arbTable) {
-            this.objects.arbTable = blessed.table({
+        HUD.initScreen();
+        if (!HUD.objects.arbTable) {
+            HUD.objects.arbTable = blessed.table({
                 top: '0',
                 left: 'center',
                 width: '50%',
@@ -39,15 +39,15 @@ module.exports = {
                 }
             });
 
-            this.screen.append(this.objects.arbTable);
+            HUD.screen.append(HUD.objects.arbTable);
         }
 
         const now = new Date().getTime();
 
-        let tableData = [this.headers.arb];
+        let tableData = [HUD.headers.arb];
         arbs.forEach(arb => {
             tableData.push([
-                `${arb.id}`,
+                `${arb.symbol.a}-${arb.symbol.b}-${arb.symbol.c}`,
                 `${arb.percent.toFixed(4)}%`,
                 `${((now - arb.times.ab)/1000).toFixed(2)}`,
                 `${((now - arb.times.bc)/1000).toFixed(2)}`,
@@ -56,14 +56,14 @@ module.exports = {
             ]);
         });
 
-        this.objects.arbTable.setData(tableData);
-        this.screen.render();
+        HUD.objects.arbTable.setData(tableData);
+        HUD.screen.render();
     },
 
     displayDepths() {
-        this.initScreen();
-        if (!this.objects.depthTable) {
-            this.objects.depthTable = blessed.table({
+        HUD.initScreen();
+        if (!HUD.objects.depthTable) {
+            HUD.objects.depthTable = blessed.table({
                 top: '0',
                 left: 'center',
                 width: '50%',
@@ -79,10 +79,10 @@ module.exports = {
                 }
             });
 
-            this.screen.append(this.objects.depthTable);
+            HUD.screen.append(HUD.objects.depthTable);
         }
 
-        let tableData = [this.headers.depth];
+        let tableData = [HUD.headers.depth];
         MarketCache.getDepthCache().forEach(depth => {
             tableData.push([
                 `${depth.ticker}`,
@@ -91,8 +91,10 @@ module.exports = {
             ]);
         });
 
-        this.objects.depthTable.setData(tableData);
-        this.screen.render();
+        HUD.objects.depthTable.setData(tableData);
+        HUD.screen.render();
     }
 
 };
+
+module.exports = HUD;
