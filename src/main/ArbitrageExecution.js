@@ -17,7 +17,7 @@ module.exports = {
         const before = new Date().getTime();
         const initialBalances = _.cloneDeep(this.balances);
 
-        return this.getExecutionStrategy()(calculated)
+        return this.execute(calculated)
             .then(results => {
                 logger.execution.info(`${CONFIG.TRADING.ENABLED ? 'Executed' : 'Test: Executed'} ${calculated.id} position in ${new Date().getTime() - before} ms`);
                 logger.execution.debug({trade: calculated});
@@ -84,6 +84,10 @@ module.exports = {
     tradesInXSeconds(seconds) {
         const timeFloor = new Date().getTime() - (seconds * 1000);
         return Object.values(this.orderHistory).filter(time => time > timeFloor).length;
+    },
+
+    execute(calculated) {
+        return this.getExecutionStrategy()(calculated);
     },
 
     getExecutionStrategy() {
