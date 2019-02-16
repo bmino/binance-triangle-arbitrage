@@ -57,7 +57,9 @@ const MarketCache = {
         MarketCache.symbols.forEach(symbol2 => {
             MarketCache.symbols.forEach(symbol3 => {
                 const trade = MarketCache.createTrade(symbol1, symbol2, symbol3);
-                if (trade) trades.push(trade);
+                if (!trade) return;
+                if (MarketCache.isTradeMirrored(trade, trades)) return;
+                trades.push(trade);
             });
         });
         return trades;
@@ -98,6 +100,12 @@ const MarketCache = {
             ticker: b+a
         };
         return null;
+    },
+
+    isTradeMirrored(trade, trades) {
+        return trades
+            .map(t => `${t.symbol.b}-${t.symbol.c}`)
+            .includes(`${trade.symbol.c}-${trade.symbol.b}`);
     }
 
 };
