@@ -47,7 +47,7 @@ const HUD = {
         let tableData = [HUD.headers.arb];
         arbs.forEach(arb => {
             tableData.push([
-                `${arb.symbol.a}-${arb.symbol.b}-${arb.symbol.c}`,
+                `${arb.trade.symbol.a}-${arb.trade.symbol.b}-${arb.trade.symbol.c}`,
                 `${arb.percent.toFixed(4)}%`,
                 `${((now - arb.times.ab)/1000).toFixed(2)}`,
                 `${((now - arb.times.bc)/1000).toFixed(2)}`,
