@@ -7,16 +7,16 @@ const MarketCache = {
     relationships: [],
 
     initialize(exchangeInfo, whitelistSymbols, baseSymbol) {
-        let symbols = new Set();
         let tickers = [];
         let tradingSymbolObjects = exchangeInfo.symbols.filter(symbolObj => symbolObj.status === 'TRADING');
+        let symbols = new Set(whitelistSymbols);
 
         console.log(`Found ${tradingSymbolObjects.length}/${exchangeInfo.symbols.length} currently trading tickers.`);
 
         // Extract Symbols and Tickers
         tradingSymbolObjects.forEach(symbolObj => {
-            if (whitelistSymbols.length > 0 && !whitelistSymbols.includes(symbolObj.baseAsset)) return;
-            symbols.add(symbolObj.baseAsset);
+            if (whitelistSymbols.length > 0 && (!whitelistSymbols.includes(symbolObj.baseAsset) || !whitelistSymbols.includes(symbolObj.quoteAsset))) return;
+            if (whitelistSymbols.length === 0) symbols.add(symbolObj.baseAsset);
             symbolObj.dustDecimals = Math.max(symbolObj.filters.filter(f => f.filterType === 'LOT_SIZE')[0].minQty.indexOf('1') - 1, 0);
             tickers[symbolObj.symbol] = symbolObj;
         });
