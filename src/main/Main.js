@@ -19,6 +19,7 @@ if (CONFIG.TRADING.ENABLED) console.log(`WARNING! Order execution is enabled!\n`
 ArbitrageExecution.refreshBalances()
     .then(BinanceApi.exchangeInfo)
     .then(exchangeInfo => MarketCache.initialize(exchangeInfo, CONFIG.TRADING.WHITELIST, CONFIG.INVESTMENT.BASE))
+    .then(() => logger.execution.debug({configuration: CONFIG}))
     .then(checkConfig)
     .then(() => {
         // Listen for depth updates
@@ -29,7 +30,7 @@ ArbitrageExecution.refreshBalances()
     .then(() => {
         console.log();
         console.log(`Execution Strategy:     ${CONFIG.TRADING.EXECUTION_STRATEGY}`);
-        console.log(`Optimization Ticks:     ${((CONFIG.INVESTMENT.MAX - CONFIG.INVESTMENT.MIN) / CONFIG.INVESTMENT.STEP).toFixed(0)}`);
+        console.log(`Optimization Ticks:     ${((CONFIG.INVESTMENT.MAX - CONFIG.INVESTMENT.MIN) / CONFIG.INVESTMENT.STEP).toFixed(0)} calculation(s)`);
         console.log(`Execution Limit:        ${CONFIG.TRADING.EXECUTION_CAP} execution(s)`);
         console.log(`Profit Threshold:       ${CONFIG.TRADING.PROFIT_THRESHOLD.toFixed(2)}%`);
         console.log(`Age Threshold:          ${CONFIG.TRADING.AGE_THRESHOLD} ms`);
@@ -39,10 +40,8 @@ ArbitrageExecution.refreshBalances()
         logger.performance.debug(`Operating System: ${os.type()}`);
         logger.performance.debug(`Cores Speeds: [${os.cpus().map(cpu => cpu.speed)}] MHz`);
 
-        logger.execution.debug({configuration: CONFIG});
-
         // Allow time to read output before starting calculation cycles
-        setTimeout(calculateArbitrage, 3000);
+        setTimeout(calculateArbitrage, 4000);
     })
     .catch(console.error);
 
@@ -93,18 +92,21 @@ function checkConfig() {
     };
 
     // Ensure enough information is being watched
-    if (MarketCache.relationships.length < 3) {
-        const msg = `Watching ${MarketCache.relationships.length} relationship(s) is not sufficient to engage in triangle arbitrage`;
+    if (MarketCache.getTickerArray().length < 3) {
+        const msg = `Watching ${MarketCache.getTickerArray().length} ticker(s) is not sufficient to engage in triangle arbitrage`;
+        logger.execution.debug(`Watched Tickers: [${MarketCache.getTickerArray()}]`);
         logger.execution.error(msg);
         throw new Error(msg);
     }
-    if (MarketCache.symbols.length < 3) {
-        const msg = `Watching ${MarketCache.symbols.length} symbol(s) is not sufficient to engage in triangle arbitrage`;
+    if (MarketCache.symbols.size < 3) {
+        const msg = `Watching ${MarketCache.symbols.size} symbol(s) is not sufficient to engage in triangle arbitrage`;
+        logger.execution.debug(`Watched Symbols: [${Array.from(MarketCache.symbols)}]`);
         logger.execution.error(msg);
         throw new Error(msg);
     }
     if (CONFIG.TRADING.WHITELIST.length > 0 && !CONFIG.TRADING.WHITELIST.includes(CONFIG.INVESTMENT.BASE)) {
         const msg = `Whitelist must include the base symbol of ${CONFIG.INVESTMENT.BASE}`;
+        logger.execution.debug(`Whitelist: [${CONFIG.TRADING.WHITELIST}]`);
         logger.execution.error(msg);
         throw new Error(msg);
     }
@@ -114,7 +116,7 @@ function checkConfig() {
         throw new Error(msg);
     }
     if (!VALID_VALUES.TRADING.EXECUTION_STRATEGY.includes(CONFIG.TRADING.EXECUTION_STRATEGY.toLowerCase())) {
-        const msg = `Parallel execution requires defining a whitelist`;
+        const msg = `${CONFIG.TRADING.EXECUTION_STRATEGY} is an invalid execution strategy`;
         logger.execution.error(msg);
         throw new Error(msg);
     }
