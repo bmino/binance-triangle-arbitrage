@@ -6,6 +6,7 @@ const _ = require ('lodash');
 const ArbitrageExecution = {
 
     inProgressIds: new Set(),
+    inProgressSymbols: new Set(),
     orderHistory: {},
     balances: {},
 
@@ -14,7 +15,9 @@ const ArbitrageExecution = {
 
         // Register trade id as being executed
         ArbitrageExecution.inProgressIds.add(calculated.id);
-        ArbitrageExecution.orderHistory[calculated.id] = new Date().getTime();
+        ArbitrageExecution.inProgressSymbols.add(calculated.trade.symbol.a);
+        ArbitrageExecution.inProgressSymbols.add(calculated.trade.symbol.b);
+        ArbitrageExecution.inProgressSymbols.add(calculated.trade.symbol.c);
 
         const before = new Date().getTime();
         const initialBalances = _.cloneDeep(ArbitrageExecution.balances);
@@ -36,30 +39,54 @@ const ArbitrageExecution = {
             })
             .then(() => {
                 ArbitrageExecution.inProgressIds.delete(calculated.id);
+                ArbitrageExecution.inProgressSymbols.delete(calculated.trade.symbol.a);
+                ArbitrageExecution.inProgressSymbols.delete(calculated.trade.symbol.b);
+                ArbitrageExecution.inProgressSymbols.delete(calculated.trade.symbol.c);
             });
     },
 
     isSafeToExecute(calculated) {
+        const SECONDS_IN_ONE_DAY = 60 * 60 * 24;
+
+        // Profit Threshold is Not Satisfied
         if (calculated.percent < CONFIG.TRADING.PROFIT_THRESHOLD) return false;
 
+        // Age Threshold is Not Satisfied
         const ageInMilliseconds = new Date().getTime() - Math.min(calculated.times.ab, calculated.times.bc, calculated.times.ca);
         if (ageInMilliseconds > CONFIG.TRADING.AGE_THRESHOLD) return false;
 
-        if (CONFIG.TRADING.EXECUTION_CAP && Object.keys(ArbitrageExecution.orderHistory).length >= CONFIG.TRADING.EXECUTION_CAP && ArbitrageExecution.inProgressIds.size === 0) {
-            const msg = `Cannot exceed execution cap of ${CONFIG.TRADING.EXECUTION_CAP} execution`;
+        if (CONFIG.TRADING.EXECUTION_CAP && ArbitrageExecution.inProgressIds.size === 0 && ArbitrageExecution.getExecutionAttemptCount() >= CONFIG.TRADING.EXECUTION_CAP) {
+            const msg = `Cannot exceed user defined execution cap of ${CONFIG.TRADING.EXECUTION_CAP} executions`;
             logger.execution.error(msg);
             process.exit();
+            return false;
         }
-        if (CONFIG.TRADING.EXECUTION_CAP && Object.keys(ArbitrageExecution.orderHistory).length >= CONFIG.TRADING.EXECUTION_CAP) {
+        if (CONFIG.TRADING.EXECUTION_CAP && ArbitrageExecution.getExecutionAttemptCount() >= CONFIG.TRADING.EXECUTION_CAP) {
             logger.execution.trace(`Blocking execution because ${Object.keys(ArbitrageExecution.orderHistory).length}/${CONFIG.TRADING.EXECUTION_CAP} executions have been attempted`);
             return false;
         }
         if (ArbitrageExecution.inProgressIds.has(calculated.id)) {
-            logger.execution.trace(`Blocking execution because ${calculated.id} is already being executed`);
+            logger.execution.trace(`Blocking execution because ${calculated.id} is currently being executed`);
             return false;
         }
-        if (ArbitrageExecution.tradesInXSeconds(10) >= 3) {
-            logger.execution.trace(`Blocking execution because ${ArbitrageExecution.tradesInXSeconds(10)} trades have already been executed in the last 10 seconds`);
+        if (ArbitrageExecution.inProgressSymbols.has(calculated.trade.symbol.a)) {
+            logger.execution.trace(`Blocking execution because ${calculated.trade.symbol.a} is currently involved in an execution`);
+            return false;
+        }
+        if (ArbitrageExecution.inProgressSymbols.has(calculated.trade.symbol.b)) {
+            logger.execution.trace(`Blocking execution because ${calculated.trade.symbol.b} is currently involved in an execution`);
+            return false;
+        }
+        if (ArbitrageExecution.inProgressSymbols.has(calculated.trade.symbol.c)) {
+            logger.execution.trace(`Blocking execution because ${calculated.trade.symbol.c} is currently involved in an execution`);
+            return false;
+        }
+        if (ArbitrageExecution.executedTradesInLastXSeconds(SECONDS_IN_ONE_DAY) > 10000) {
+            logger.execution.trace(`Blocking execution because ${ArbitrageExecution.executedTradesInLastXSeconds(SECONDS_IN_ONE_DAY)} trades have been completed in the past 24 hours`);
+            return false;
+        }
+        if (ArbitrageExecution.executedTradesInLastXSeconds(10) >= 7) {
+            logger.execution.trace(`Blocking execution because ${ArbitrageExecution.executedTradesInLastXSeconds(10)} trades have been completed in the last 10 seconds`);
             return false;
         }
 
@@ -83,13 +110,19 @@ const ArbitrageExecution = {
         return differences;
     },
 
-    tradesInXSeconds(seconds) {
+    executedTradesInLastXSeconds(seconds) {
         const timeFloor = new Date().getTime() - (seconds * 1000);
-        return Object.values(ArbitrageExecution.orderHistory).filter(time => time > timeFloor).length;
+        return Object.values(ArbitrageExecution.orderHistory).filter(time => time > timeFloor).length * 3;
+    },
+
+    getExecutionAttemptCount() {
+        return Object.keys(ArbitrageExecution.orderHistory).length;
     },
 
     execute(calculated) {
-        return ArbitrageExecution.getExecutionStrategy()(calculated);
+        ArbitrageExecution.orderHistory[calculated.id] = new Date().getTime();
+        return ArbitrageExecution.getExecutionStrategy()(calculated)
+            .then(() => ArbitrageExecution.orderHistory[calculated.id] = new Date().getTime());
     },
 
     getExecutionStrategy() {
@@ -111,12 +144,8 @@ const ArbitrageExecution = {
 
     linearExecutionStrategy(calculated) {
         return BinanceApi.marketBuyOrSell(calculated.trade.ab.method)(calculated.trade.ab.ticker, calculated.ab.market)
-            .then(() => {
-                return BinanceApi.marketBuyOrSell(calculated.trade.bc.method)(calculated.trade.bc.ticker, calculated.bc.market);
-            })
-            .then(() => {
-                return BinanceApi.marketBuyOrSell(calculated.trade.ca.method)(calculated.trade.ca.ticker, calculated.ca.market);
-            });
+            .then(() => BinanceApi.marketBuyOrSell(calculated.trade.bc.method)(calculated.trade.bc.ticker, calculated.bc.market))
+            .then(() => BinanceApi.marketBuyOrSell(calculated.trade.ca.method)(calculated.trade.ca.ticker, calculated.ca.market));
     }
 
 };
