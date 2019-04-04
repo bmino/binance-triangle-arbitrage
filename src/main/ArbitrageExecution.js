@@ -10,6 +10,8 @@ const ArbitrageExecution = {
     balances: {},
 
     executeCalculatedPosition(calculated) {
+        if (!ArbitrageExecution.isSafeToExecute(calculated)) return false;
+
         // Register trade id as being executed
         ArbitrageExecution.inProgressIds.add(calculated.id);
         ArbitrageExecution.orderHistory[calculated.id] = new Date().getTime();
