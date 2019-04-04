@@ -56,10 +56,10 @@ function calculateArbitrage() {
 
     MarketCache.relationships.forEach(relationship => {
         try {
-            let calculated = CalculationNode.optimize(relationship);
+            const calculated = CalculationNode.optimize(relationship);
             if (calculated) {
                 if (CONFIG.HUD.ENABLED) results[calculated.id] = calculated;
-                if (ArbitrageExecution.isSafeToExecute(calculated)) ArbitrageExecution.executeCalculatedPosition(calculated);
+                ArbitrageExecution.executeCalculatedPosition(calculated);
             }
         } catch (error) {
             logger.performance.debug(error.message);
