@@ -2,6 +2,7 @@ const CONFIG = require('../../config/config');
 const logger = require('./Loggers');
 const BinanceApi = require('./BinanceApi');
 const _ = require ('lodash');
+const uuidv4 = require('uuid/v4');
 
 const ArbitrageExecution = {
 
@@ -64,7 +65,7 @@ const ArbitrageExecution = {
             return false;
         }
         if (CONFIG.TRADING.EXECUTION_CAP && ArbitrageExecution.getExecutionAttemptCount() >= CONFIG.TRADING.EXECUTION_CAP) {
-            logger.execution.trace(`Blocking execution because ${Object.keys(ArbitrageExecution.orderHistory).length}/${CONFIG.TRADING.EXECUTION_CAP} executions have been attempted`);
+            logger.execution.trace(`Blocking execution because ${ArbitrageExecution.getExecutionAttemptCount()} executions have been attempted`);
             return false;
         }
         if (ArbitrageExecution.inProgressIds.has(calculated.id)) {
@@ -122,9 +123,10 @@ const ArbitrageExecution = {
     },
 
     execute(calculated) {
-        ArbitrageExecution.orderHistory[calculated.id] = new Date().getTime();
+        const uuid = uuidv4();
+        ArbitrageExecution.orderHistory[uuid] = new Date().getTime();
         return ArbitrageExecution.getExecutionStrategy()(calculated)
-            .then(() => ArbitrageExecution.orderHistory[calculated.id] = new Date().getTime());
+            .then(() => ArbitrageExecution.orderHistory[uuid] = new Date().getTime());
     },
 
     getExecutionStrategy() {
