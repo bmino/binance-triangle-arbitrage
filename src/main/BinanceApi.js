@@ -30,6 +30,7 @@ const BinanceApi = {
         return new Promise((resolve, reject) => {
             binance.marketBuy(ticker, quantity, (error, response) => {
                 if (error) return reject(new Error(JSON.parse(error.body).msg));
+                logger.execution.info(`${binance.getOption('test') ? 'Test: Successfully bought' : 'Successfully bought'} ${response.executedQty} ${ticker} @ a quote of ${response.cummulativeQuoteQty}`);
                 return resolve(response);
             })
         })
@@ -40,6 +41,7 @@ const BinanceApi = {
         return new Promise((resolve, reject) => {
             binance.marketSell(ticker, quantity, (error, response) => {
                 if (error) return reject(new Error(JSON.parse(error.body).msg));
+                logger.execution.info(`${binance.getOption('test') ? 'Test: Successfully sold' : 'Successfully sold'} ${response.executedQty} ${ticker} @ a quote of ${response.cummulativeQuoteQty}`);
                 return resolve(response);
             });
         });
