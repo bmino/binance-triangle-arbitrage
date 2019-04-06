@@ -21,6 +21,7 @@ ArbitrageExecution.refreshBalances()
     .then(exchangeInfo => MarketCache.initialize(exchangeInfo, CONFIG.TRADING.WHITELIST, CONFIG.INVESTMENT.BASE))
     .then(() => logger.execution.debug({configuration: CONFIG}))
     .then(checkConfig)
+    .then(checkBalances)
     .then(() => {
         // Listen for depth updates
         const tickers = MarketCache.getTickerArray();
@@ -127,6 +128,19 @@ function checkConfig() {
     }
     if (!VALID_VALUES.DEPTH.SIZE.includes(CONFIG.DEPTH.SIZE)) {
         const msg = `Depth size can only contain one of the following values: ${VALID_VALUES.DEPTH.SIZE}`;
+        logger.execution.error(msg);
+        throw new Error(msg);
+    }
+}
+
+function checkBalances() {
+    if (ArbitrageExecution.balances[CONFIG.INVESTMENT.BASE].available < CONFIG.INVESTMENT.MIN) {
+        const msg = `An available balance of ${CONFIG.INVESTMENT.MIN} ${CONFIG.INVESTMENT.BASE} is required to satisfy your INVESTMENT.MIN configuration`;
+        logger.execution.error(msg);
+        throw new Error(msg);
+    }
+    if (ArbitrageExecution.balances[CONFIG.INVESTMENT.BASE].available < CONFIG.INVESTMENT.MAX) {
+        const msg = `An available balance of ${CONFIG.INVESTMENT.MAX} ${CONFIG.INVESTMENT.BASE} is required to satisfy your INVESTMENT.MAX configuration`;
         logger.execution.error(msg);
         throw new Error(msg);
     }
