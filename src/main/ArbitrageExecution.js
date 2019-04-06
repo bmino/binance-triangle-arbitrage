@@ -34,7 +34,9 @@ const ArbitrageExecution = {
             .then((newBalances) => {
                 const deltas = ArbitrageExecution.compareBalances(initialBalances, newBalances);
                 Object.entries(deltas).forEach(([symbol, delta]) => {
-                    logger.execution.info(`${symbol} delta: ${delta}`);
+                    // Padding to horizontally align positive and negative deltas
+                    const pad = delta > 0 ? ' ' : '';
+                    logger.execution.info(`${symbol} delta: ${pad}${delta.toFixed(8)}`);
                 });
             })
             .then(() => {
