@@ -45,6 +45,11 @@ const ArbitrageExecution = {
                 ArbitrageExecution.inProgressSymbols.delete(calculated.trade.symbol.a);
                 ArbitrageExecution.inProgressSymbols.delete(calculated.trade.symbol.b);
                 ArbitrageExecution.inProgressSymbols.delete(calculated.trade.symbol.c);
+
+                if (CONFIG.TRADING.EXECUTION_CAP && ArbitrageExecution.inProgressIds.size === 0 && ArbitrageExecution.getExecutionAttemptCount() >= CONFIG.TRADING.EXECUTION_CAP) {
+                    logger.execution.error(`Cannot exceed user defined execution cap of ${CONFIG.TRADING.EXECUTION_CAP} executions`);
+                    process.exit();
+                }
             });
     },
 
@@ -58,12 +63,6 @@ const ArbitrageExecution = {
         const ageInMilliseconds = new Date().getTime() - Math.min(calculated.times.ab, calculated.times.bc, calculated.times.ca);
         if (ageInMilliseconds > CONFIG.TRADING.AGE_THRESHOLD) return false;
 
-        if (CONFIG.TRADING.EXECUTION_CAP && ArbitrageExecution.inProgressIds.size === 0 && ArbitrageExecution.getExecutionAttemptCount() >= CONFIG.TRADING.EXECUTION_CAP) {
-            const msg = `Cannot exceed user defined execution cap of ${CONFIG.TRADING.EXECUTION_CAP} executions`;
-            logger.execution.error(msg);
-            process.exit();
-            return false;
-        }
         if (CONFIG.TRADING.EXECUTION_CAP && ArbitrageExecution.getExecutionAttemptCount() >= CONFIG.TRADING.EXECUTION_CAP) {
             logger.execution.trace(`Blocking execution because ${ArbitrageExecution.getExecutionAttemptCount()} executions have been attempted`);
             return false;

@@ -92,7 +92,6 @@ function checkConfig() {
         }
     };
 
-    // Ensure enough information is being watched
     if (MarketCache.getTickerArray().length < 3) {
         const msg = `Watching ${MarketCache.getTickerArray().length} ticker(s) is not sufficient to engage in triangle arbitrage`;
         logger.execution.debug(`Watched Tickers: [${MarketCache.getTickerArray()}]`);
