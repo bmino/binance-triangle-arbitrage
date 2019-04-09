@@ -73,7 +73,7 @@ function calculateArbitrage() {
     const calculationTime = new Date().getTime() - before;
 
     const msg = `Completed ${completedCalculations}/${totalCalculations} (${((completedCalculations/totalCalculations)*100).toFixed(1)}%) calculations in ${calculationTime} ms`;
-    (errorCount > 0) ? logger.performance.info(msg) : logger.performance.debug(msg);
+    (errorCount > 0) ? logger.performance.info(msg) : logger.performance.trace(msg);
 
     if (CONFIG.HUD.ENABLED) refreshHUD(results);
 
