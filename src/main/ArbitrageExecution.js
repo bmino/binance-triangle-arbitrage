@@ -91,6 +91,10 @@ const ArbitrageExecution = {
             logger.execution.trace(`Blocking execution because ${ArbitrageExecution.executedTradesInLastXSeconds(10)} trades have been completed in the last 10 seconds`);
             return false;
         }
+        if (ArbitrageExecution.executedTradesInLastXSeconds(1) >= 9) {
+            logger.execution.trace(`Blocking execution because ${ArbitrageExecution.executedTradesInLastXSeconds(1)} trades have been completed in the last 1 seconds`);
+            return false;
+        }
 
         return true;
     },
