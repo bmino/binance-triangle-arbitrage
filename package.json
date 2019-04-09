@@ -7,7 +7,8 @@
     "npm": "6.9.0"
   },
   "scripts": {
-    "start": "node src/main/Main.js"
+    "start": "node src/main/Main.js",
+    "test": "mocha"
   },
   "dependencies": {
     "blessed": "^0.1.81",
@@ -15,5 +16,8 @@
     "node-binance-api": "^0.9.0",
     "pino": "^5.11.1",
     "pino-pretty": "^2.5.0"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0"
   }
 }

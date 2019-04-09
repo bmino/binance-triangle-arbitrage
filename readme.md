@@ -73,6 +73,13 @@ All logs are stored in the `/logs` directory. The log level is set via the `LOG.
 * **performance.log** - Data about performance and speed
 * **execution.log** - Market interactions and profits
 
+## Running the tests
+This project uses the `mocha` testing framework and the tests can be run by running:
+
+    ```
+    npm test
+    ```
+
 
 ## Authors
 * **[Brandon Mino](https://github.com/bmino)** - *Project Lead*
