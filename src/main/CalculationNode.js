@@ -111,6 +111,11 @@ const CalculationNode = {
         const decimals = MarketCache.tickers[ticker].dustDecimals;
         const decimalIndex = amountString.indexOf('.');
         return parseFloat(amountString.slice(0, decimalIndex + decimals + 1));
+    },
+
+    average(array) {
+        const sum = array.reduce((a, b) => a + b, 0);
+        return sum / array.length;
     }
 
 };

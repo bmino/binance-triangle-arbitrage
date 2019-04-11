@@ -59,6 +59,15 @@ const BinanceApi = {
         return method.toUpperCase() === 'BUY' ? BinanceApi.marketBuy : BinanceApi.marketSell;
     },
 
+    time() {
+        return new Promise((resolve, reject) => {
+            binance.time((error, response) => {
+                if (error) return reject(error);
+                return resolve(response);
+            });
+        });
+    },
+
     depthCache(tickers, limit=100, stagger=200) {
         return binance.websockets.depthCacheStaggered(tickers, BinanceApi.processDepth, limit, stagger);
     },

@@ -11,7 +11,7 @@ const MarketCache = {
         let tradingSymbolObjects = exchangeInfo.symbols.filter(symbolObj => symbolObj.status === 'TRADING');
         let symbols = new Set(whitelistSymbols);
 
-        console.log(`Found ${tradingSymbolObjects.length}/${exchangeInfo.symbols.length} currently trading tickers.`);
+        console.log(`Found ${tradingSymbolObjects.length}/${exchangeInfo.symbols.length} currently trading tickers`);
 
         // Extract Symbols and Tickers
         tradingSymbolObjects.forEach(symbolObj => {

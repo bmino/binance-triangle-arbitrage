@@ -7,6 +7,7 @@ const HUD = require('./HUD');
 const BinanceApi = require('./BinanceApi');
 const ArbitrageExecution = require('./ArbitrageExecution');
 const CalculationNode = require('./CalculationNode');
+const SpeedTest = require('./SpeedTest');
 
 binance.options({
     APIKEY: CONFIG.KEYS.API,
@@ -17,6 +18,8 @@ binance.options({
 if (CONFIG.TRADING.ENABLED) console.log(`WARNING! Order execution is enabled!\n`);
 
 ArbitrageExecution.refreshBalances()
+    .then(() => SpeedTest.multiPing(5))
+    .then((pings) => console.log(`Successfully pinged the Binance api in ${CalculationNode.average(pings).toFixed(0)} ms`))
     .then(BinanceApi.exchangeInfo)
     .then(exchangeInfo => MarketCache.initialize(exchangeInfo, CONFIG.TRADING.WHITELIST, CONFIG.INVESTMENT.BASE))
     .then(() => logger.execution.debug({configuration: CONFIG}))
@@ -31,7 +34,7 @@ ArbitrageExecution.refreshBalances()
     .then(() => {
         console.log();
         console.log(`Execution Strategy:     ${CONFIG.TRADING.EXECUTION_STRATEGY}`);
-        console.log(`Optimization Ticks:     ${((CONFIG.INVESTMENT.MAX - CONFIG.INVESTMENT.MIN) / CONFIG.INVESTMENT.STEP).toFixed(0)} calculation(s)`);
+        console.log(`Optimization Ticks:     ${((CONFIG.INVESTMENT.MAX - CONFIG.INVESTMENT.MIN) / CONFIG.INVESTMENT.STEP).toFixed(0)} ticks(s)`);
         console.log(`Execution Limit:        ${CONFIG.TRADING.EXECUTION_CAP} execution(s)`);
         console.log(`Profit Threshold:       ${CONFIG.TRADING.PROFIT_THRESHOLD.toFixed(2)}%`);
         console.log(`Age Threshold:          ${CONFIG.TRADING.AGE_THRESHOLD} ms`);
@@ -133,6 +136,8 @@ function checkConfig() {
 }
 
 function checkBalances() {
+    console.log(`Checking balances ...`);
+
     if (ArbitrageExecution.balances[CONFIG.INVESTMENT.BASE].available < CONFIG.INVESTMENT.MIN) {
         const msg = `An available balance of ${CONFIG.INVESTMENT.MIN} ${CONFIG.INVESTMENT.BASE} is required to satisfy your INVESTMENT.MIN configuration`;
         logger.execution.error(msg);
