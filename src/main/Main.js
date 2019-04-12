@@ -107,6 +107,11 @@ function checkConfig() {
         logger.execution.error(msg);
         throw new Error(msg);
     }
+    if (MarketCache.relationships.length === 0) {
+        const msg = `Watching ${MarketCache.relationships.length} triangular relationships is not sufficient to engage in triangle arbitrage`;
+        logger.execution.error(msg);
+        throw new Error(msg);
+    }
     if (CONFIG.TRADING.WHITELIST.length > 0 && !CONFIG.TRADING.WHITELIST.includes(CONFIG.INVESTMENT.BASE)) {
         const msg = `Whitelist must include the base symbol of ${CONFIG.INVESTMENT.BASE}`;
         logger.execution.debug(`Whitelist: [${CONFIG.TRADING.WHITELIST}]`);

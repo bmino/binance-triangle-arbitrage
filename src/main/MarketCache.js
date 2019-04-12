@@ -25,6 +25,8 @@ const MarketCache = {
         MarketCache.symbols = symbols;
         MarketCache.tickers = tickers;
         MarketCache.relationships = MarketCache.getTradesFromSymbol(baseSymbol);
+
+        console.log(`Found ${MarketCache.relationships.length} triangular relationships`);
     },
 
     getTickerArray() {
