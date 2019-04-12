@@ -50,11 +50,16 @@ const ArbitrageExecution = {
                     b: actual.b.earned - actual.b.spent,
                     c: actual.c.earned - actual.c.spent
                 };
+                const percent = {
+                    a: delta.a / actual.a.spent,
+                    b: delta.b / actual.b.spent,
+                    c: delta.c / actual.c.spent
+                };
 
-                logger.execution.info(`${symbol.a} delta:\t ${delta.a < 0 ? '' : ' '}${delta.a.toFixed(8)} (${(delta.a / actual.a.spent).toFixed(6)}%)`);
-                logger.execution.info(`${symbol.b} delta:\t ${delta.b < 0 ? '' : ' '}${delta.b.toFixed(8)} (${(delta.b / actual.b.spent).toFixed(6)}%)`);
-                logger.execution.info(`${symbol.c} delta:\t ${delta.c < 0 ? '' : ' '}${delta.c.toFixed(8)} (${(delta.c / actual.c.spent).toFixed(6)}%)`);
-                logger.execution.info(`BNB commission:  ${(-1 * actual.fees).toFixed(8)}`);
+                logger.execution.info(`${symbol.a} delta:\t  ${delta.a < 0 ? '' : ' '}${delta.a.toFixed(8)} (${percent.a < 0 ? '' : ' '}${percent.a.toFixed(6)}%)`);
+                logger.execution.info(`${symbol.b} delta:\t  ${delta.b < 0 ? '' : ' '}${delta.b.toFixed(8)} (${percent.b < 0 ? '' : ' '}${percent.b.toFixed(6)}%)`);
+                logger.execution.info(`${symbol.c} delta:\t  ${delta.c < 0 ? '' : ' '}${delta.c.toFixed(8)} (${percent.c < 0 ? '' : ' '}${percent.c.toFixed(6)}%)`);
+                logger.execution.info(`BNB commission: ${(-1 * actual.fees).toFixed(8)}`);
                 logger.execution.info();
             })
             .catch((err) => logger.execution.error(err.message))
@@ -173,7 +178,6 @@ const ArbitrageExecution = {
     },
 
     linearExecutionStrategy(calculated) {
-        const { symbol } = calculated.trade;
         let actual = {
             a: {
                 spent: 0,
@@ -189,37 +193,29 @@ const ArbitrageExecution = {
             },
             fees: 0
         };
+        let recalculated = {
+            bc: calculated.bc,
+            ca: calculated.ca
+        };
 
         return BinanceApi.marketBuyOrSell(calculated.trade.ab.method)(calculated.trade.ab.ticker, calculated.ab)
             .then(({ executedQty, cummulativeQuoteQty, fills, orderId }) => {
-                let recalculatedBC = calculated.bc;
                 if (orderId) {
                     actual.a.spent = calculated.trade.ab.method.toUpperCase() === 'BUY' ? parseFloat(cummulativeQuoteQty) : parseFloat(executedQty);
                     actual.b.earned = calculated.trade.ab.method.toUpperCase() === 'SELL' ? parseFloat(cummulativeQuoteQty) : parseFloat(executedQty);
                     actual.fees += ArbitrageExecution.aggregateFees(fills, 'BNB');
-                    if (calculated.trade.bc.method.toUpperCase() === 'BUY') {
-                        const dustedBC = CalculationNode.orderBookConversion(actual.b.earned, symbol.b, symbol.c, calculated.trade.bc.ticker);
-                        recalculatedBC = CalculationNode.calculateDustless(calculated.trade.bc.ticker, dustedBC);
-                    } else {
-                        recalculatedBC = CalculationNode.calculateDustless(calculated.trade.bc.ticker, actual.b.earned);
-                    }
+                    recalculated.bc = CalculationNode.recalculateTradeLeg(calculated.trade.bc, actual.b.earned);
                 }
-                return BinanceApi.marketBuyOrSell(calculated.trade.bc.method)(calculated.trade.bc.ticker, recalculatedBC);
+                return BinanceApi.marketBuyOrSell(calculated.trade.bc.method)(calculated.trade.bc.ticker, recalculated.bc);
             })
             .then(({ executedQty, cummulativeQuoteQty, fills, orderId }) => {
-                let recalculatedCA = calculated.ca;
                 if (orderId) {
                     actual.b.spent = calculated.trade.bc.method.toUpperCase() === 'BUY' ? parseFloat(cummulativeQuoteQty) : parseFloat(executedQty);
                     actual.c.earned = calculated.trade.bc.method.toUpperCase() === 'SELL' ? parseFloat(cummulativeQuoteQty) : parseFloat(executedQty);
                     actual.fees += ArbitrageExecution.aggregateFees(fills, 'BNB');
-                    if (calculated.trade.ca.method.toUpperCase() === 'BUY') {
-                        const dustedCA = CalculationNode.orderBookConversion(actual.c.earned, symbol.c, symbol.a, calculated.trade.ca.ticker);
-                        recalculatedCA = CalculationNode.calculateDustless(calculated.trade.ca.ticker, dustedCA);
-                    } else {
-                        recalculatedCA = CalculationNode.calculateDustless(calculated.trade.ca.ticker, actual.c.earned);
-                    }
+                    recalculated.ca = CalculationNode.recalculateTradeLeg(calculated.trade.ca, actual.c.earned);
                 }
-                return BinanceApi.marketBuyOrSell(calculated.trade.ca.method)(calculated.trade.ca.ticker, recalculatedCA);
+                return BinanceApi.marketBuyOrSell(calculated.trade.ca.method)(calculated.trade.ca.ticker, recalculated.ca);
             })
             .then(({ executedQty, cummulativeQuoteQty, fills, orderId }) => {
                 if (orderId) {

@@ -65,6 +65,15 @@ const CalculationNode = {
     
         return calculated;
     },
+
+    recalculateTradeLeg({ asset, quote, method, ticker }, quantityEarned) {
+        if (method.toUpperCase() === 'BUY') {
+            const dustedQuantity = CalculationNode.orderBookConversion(quantityEarned, quote, asset, ticker);
+            return CalculationNode.calculateDustless(ticker, dustedQuantity);
+        } else {
+            return CalculationNode.calculateDustless(ticker, quantityEarned);
+        }
+    },
     
     orderBookConversion(amountFrom, symbolFrom, symbolTo, ticker) {
         let i, j, rates, rate, quantity, exchangeableAmount;
