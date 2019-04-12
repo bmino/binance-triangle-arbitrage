@@ -1,3 +1,4 @@
+const CONFIG = require('../../config/config.json');
 const binance = require('node-binance-api')();
 
 const MarketCache = {
@@ -71,9 +72,11 @@ const MarketCache = {
 
         const bc = MarketCache.getRelationship(b, c);
         if (!bc) return;
+        if (CONFIG.TRADING.EXECUTION_STRATEGY.toLowerCase() === 'linear' && bc.method.toUpperCase() === 'BUY') return;
 
         const ca = MarketCache.getRelationship(c, a);
         if (!ca) return;
+        if (CONFIG.TRADING.EXECUTION_STRATEGY.toLowerCase() === 'linear' && ca.method.toUpperCase() === 'BUY') return;
 
         return {
             ab: ab,
