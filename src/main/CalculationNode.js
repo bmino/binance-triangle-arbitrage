@@ -66,9 +66,9 @@ const CalculationNode = {
         return calculated;
     },
 
-    recalculateTradeLeg({ asset, quote, method, ticker }, quantityEarned) {
+    recalculateTradeLeg({ base, quote, method, ticker }, quantityEarned) {
         if (method.toUpperCase() === 'BUY') {
-            const dustedQuantity = CalculationNode.orderBookConversion(quantityEarned, quote, asset, ticker);
+            const dustedQuantity = CalculationNode.orderBookConversion(quantityEarned, quote, base, ticker);
             return CalculationNode.calculateDustless(ticker, dustedQuantity);
         } else {
             return CalculationNode.calculateDustless(ticker, quantityEarned);

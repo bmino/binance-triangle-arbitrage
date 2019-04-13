@@ -92,13 +92,13 @@ const MarketCache = {
         if (MarketCache.tickers[a+b]) return {
             method: 'Sell',
             ticker: a+b,
-            asset: a,
+            base: a,
             quote: b
         };
         if (MarketCache.tickers[b+a]) return {
             method: 'Buy',
             ticker: b+a,
-            asset: b,
+            base: b,
             quote: a
         };
         return null;
