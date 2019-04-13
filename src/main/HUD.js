@@ -1,16 +1,13 @@
-const MarketCache = require('./MarketCache');
 const blessed = require('blessed');
 
 const HUD = {
 
     screen: null,
     objects: {
-        arbTable: null,
-        depthTable: null
+        arbTable: null
     },
     headers: {
-        arb: ['Trade', 'Profit', 'AB Age', 'BC Age', 'CA Age', 'Age'],
-        depth: ['Ticker', 'Bids', 'Asks']
+        arb: ['Trade', 'Profit', 'AB Age', 'BC Age', 'CA Age', 'Age']
     },
 
     initScreen() {
@@ -57,41 +54,6 @@ const HUD = {
         });
 
         HUD.objects.arbTable.setData(tableData);
-        HUD.screen.render();
-    },
-
-    displayDepths() {
-        HUD.initScreen();
-        if (!HUD.objects.depthTable) {
-            HUD.objects.depthTable = blessed.table({
-                top: '0',
-                left: 'center',
-                width: '50%',
-                height: '50%',
-                border: {
-                    type: 'line'
-                },
-                style: {
-                    header: {
-                        fg: 'blue',
-                        bold: true
-                    }
-                }
-            });
-
-            HUD.screen.append(HUD.objects.depthTable);
-        }
-
-        let tableData = [HUD.headers.depth];
-        MarketCache.getDepthCache().forEach(depth => {
-            tableData.push([
-                `${depth.ticker}`,
-                `${Object.keys(depth.bids).length}`,
-                `${Object.keys(depth.asks).length}`
-            ]);
-        });
-
-        HUD.objects.depthTable.setData(tableData);
         HUD.screen.render();
     }
 

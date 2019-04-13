@@ -37,15 +37,6 @@ const MarketCache = {
         return Object.keys(MarketCache.tickers);
     },
 
-    getDepthCache() {
-        return MarketCache.getTickerArray()
-            .map(ticker => {
-                let depth = binance.depthCache(ticker);
-                depth.ticker = ticker;
-                return depth;
-            });
-    },
-
     pruneDepthsAboveThreshold(threshold=100) {
         MarketCache.getTickerArray().forEach(ticker => {
             let depth = binance.depthCache(ticker);
