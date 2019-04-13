@@ -59,6 +59,12 @@ Upon each version update you should copy the new syntax from `config.json.exampl
     * `"linear"` - each trade of the triangle arbitrage is executed sequentially
     * `"parallel"` - all three trades of the triangle arbitrage are executed at the same time
 
+#### `EXECUTION_TEMPLATE` (Array | String)
+* Default: `["BUY", "SELL", "SELL"]`
+* Description: Restricts the order type of each leg in the position
+* Special Values:
+    * `null` - No restriction on order type
+
 #### `TRADING.EXECUTION_CAP` (Number)
 * Default: `1`
 * Description: Maximum number of executions to attempt before shutting down

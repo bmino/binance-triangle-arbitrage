@@ -69,14 +69,15 @@ const MarketCache = {
     createTrade(a, b, c) {
         const ab = MarketCache.getRelationship(a, b);
         if (!ab) return;
+        if (CONFIG.TRADING.EXECUTION_TEMPLATE[0] && CONFIG.TRADING.EXECUTION_TEMPLATE[0].toUpperCase() !== ab.method.toUpperCase()) return;
 
         const bc = MarketCache.getRelationship(b, c);
         if (!bc) return;
-        if (CONFIG.TRADING.EXECUTION_STRATEGY.toLowerCase() === 'linear' && bc.method.toUpperCase() === 'BUY') return;
+        if (CONFIG.TRADING.EXECUTION_TEMPLATE[1] && CONFIG.TRADING.EXECUTION_TEMPLATE[1].toUpperCase() !== bc.method.toUpperCase()) return;
 
         const ca = MarketCache.getRelationship(c, a);
         if (!ca) return;
-        if (CONFIG.TRADING.EXECUTION_STRATEGY.toLowerCase() === 'linear' && ca.method.toUpperCase() === 'BUY') return;
+        if (CONFIG.TRADING.EXECUTION_TEMPLATE[2] && CONFIG.TRADING.EXECUTION_TEMPLATE[2].toUpperCase() !== ca.method.toUpperCase()) return;
 
         return {
             ab: ab,

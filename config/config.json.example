@@ -15,6 +15,7 @@
     "TRADING": {
         "ENABLED": false,
         "EXECUTION_STRATEGY": "linear",
+        "EXECUTION_TEMPLATE": ["BUY", "SELL", "SELL"],
         "EXECUTION_CAP": 1,
         "PROFIT_THRESHOLD": 0.3,
         "AGE_THRESHOLD": 300,
