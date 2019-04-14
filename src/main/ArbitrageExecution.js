@@ -51,14 +51,14 @@ const ArbitrageExecution = {
                     c: actual.c.earned - actual.c.spent
                 };
                 const percent = {
-                    a: delta.a / actual.a.spent,
-                    b: delta.b / actual.b.spent,
-                    c: delta.c / actual.c.spent
+                    a: delta.a / actual.a.spent * 100,
+                    b: delta.b / actual.b.spent * 100,
+                    c: delta.c / actual.c.spent * 100
                 };
 
-                logger.execution.info(`${symbol.a} delta:\t  ${delta.a < 0 ? '' : ' '}${delta.a.toFixed(8)} (${percent.a < 0 ? '' : ' '}${percent.a.toFixed(6)}%)`);
-                logger.execution.info(`${symbol.b} delta:\t  ${delta.b < 0 ? '' : ' '}${delta.b.toFixed(8)} (${percent.b < 0 ? '' : ' '}${percent.b.toFixed(6)}%)`);
-                logger.execution.info(`${symbol.c} delta:\t  ${delta.c < 0 ? '' : ' '}${delta.c.toFixed(8)} (${percent.c < 0 ? '' : ' '}${percent.c.toFixed(6)}%)`);
+                logger.execution.info(`${symbol.a} delta:\t  ${delta.a < 0 ? '' : ' '}${delta.a.toFixed(8)} (${percent.a < 0 ? '' : ' '}${percent.a.toFixed(4)}%)`);
+                logger.execution.info(`${symbol.b} delta:\t  ${delta.b < 0 ? '' : ' '}${delta.b.toFixed(8)} (${percent.b < 0 ? '' : ' '}${percent.b.toFixed(4)}%)`);
+                logger.execution.info(`${symbol.c} delta:\t  ${delta.c < 0 ? '' : ' '}${delta.c.toFixed(8)} (${percent.c < 0 ? '' : ' '}${percent.c.toFixed(4)}%)`);
                 logger.execution.info(`BNB commission: ${(-1 * actual.fees).toFixed(8)}`);
                 logger.execution.info();
             })
