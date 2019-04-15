@@ -7,6 +7,7 @@ const HUD = require('./HUD');
 const BinanceApi = require('./BinanceApi');
 const ArbitrageExecution = require('./ArbitrageExecution');
 const CalculationNode = require('./CalculationNode');
+const SpeedTest = require('./SpeedTest');
 
 binance.options({
     APIKEY: CONFIG.KEYS.API,
@@ -17,10 +18,13 @@ binance.options({
 if (CONFIG.TRADING.ENABLED) console.log(`WARNING! Order execution is enabled!\n`);
 
 ArbitrageExecution.refreshBalances()
+    .then(() => SpeedTest.multiPing(5))
+    .then((pings) => console.log(`Successfully pinged the Binance api in ${CalculationNode.average(pings).toFixed(0)} ms`))
     .then(BinanceApi.exchangeInfo)
     .then(exchangeInfo => MarketCache.initialize(exchangeInfo, CONFIG.TRADING.WHITELIST, CONFIG.INVESTMENT.BASE))
     .then(() => logger.execution.debug({configuration: CONFIG}))
     .then(checkConfig)
+    .then(checkBalances)
     .then(() => {
         // Listen for depth updates
         const tickers = MarketCache.getTickerArray();
@@ -30,7 +34,7 @@ ArbitrageExecution.refreshBalances()
     .then(() => {
         console.log();
         console.log(`Execution Strategy:     ${CONFIG.TRADING.EXECUTION_STRATEGY}`);
-        console.log(`Optimization Ticks:     ${((CONFIG.INVESTMENT.MAX - CONFIG.INVESTMENT.MIN) / CONFIG.INVESTMENT.STEP).toFixed(0)} calculation(s)`);
+        console.log(`Optimization Ticks:     ${((CONFIG.INVESTMENT.MAX - CONFIG.INVESTMENT.MIN) / CONFIG.INVESTMENT.STEP).toFixed(0)} ticks(s)`);
         console.log(`Execution Limit:        ${CONFIG.TRADING.EXECUTION_CAP} execution(s)`);
         console.log(`Profit Threshold:       ${CONFIG.TRADING.PROFIT_THRESHOLD.toFixed(2)}%`);
         console.log(`Age Threshold:          ${CONFIG.TRADING.AGE_THRESHOLD} ms`);
@@ -72,7 +76,7 @@ function calculateArbitrage() {
     const calculationTime = new Date().getTime() - before;
 
     const msg = `Completed ${completedCalculations}/${totalCalculations} (${((completedCalculations/totalCalculations)*100).toFixed(1)}%) calculations in ${calculationTime} ms`;
-    (errorCount > 0) ? logger.performance.info(msg) : logger.performance.debug(msg);
+    (errorCount > 0) ? logger.performance.info(msg) : logger.performance.trace(msg);
 
     if (CONFIG.HUD.ENABLED) refreshHUD(results);
 
@@ -91,7 +95,6 @@ function checkConfig() {
         }
     };
 
-    // Ensure enough information is being watched
     if (MarketCache.getTickerArray().length < 3) {
         const msg = `Watching ${MarketCache.getTickerArray().length} ticker(s) is not sufficient to engage in triangle arbitrage`;
         logger.execution.debug(`Watched Tickers: [${MarketCache.getTickerArray()}]`);
@@ -101,6 +104,11 @@ function checkConfig() {
     if (MarketCache.symbols.size < 3) {
         const msg = `Watching ${MarketCache.symbols.size} symbol(s) is not sufficient to engage in triangle arbitrage`;
         logger.execution.debug(`Watched Symbols: [${Array.from(MarketCache.symbols)}]`);
+        logger.execution.error(msg);
+        throw new Error(msg);
+    }
+    if (MarketCache.relationships.length === 0) {
+        const msg = `Watching ${MarketCache.relationships.length} triangular relationships is not sufficient to engage in triangle arbitrage`;
         logger.execution.error(msg);
         throw new Error(msg);
     }
@@ -127,6 +135,21 @@ function checkConfig() {
     }
     if (!VALID_VALUES.DEPTH.SIZE.includes(CONFIG.DEPTH.SIZE)) {
         const msg = `Depth size can only contain one of the following values: ${VALID_VALUES.DEPTH.SIZE}`;
+        logger.execution.error(msg);
+        throw new Error(msg);
+    }
+}
+
+function checkBalances() {
+    console.log(`Checking balances ...`);
+
+    if (ArbitrageExecution.balances[CONFIG.INVESTMENT.BASE].available < CONFIG.INVESTMENT.MIN) {
+        const msg = `An available balance of ${CONFIG.INVESTMENT.MIN} ${CONFIG.INVESTMENT.BASE} is required to satisfy your INVESTMENT.MIN configuration`;
+        logger.execution.error(msg);
+        throw new Error(msg);
+    }
+    if (ArbitrageExecution.balances[CONFIG.INVESTMENT.BASE].available < CONFIG.INVESTMENT.MAX) {
+        const msg = `An available balance of ${CONFIG.INVESTMENT.MAX} ${CONFIG.INVESTMENT.BASE} is required to satisfy your INVESTMENT.MAX configuration`;
         logger.execution.error(msg);
         throw new Error(msg);
     }

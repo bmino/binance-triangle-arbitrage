@@ -1,3 +1,4 @@
+const CONFIG = require('../../config/config.json');
 const binance = require('node-binance-api')();
 
 const MarketCache = {
@@ -9,14 +10,17 @@ const MarketCache = {
     initialize(exchangeInfo, whitelistSymbols, baseSymbol) {
         let tickers = [];
         let tradingSymbolObjects = exchangeInfo.symbols.filter(symbolObj => symbolObj.status === 'TRADING');
-        let symbols = new Set(whitelistSymbols);
+        let symbols = new Set();
 
-        console.log(`Found ${tradingSymbolObjects.length}/${exchangeInfo.symbols.length} currently trading tickers.`);
+        console.log(`Found ${tradingSymbolObjects.length}/${exchangeInfo.symbols.length} currently trading tickers`);
 
         // Extract Symbols and Tickers
         tradingSymbolObjects.forEach(symbolObj => {
-            if (whitelistSymbols.length > 0 && (!whitelistSymbols.includes(symbolObj.baseAsset) || !whitelistSymbols.includes(symbolObj.quoteAsset))) return;
-            if (whitelistSymbols.length === 0) symbols.add(symbolObj.baseAsset);
+            if (whitelistSymbols.length > 0) {
+                if (!whitelistSymbols.includes(symbolObj.baseAsset)) return;
+                if (!whitelistSymbols.includes(symbolObj.quoteAsset)) return;
+            }
+            symbols.add(symbolObj.baseAsset);
             symbolObj.dustDecimals = Math.max(symbolObj.filters.filter(f => f.filterType === 'LOT_SIZE')[0].minQty.indexOf('1') - 1, 0);
             tickers[symbolObj.symbol] = symbolObj;
         });
@@ -25,19 +29,12 @@ const MarketCache = {
         MarketCache.symbols = symbols;
         MarketCache.tickers = tickers;
         MarketCache.relationships = MarketCache.getTradesFromSymbol(baseSymbol);
+
+        console.log(`Found ${MarketCache.relationships.length} triangular relationships`);
     },
 
     getTickerArray() {
         return Object.keys(MarketCache.tickers);
-    },
-
-    getDepthCache() {
-        return MarketCache.getTickerArray()
-            .map(ticker => {
-                let depth = binance.depthCache(ticker);
-                depth.ticker = ticker;
-                return depth;
-            });
     },
 
     pruneDepthsAboveThreshold(threshold=100) {
@@ -66,12 +63,15 @@ const MarketCache = {
     createTrade(a, b, c) {
         const ab = MarketCache.getRelationship(a, b);
         if (!ab) return;
+        if (CONFIG.TRADING.EXECUTION_TEMPLATE[0] && CONFIG.TRADING.EXECUTION_TEMPLATE[0].toUpperCase() !== ab.method.toUpperCase()) return;
 
         const bc = MarketCache.getRelationship(b, c);
         if (!bc) return;
+        if (CONFIG.TRADING.EXECUTION_TEMPLATE[1] && CONFIG.TRADING.EXECUTION_TEMPLATE[1].toUpperCase() !== bc.method.toUpperCase()) return;
 
         const ca = MarketCache.getRelationship(c, a);
         if (!ca) return;
+        if (CONFIG.TRADING.EXECUTION_TEMPLATE[2] && CONFIG.TRADING.EXECUTION_TEMPLATE[2].toUpperCase() !== ca.method.toUpperCase()) return;
 
         return {
             ab: ab,
@@ -91,11 +91,15 @@ const MarketCache = {
 
         if (MarketCache.tickers[a+b]) return {
             method: 'Sell',
-            ticker: a+b
+            ticker: a+b,
+            base: a,
+            quote: b
         };
         if (MarketCache.tickers[b+a]) return {
             method: 'Buy',
-            ticker: b+a
+            ticker: b+a,
+            base: b,
+            quote: a
         };
         return null;
     }
