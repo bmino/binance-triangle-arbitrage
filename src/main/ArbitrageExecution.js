@@ -78,11 +78,13 @@ const ArbitrageExecution = {
     },
 
     isSafeToExecute(calculated) {
+        const now = new Date().getTime();
+
         // Profit Threshold is Not Satisfied
         if (calculated.percent < CONFIG.TRADING.PROFIT_THRESHOLD) return false;
 
         // Age Threshold is Not Satisfied
-        const ageInMilliseconds = new Date().getTime() - Math.min(calculated.times.ab, calculated.times.bc, calculated.times.ca);
+        const ageInMilliseconds = now - Math.min(calculated.times.ab, calculated.times.bc, calculated.times.ca);
         if (ageInMilliseconds > CONFIG.TRADING.AGE_THRESHOLD) return false;
 
         if (CONFIG.TRADING.EXECUTION_CAP && ArbitrageExecution.getAttemptedPositionsCount() >= CONFIG.TRADING.EXECUTION_CAP) {
@@ -103,6 +105,10 @@ const ArbitrageExecution = {
         }
         if (ArbitrageExecution.getAttemptedPositionsCountInLastSecond() > 1) {
             logger.execution.trace(`Blocking execution because ${ArbitrageExecution.getAttemptedPositionsCountInLastSecond()} position has already been attempted in the last second`);
+            return false;
+        }
+        if (Object.entries(ArbitrageExecution.attemptedPositions).find(([executionTime, id]) => id === calculated.id && executionTime > (now - CONFIG.TRADING.AGE_THRESHOLD))) {
+            logger.execution.trace(`Blocking execution to avoid double executing the same position`);
             return false;
         }
 
