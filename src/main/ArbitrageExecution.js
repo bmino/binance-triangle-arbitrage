@@ -160,17 +160,14 @@ const ArbitrageExecution = {
                 };
 
                 if (resultsAB.orderId && resultsBC.orderId && resultsCA.orderId) {
-                    actual.a.spent = calculated.trade.ab.method.toUpperCase() === 'BUY' ? parseFloat(resultsAB.cummulativeQuoteQty) : parseFloat(resultsAB.executedQty);
-                    actual.b.earned = calculated.trade.ab.method.toUpperCase() === 'SELL' ? parseFloat(resultsAB.cummulativeQuoteQty) : parseFloat(resultsAB.executedQty);
-                    actual.fees += ArbitrageExecution.aggregateFees(resultsAB.fills, 'BNB');
+                    [actual.a.spent, actual.b.earned, fees] = ArbitrageExecution.parseActualResults(calculated.trade.ab, resultsAB);
+                    actual.fees += fees;
 
-                    actual.b.spent = calculated.trade.bc.method.toUpperCase() === 'BUY' ? parseFloat(resultsBC.cummulativeQuoteQty) : parseFloat(resultsBC.executedQty);
-                    actual.c.earned = calculated.trade.bc.method.toUpperCase() === 'SELL' ? parseFloat(resultsBC.cummulativeQuoteQty) : parseFloat(resultsBC.executedQty);
-                    actual.fees += ArbitrageExecution.aggregateFees(resultsBC.fills, 'BNB');
+                    [actual.b.spent, actual.c.earned, fees] = ArbitrageExecution.parseActualResults(calculated.trade.bc, resultsBC);
+                    actual.fees += fees;
 
-                    actual.c.spent = calculated.trade.ca.method.toUpperCase() === 'BUY' ? parseFloat(resultsCA.cummulativeQuoteQty) : parseFloat(resultsCA.executedQty);
-                    actual.a.earned = calculated.trade.ca.method.toUpperCase() === 'SELL' ? parseFloat(resultsCA.cummulativeQuoteQty) : parseFloat(resultsCA.executedQty);
-                    actual.fees += ArbitrageExecution.aggregateFees(resultsCA.fills, 'BNB');
+                    [actual.c.spent, actual.a.earned, fees] = ArbitrageExecution.parseActualResults(calculated.trade.ca, resultsCA);
+                    actual.fees += fees;
                 }
 
                 return actual;
@@ -199,36 +196,36 @@ const ArbitrageExecution = {
         };
 
         return BinanceApi.marketBuyOrSell(calculated.trade.ab.method)(calculated.trade.ab.ticker, calculated.ab)
-            .then(({ executedQty, cummulativeQuoteQty, fills, orderId }) => {
-                if (orderId) {
-                    actual.a.spent = calculated.trade.ab.method.toUpperCase() === 'BUY' ? parseFloat(cummulativeQuoteQty) : parseFloat(executedQty);
-                    actual.b.earned = calculated.trade.ab.method.toUpperCase() === 'SELL' ? parseFloat(cummulativeQuoteQty) : parseFloat(executedQty);
-                    actual.fees += ArbitrageExecution.aggregateFees(fills, 'BNB');
+            .then((results) => {
+                if (results.orderId) {
+                    [actual.a.spent, actual.b.earned, fees] = ArbitrageExecution.parseActualResults(calculated.trade.ab, results);
+                    actual.fees += fees;
                     recalculated.bc = CalculationNode.recalculateTradeLeg(calculated.trade.bc, actual.b.earned);
                 }
                 return BinanceApi.marketBuyOrSell(calculated.trade.bc.method)(calculated.trade.bc.ticker, recalculated.bc);
             })
-            .then(({ executedQty, cummulativeQuoteQty, fills, orderId }) => {
-                if (orderId) {
-                    actual.b.spent = calculated.trade.bc.method.toUpperCase() === 'BUY' ? parseFloat(cummulativeQuoteQty) : parseFloat(executedQty);
-                    actual.c.earned = calculated.trade.bc.method.toUpperCase() === 'SELL' ? parseFloat(cummulativeQuoteQty) : parseFloat(executedQty);
-                    actual.fees += ArbitrageExecution.aggregateFees(fills, 'BNB');
+            .then((results) => {
+                if (results.orderId) {
+                    [actual.b.spent, actual.c.earned, fees] = ArbitrageExecution.parseActualResults(calculated.trade.bc, results);
+                    actual.fees += fees;
                     recalculated.ca = CalculationNode.recalculateTradeLeg(calculated.trade.ca, actual.c.earned);
                 }
                 return BinanceApi.marketBuyOrSell(calculated.trade.ca.method)(calculated.trade.ca.ticker, recalculated.ca);
             })
-            .then(({ executedQty, cummulativeQuoteQty, fills, orderId }) => {
-                if (orderId) {
-                    actual.c.spent = calculated.trade.ca.method.toUpperCase() === 'BUY' ? parseFloat(cummulativeQuoteQty) : parseFloat(executedQty);
-                    actual.a.earned = calculated.trade.ca.method.toUpperCase() === 'SELL' ? parseFloat(cummulativeQuoteQty) : parseFloat(executedQty);
-                    actual.fees += ArbitrageExecution.aggregateFees(fills, 'BNB');
+            .then((results) => {
+                if (results.orderId) {
+                    [actual.c.spent, actual.a.earned, fees] = ArbitrageExecution.parseActualResults(calculated.trade.ca, results);
+                    actual.fees += fees;
                 }
                 return actual;
             });
     },
 
-    aggregateFees(fills, quoteAsset = 'BNB') {
-        return fills.filter(f => f.commissionAsset === quoteAsset).map(f => parseFloat(f.commission)).reduce((total, fee) => total + fee, 0);
+    parseActualResults(method, { executedQty, cummulativeQuoteQty, fills }) {
+        const spent = method.toUpperCase() === 'BUY' ? parseFloat(cummulativeQuoteQty) : parseFloat(executedQty);
+        const earned = method.toUpperCase() === 'SELL' ? parseFloat(cummulativeQuoteQty) : parseFloat(executedQty);
+        const fees = fills.filter(f => f.commissionAsset === 'BNB').map(f => parseFloat(f.commission)).reduce((total, fee) => total + fee, 0);
+        return [spent, earned, fees];
     }
 
 };
