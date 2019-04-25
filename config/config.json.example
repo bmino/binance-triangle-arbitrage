@@ -17,7 +17,8 @@
         "EXECUTION_STRATEGY": "linear",
         "EXECUTION_TEMPLATE": ["BUY", "SELL", "SELL"],
         "EXECUTION_CAP": 1,
-        "PROFIT_THRESHOLD": 0.3,
+        "TAKER_FEE": 0.00,
+        "PROFIT_THRESHOLD": 0.30,
         "AGE_THRESHOLD": 300,
         "WHITELIST": []
     },

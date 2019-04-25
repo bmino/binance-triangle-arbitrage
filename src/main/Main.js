@@ -128,6 +128,11 @@ function checkConfig() {
         logger.execution.error(msg);
         throw new Error(msg);
     }
+    if (CONFIG.TRADING.TAKER_FEE < 0) {
+        const msg = `Taker fee (${CONFIG.TRADING.TAKER_FEE}) must be a positive value`;
+        logger.execution.error(msg);
+        throw new Error(msg);
+    }
     if (CONFIG.DEPTH.SIZE > 100 && CONFIG.TRADING.WHITELIST.length === 0) {
         const msg = `Using a depth size higher than 100 requires defining a whitelist`;
         logger.execution.error(msg);

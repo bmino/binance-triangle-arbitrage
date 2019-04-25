@@ -71,8 +71,12 @@ Upon each version update you should copy the new syntax from `config.json.exampl
 * Special Values:
     * `0` - No limit on executions
 
+#### `TAKER_FEE` (Number)
+* Default: `0.00`
+* Description: Market taker fee (percent)
+
 #### `TRADING.PROFIT_THRESHOLD` (Number)
-* Default: `0.3`
+* Default: `0.30`
 * Description: Minimum profit (percent) required to consider executing a position
 
 #### `TRADING.AGE_THRESHOLD` (Number)
