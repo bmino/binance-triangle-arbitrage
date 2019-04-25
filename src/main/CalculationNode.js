@@ -60,7 +60,7 @@ const CalculationNode = {
             calculated.a = CalculationNode.orderBookConversion(calculated.ca, trade.symbol.c, trade.symbol.a, trade.ca.ticker);
         }
     
-        calculated.percent = (calculated.a - calculated.start) / calculated.start * 100;
+        calculated.percent = (calculated.a - calculated.start) / calculated.start * 100 - (CONFIG.TRADING.TAKER_FEE * 3);
         if (!calculated.percent) calculated.percent = 0;
     
         return calculated;

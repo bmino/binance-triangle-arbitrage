@@ -78,11 +78,13 @@ const ArbitrageExecution = {
     },
 
     isSafeToExecute(calculated) {
+        const now = new Date().getTime();
+
         // Profit Threshold is Not Satisfied
         if (calculated.percent < CONFIG.TRADING.PROFIT_THRESHOLD) return false;
 
         // Age Threshold is Not Satisfied
-        const ageInMilliseconds = new Date().getTime() - Math.min(calculated.times.ab, calculated.times.bc, calculated.times.ca);
+        const ageInMilliseconds = now - Math.min(calculated.times.ab, calculated.times.bc, calculated.times.ca);
         if (ageInMilliseconds > CONFIG.TRADING.AGE_THRESHOLD) return false;
 
         if (CONFIG.TRADING.EXECUTION_CAP && ArbitrageExecution.getAttemptedPositionsCount() >= CONFIG.TRADING.EXECUTION_CAP) {
@@ -103,6 +105,10 @@ const ArbitrageExecution = {
         }
         if (ArbitrageExecution.getAttemptedPositionsCountInLastSecond() > 1) {
             logger.execution.trace(`Blocking execution because ${ArbitrageExecution.getAttemptedPositionsCountInLastSecond()} position has already been attempted in the last second`);
+            return false;
+        }
+        if (Object.entries(ArbitrageExecution.attemptedPositions).find(([executionTime, id]) => id === calculated.id && executionTime > (now - CONFIG.TRADING.AGE_THRESHOLD))) {
+            logger.execution.trace(`Blocking execution to avoid double executing the same position`);
             return false;
         }
 
@@ -160,17 +166,14 @@ const ArbitrageExecution = {
                 };
 
                 if (resultsAB.orderId && resultsBC.orderId && resultsCA.orderId) {
-                    actual.a.spent = calculated.trade.ab.method.toUpperCase() === 'BUY' ? parseFloat(resultsAB.cummulativeQuoteQty) : parseFloat(resultsAB.executedQty);
-                    actual.b.earned = calculated.trade.ab.method.toUpperCase() === 'SELL' ? parseFloat(resultsAB.cummulativeQuoteQty) : parseFloat(resultsAB.executedQty);
-                    actual.fees += ArbitrageExecution.aggregateFees(resultsAB.fills, 'BNB');
+                    [actual.a.spent, actual.b.earned, fees] = ArbitrageExecution.parseActualResults(calculated.trade.ab.method, resultsAB);
+                    actual.fees += fees;
 
-                    actual.b.spent = calculated.trade.bc.method.toUpperCase() === 'BUY' ? parseFloat(resultsBC.cummulativeQuoteQty) : parseFloat(resultsBC.executedQty);
-                    actual.c.earned = calculated.trade.bc.method.toUpperCase() === 'SELL' ? parseFloat(resultsBC.cummulativeQuoteQty) : parseFloat(resultsBC.executedQty);
-                    actual.fees += ArbitrageExecution.aggregateFees(resultsBC.fills, 'BNB');
+                    [actual.b.spent, actual.c.earned, fees] = ArbitrageExecution.parseActualResults(calculated.trade.bc.method, resultsBC);
+                    actual.fees += fees;
 
-                    actual.c.spent = calculated.trade.ca.method.toUpperCase() === 'BUY' ? parseFloat(resultsCA.cummulativeQuoteQty) : parseFloat(resultsCA.executedQty);
-                    actual.a.earned = calculated.trade.ca.method.toUpperCase() === 'SELL' ? parseFloat(resultsCA.cummulativeQuoteQty) : parseFloat(resultsCA.executedQty);
-                    actual.fees += ArbitrageExecution.aggregateFees(resultsCA.fills, 'BNB');
+                    [actual.c.spent, actual.a.earned, fees] = ArbitrageExecution.parseActualResults(calculated.trade.ca.method, resultsCA);
+                    actual.fees += fees;
                 }
 
                 return actual;
@@ -199,36 +202,36 @@ const ArbitrageExecution = {
         };
 
         return BinanceApi.marketBuyOrSell(calculated.trade.ab.method)(calculated.trade.ab.ticker, calculated.ab)
-            .then(({ executedQty, cummulativeQuoteQty, fills, orderId }) => {
-                if (orderId) {
-                    actual.a.spent = calculated.trade.ab.method.toUpperCase() === 'BUY' ? parseFloat(cummulativeQuoteQty) : parseFloat(executedQty);
-                    actual.b.earned = calculated.trade.ab.method.toUpperCase() === 'SELL' ? parseFloat(cummulativeQuoteQty) : parseFloat(executedQty);
-                    actual.fees += ArbitrageExecution.aggregateFees(fills, 'BNB');
+            .then((results) => {
+                if (results.orderId) {
+                    [actual.a.spent, actual.b.earned, fees] = ArbitrageExecution.parseActualResults(calculated.trade.ab.method, results);
+                    actual.fees += fees;
                     recalculated.bc = CalculationNode.recalculateTradeLeg(calculated.trade.bc, actual.b.earned);
                 }
                 return BinanceApi.marketBuyOrSell(calculated.trade.bc.method)(calculated.trade.bc.ticker, recalculated.bc);
             })
-            .then(({ executedQty, cummulativeQuoteQty, fills, orderId }) => {
-                if (orderId) {
-                    actual.b.spent = calculated.trade.bc.method.toUpperCase() === 'BUY' ? parseFloat(cummulativeQuoteQty) : parseFloat(executedQty);
-                    actual.c.earned = calculated.trade.bc.method.toUpperCase() === 'SELL' ? parseFloat(cummulativeQuoteQty) : parseFloat(executedQty);
-                    actual.fees += ArbitrageExecution.aggregateFees(fills, 'BNB');
+            .then((results) => {
+                if (results.orderId) {
+                    [actual.b.spent, actual.c.earned, fees] = ArbitrageExecution.parseActualResults(calculated.trade.bc.method, results);
+                    actual.fees += fees;
                     recalculated.ca = CalculationNode.recalculateTradeLeg(calculated.trade.ca, actual.c.earned);
                 }
                 return BinanceApi.marketBuyOrSell(calculated.trade.ca.method)(calculated.trade.ca.ticker, recalculated.ca);
             })
-            .then(({ executedQty, cummulativeQuoteQty, fills, orderId }) => {
-                if (orderId) {
-                    actual.c.spent = calculated.trade.ca.method.toUpperCase() === 'BUY' ? parseFloat(cummulativeQuoteQty) : parseFloat(executedQty);
-                    actual.a.earned = calculated.trade.ca.method.toUpperCase() === 'SELL' ? parseFloat(cummulativeQuoteQty) : parseFloat(executedQty);
-                    actual.fees += ArbitrageExecution.aggregateFees(fills, 'BNB');
+            .then((results) => {
+                if (results.orderId) {
+                    [actual.c.spent, actual.a.earned, fees] = ArbitrageExecution.parseActualResults(calculated.trade.ca.method, results);
+                    actual.fees += fees;
                 }
                 return actual;
             });
     },
 
-    aggregateFees(fills, quoteAsset = 'BNB') {
-        return fills.filter(f => f.commissionAsset === quoteAsset).map(f => parseFloat(f.commission)).reduce((total, fee) => total + fee, 0);
+    parseActualResults(method, { executedQty, cummulativeQuoteQty, fills }) {
+        const spent = method.toUpperCase() === 'BUY' ? parseFloat(cummulativeQuoteQty) : parseFloat(executedQty);
+        const earned = method.toUpperCase() === 'SELL' ? parseFloat(cummulativeQuoteQty) : parseFloat(executedQty);
+        const fees = fills.filter(f => f.commissionAsset === 'BNB').map(f => parseFloat(f.commission)).reduce((total, fee) => total + fee, 0);
+        return [spent, earned, fees];
     }
 
 };
