@@ -75,7 +75,6 @@ const BinanceApi = {
     processDepth(ticker, depth) {
         depth.bids = binance.sortBids(depth.bids);
         depth.asks = binance.sortAsks(depth.asks);
-        depth.time = depth.eventTime;
     }
 
 };
