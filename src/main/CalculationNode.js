@@ -76,17 +76,19 @@ const CalculationNode = {
     },
 
     orderBookConversion(amountFrom, symbolFrom, symbolTo, ticker) {
-        let i, j, rates, rate, quantity, exchangeableAmount;
+        let i, j, rate, quantity, exchangeableAmount;
         let orderBook = binance.depthCache(ticker) || {};
+        const bidRates = Object.keys(orderBook.bids || {});
+        const askRates = Object.keys(orderBook.asks || {});
         let amountTo = 0;
 
         if (amountFrom === 0) return 0;
+        if (parseFloat(bidRates[0]) > parseFloat(askRates[0])) throw new Error(`Spread does not exist for ${ticker}`);
 
         if (ticker === symbolFrom + symbolTo) {
-            rates = Object.keys(orderBook.bids || {});
-            for (i=0; i<rates.length; i++) {
-                rate = parseFloat(rates[i]);
-                quantity = orderBook.bids[rates[i]];
+            for (i=0; i<bidRates.length; i++) {
+                rate = parseFloat(bidRates[i]);
+                quantity = orderBook.bids[bidRates[i]];
                 if (quantity < amountFrom) {
                     amountFrom -= quantity;
                     amountTo += quantity * rate;
@@ -96,10 +98,9 @@ const CalculationNode = {
                 }
             }
         } else {
-            rates = Object.keys(orderBook.asks || {});
-            for (j=0; j<rates.length; j++) {
-                rate = parseFloat(rates[j]);
-                quantity = orderBook.asks[rates[j]];
+            for (j=0; j<askRates.length; j++) {
+                rate = parseFloat(askRates[j]);
+                quantity = orderBook.asks[askRates[j]];
                 exchangeableAmount = quantity * rate;
                 if (exchangeableAmount < amountFrom) {
                     amountFrom -= quantity * rate;
@@ -111,7 +112,7 @@ const CalculationNode = {
             }
         }
 
-        throw new Error(`Depth (${rates.length}) too shallow to convert ${amountFrom} ${symbolFrom} to ${symbolTo} using ${ticker}`);
+        throw new Error(`Bid depth (${bidRates.length}) or ask depth (${askRates.length}) too shallow to convert ${amountFrom} ${symbolFrom} to ${symbolTo} using ${ticker}`);
     },
 
     calculateDustless(ticker, amount) {
