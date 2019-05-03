@@ -21,6 +21,7 @@ const MarketCache = {
                 if (!whitelistSymbols.includes(symbolObj.quoteAsset)) return;
             }
             symbols.add(symbolObj.baseAsset);
+            symbols.add(symbolObj.quoteAsset);
             symbolObj.dustDecimals = Math.max(symbolObj.filters.filter(f => f.filterType === 'LOT_SIZE')[0].minQty.indexOf('1') - 1, 0);
             tickers[symbolObj.symbol] = symbolObj;
         });
@@ -58,6 +59,10 @@ const MarketCache = {
             });
         });
         return trades;
+    },
+
+    getTickersWithoutDepthCacheUpdate() {
+        return MarketCache.getTickerArray().filter(ticker => !binance.depthCache(ticker).eventTime);
     },
 
     createTrade(a, b, c) {
