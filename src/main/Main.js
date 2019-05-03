@@ -78,6 +78,9 @@ function calculateArbitrage() {
     const msg = `Completed ${completedCalculations}/${totalCalculations} (${((completedCalculations/totalCalculations)*100).toFixed(1)}%) calculations in ${calculationTime} ms`;
     (errorCount > 0) ? logger.performance.info(msg) : logger.performance.trace(msg);
 
+    const tickersWithoutDepthUpdate = MarketCache.getTickersWithoutDepthCacheUpdate();
+    (tickersWithoutDepthUpdate.length > 0) && logger.execution.trace(`Found ${tickersWithoutDepthUpdate.length} tickers without a depth cache update: [${tickersWithoutDepthUpdate}]`);
+
     if (CONFIG.HUD.ENABLED) refreshHUD(results);
 
     setTimeout(calculateArbitrage, CONFIG.CALCULATION_COOLDOWN);

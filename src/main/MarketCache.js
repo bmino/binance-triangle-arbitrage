@@ -61,6 +61,10 @@ const MarketCache = {
         return trades;
     },
 
+    getTickersWithoutDepthCacheUpdate() {
+        return MarketCache.getTickerArray().filter(ticker => !binance.depthCache(ticker).eventTime);
+    },
+
     createTrade(a, b, c) {
         const ab = MarketCache.getRelationship(a, b);
         if (!ab) return;
