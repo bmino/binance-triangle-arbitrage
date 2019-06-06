@@ -26,10 +26,10 @@ const CalculationNode = {
             ab: 0,
             bc: 0,
             ca: 0,
-            times: {
-                ab: binance.depthCache(trade.ab.ticker).eventTime,
-                bc: binance.depthCache(trade.bc.ticker).eventTime,
-                ca: binance.depthCache(trade.ca.ticker).eventTime
+            depth: {
+                ab: binance.depthCache(trade.ab.ticker),
+                bc: binance.depthCache(trade.bc.ticker),
+                ca: binance.depthCache(trade.ca.ticker)
             },
             a: 0,
             b: 0,

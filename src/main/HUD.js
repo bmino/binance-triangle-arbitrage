@@ -46,10 +46,10 @@ const HUD = {
             tableData.push([
                 `${arb.trade.symbol.a}-${arb.trade.symbol.b}-${arb.trade.symbol.c}`,
                 `${arb.percent.toFixed(4)}%`,
-                `${((now - arb.times.ab)/1000).toFixed(2)}`,
-                `${((now - arb.times.bc)/1000).toFixed(2)}`,
-                `${((now - arb.times.ca)/1000).toFixed(2)}`,
-                `${((now - Math.min(arb.times.ab, arb.times.bc, arb.times.ca))/1000).toFixed(2)}`
+                `${((now - arb.depth.ab.eventTime)/1000).toFixed(2)}`,
+                `${((now - arb.depth.bc.eventTime)/1000).toFixed(2)}`,
+                `${((now - arb.depth.ca.eventTime)/1000).toFixed(2)}`,
+                `${((now - Math.min(arb.depth.ab.eventTime, arb.depth.bc.eventTime, arb.depth.ca.eventTime))/1000).toFixed(2)}`
             ]);
         });
 

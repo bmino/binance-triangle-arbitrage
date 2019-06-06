@@ -13,7 +13,7 @@ const ArbitrageExecution = {
     executeCalculatedPosition(calculated) {
         const startTime = new Date().getTime();
 
-        const { times } = calculated;
+        const { depth } = calculated;
         const { symbol } = calculated.trade;
 
         if (!ArbitrageExecution.isSafeToExecute(calculated)) return false;
@@ -25,7 +25,7 @@ const ArbitrageExecution = {
         ArbitrageExecution.inProgressSymbols.add(symbol.b);
         ArbitrageExecution.inProgressSymbols.add(symbol.c);
 
-        logger.execution.info(`Attempting to execute ${calculated.id} with an age of ${(startTime - Math.min(times.ab, times.bc, times.ca)).toFixed(0)} ms and expected profit of ${calculated.percent.toFixed(4)}%`);
+        logger.execution.info(`Attempting to execute ${calculated.id} with an age of ${(startTime - Math.min(depth.ab.eventTime, depth.bc.eventTime, depth.ca.eventTime)).toFixed(0)} ms and expected profit of ${calculated.percent.toFixed(4)}%`);
 
         return ArbitrageExecution.execute(calculated)
             .then((actual) => {
@@ -84,7 +84,7 @@ const ArbitrageExecution = {
         if (calculated.percent < CONFIG.TRADING.PROFIT_THRESHOLD) return false;
 
         // Age Threshold is Not Satisfied
-        const ageInMilliseconds = now - Math.min(calculated.times.ab, calculated.times.bc, calculated.times.ca);
+        const ageInMilliseconds = now - Math.min(calculated.depth.ab.eventTime, calculated.depth.bc.eventTime, calculated.depth.ca.eventTime);
         if (ageInMilliseconds > CONFIG.TRADING.AGE_THRESHOLD) return false;
 
         if (CONFIG.TRADING.EXECUTION_CAP && ArbitrageExecution.getAttemptedPositionsCount() >= CONFIG.TRADING.EXECUTION_CAP) {
