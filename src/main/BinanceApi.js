@@ -25,6 +25,14 @@ const BinanceApi = {
         });
     },
 
+    getDepths(abTicker, bcTicker, caTicker) {
+        return {
+            ab: binance.depthCache(abTicker),
+            bc: binance.depthCache(bcTicker),
+            ca: binance.depthCache(caTicker)
+        };
+    },
+
     marketBuy(ticker, quantity) {
         logger.execution.info(`${binance.getOption('test') ? 'Test: Buying' : 'Buying'} ${quantity} ${ticker} @ market price`);
         return new Promise((resolve, reject) => {
