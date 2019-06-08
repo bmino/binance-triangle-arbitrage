@@ -25,12 +25,18 @@ const BinanceApi = {
         });
     },
 
-    getDepths(abTicker, bcTicker, caTicker) {
+    cloneDepth(ticker) {
+        const tmp = binance.depthCache(ticker);
         return {
-            ab: binance.depthCache(abTicker),
-            bc: binance.depthCache(bcTicker),
-            ca: binance.depthCache(caTicker)
+            eventTime: tmp.eventTime,
+            lastUpdateId: tmp.lastUpdateId,
+            asks: {...tmp.asks},
+            bids: {...tmp.bids}
         };
+    },
+
+    cloneDepths(...tickers) {
+        return tickers.map(ticker => BinanceApi.cloneDepth(ticker));
     },
 
     marketBuy(ticker, quantity) {

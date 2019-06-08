@@ -1,5 +1,5 @@
 const CONFIG = require('../../config/config');
-const binance = require('node-binance-api')();
+const BinanceApi = require('./BinanceApi');
 const MarketCache = require('./MarketCache');
 
 const CalculationNode = {
@@ -27,9 +27,9 @@ const CalculationNode = {
             bc: 0,
             ca: 0,
             depth: {
-                ab: binance.depthCache(trade.ab.ticker),
-                bc: binance.depthCache(trade.bc.ticker),
-                ca: binance.depthCache(trade.ca.ticker)
+                ab: BinanceApi.cloneDepth(trade.ab.ticker),
+                bc: BinanceApi.cloneDepth(trade.bc.ticker),
+                ca: BinanceApi.cloneDepth(trade.ca.ticker)
             },
             a: 0,
             b: 0,
@@ -77,7 +77,7 @@ const CalculationNode = {
 
     orderBookConversion(amountFrom, symbolFrom, symbolTo, ticker) {
         let i, j, rate, quantity, exchangeableAmount;
-        let orderBook = binance.depthCache(ticker) || {};
+        let orderBook = BinanceApi.cloneDepth(ticker) || {};
         const bidRates = Object.keys(orderBook.bids || {});
         const askRates = Object.keys(orderBook.asks || {});
         let amountTo = 0;

@@ -26,7 +26,8 @@ const ArbitrageExecution = {
         ArbitrageExecution.inProgressSymbols.add(symbol.c);
 
         logger.execution.info(`Attempting to execute ${calculated.id} with an age of ${(startTime - Math.min(depth.ab.eventTime, depth.bc.eventTime, depth.ca.eventTime)).toFixed(0)} ms and expected profit of ${calculated.percent.toFixed(4)}%`);
-        const PRE_EXECUTION_DEPTH_CACHE = BinanceApi.getDepths(calculated.trade.ab.ticker, calculated.trade.bc.ticker, calculated.trade.ca.ticker);
+        const PRE_EXECUTION_DEPTH_CACHE = BinanceApi.cloneDepths(calculated.trade.ab.ticker, calculated.trade.bc.ticker, calculated.trade.ca.ticker);
+        logger.execution.debug(`Pre Time: ${PRE_EXECUTION_DEPTH_CACHE[0].eventTime} ${PRE_EXECUTION_DEPTH_CACHE[1].eventTime} ${PRE_EXECUTION_DEPTH_CACHE[2].eventTime}`);
 
         return ArbitrageExecution.execute(calculated)
             .then((actual) => {
@@ -35,7 +36,8 @@ const ArbitrageExecution = {
                 // Results are only collected when a trade is executed
                 if (!CONFIG.TRADING.ENABLED) return;
 
-                const POST_EXECUTION_DEPTH_CACHE = BinanceApi.getDepths(calculated.trade.ab.ticker, calculated.trade.bc.ticker, calculated.trade.ca.ticker);
+                const POST_EXECUTION_DEPTH_CACHE = BinanceApi.cloneDepths(calculated.trade.ab.ticker, calculated.trade.bc.ticker, calculated.trade.ca.ticker);
+                logger.execution.debug(`Post Time: ${POST_EXECUTION_DEPTH_CACHE[0].eventTime} ${POST_EXECUTION_DEPTH_CACHE[1].eventTime} ${POST_EXECUTION_DEPTH_CACHE[2].eventTime}`);
 
                 logger.execution.debug();
                 logger.execution.debug(`AB Expected Conversion:  ${calculated.start.toFixed(8)} ${symbol.a} into ${calculated.b.toFixed(8)} ${symbol.b}`);
