@@ -19,7 +19,11 @@ if (CONFIG.TRADING.ENABLED) console.log(`WARNING! Order execution is enabled!\n`
 
 ArbitrageExecution.refreshBalances()
     .then(() => SpeedTest.multiPing(5))
-    .then((pings) => console.log(`Successfully pinged the Binance api in ${CalculationNode.average(pings).toFixed(0)} ms`))
+    .then((pings) => {
+        const msg = `Successfully pinged the Binance api in ${CalculationNode.average(pings).toFixed(0)} ms`;
+        console.log(msg);
+        logger.performance.info(msg);
+    })
     .then(BinanceApi.exchangeInfo)
     .then(exchangeInfo => MarketCache.initialize(exchangeInfo, CONFIG.TRADING.WHITELIST, CONFIG.INVESTMENT.BASE))
     .then(() => logger.execution.debug({configuration: CONFIG}))
