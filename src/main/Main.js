@@ -38,7 +38,6 @@ ArbitrageExecution.refreshBalances()
     .then(() => {
         console.log();
         console.log(`Execution Strategy:     ${CONFIG.TRADING.EXECUTION_STRATEGY}`);
-        console.log(`Optimization Ticks:     ${((CONFIG.INVESTMENT.MAX - CONFIG.INVESTMENT.MIN) / CONFIG.INVESTMENT.STEP).toFixed(0)} ticks(s)`);
         console.log(`Execution Limit:        ${CONFIG.TRADING.EXECUTION_CAP} execution(s)`);
         console.log(`Profit Threshold:       ${CONFIG.TRADING.PROFIT_THRESHOLD.toFixed(2)}%`);
         console.log(`Age Threshold:          ${CONFIG.TRADING.AGE_THRESHOLD} ms`);
@@ -116,6 +115,21 @@ function checkConfig() {
     }
     if (MarketCache.relationships.length === 0) {
         const msg = `Watching ${MarketCache.relationships.length} triangular relationships is not sufficient to engage in triangle arbitrage`;
+        logger.execution.error(msg);
+        throw new Error(msg);
+    }
+    if (CONFIG.INVESTMENT.STEP <= 0) {
+        const msg = `INVESTMENT.STEP must be a positive value`;
+        logger.execution.error(msg);
+        throw new Error(msg);
+    }
+    if (CONFIG.INVESTMENT.MIN > CONFIG.INVESTMENT.MAX) {
+        const msg = `INVESTMENT.MIN cannot be greater than INVESTMENT.MAX`;
+        logger.execution.error(msg);
+        throw new Error(msg);
+    }
+    if ((CONFIG.INVESTMENT.MIN !== CONFIG.INVESTMENT.MAX) && (CONFIG.INVESTMENT.MAX - CONFIG.INVESTMENT.MIN) / CONFIG.INVESTMENT.STEP < 1) {
+        const msg = `Not enough steps between INVESTMENT.MIN and INVESTMENT.MAX using step size of ${CONFIG.INVESTMENT.STEP}`;
         logger.execution.error(msg);
         throw new Error(msg);
     }
