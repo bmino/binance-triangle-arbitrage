@@ -59,8 +59,6 @@ function calculateArbitrage() {
     let errorCount = 0;
     let results = {};
 
-    MarketCache.pruneDepthsAboveThreshold(CONFIG.DEPTH.SIZE);
-
     MarketCache.relationships.forEach(relationship => {
         try {
             const calculated = CalculationNode.optimize(relationship);
