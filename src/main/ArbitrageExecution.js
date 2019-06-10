@@ -57,20 +57,15 @@ const ArbitrageExecution = {
                 logger.execution.debug(POST_EXECUTION_DEPTH_CACHE);
                 logger.execution.debug();
 
-                const delta = {
-                    a: actual.a.earned - actual.a.spent,
-                    b: actual.b.earned - actual.b.spent,
-                    c: actual.c.earned - actual.c.spent
-                };
                 const percent = {
-                    a: delta.a / actual.a.spent * 100,
-                    b: delta.b / actual.b.spent * 100,
-                    c: delta.c / actual.c.spent * 100
+                    a: actual.a.delta / actual.a.spent * 100,
+                    b: actual.b.delta / actual.b.spent * 100,
+                    c: actual.c.delta / actual.c.spent * 100
                 };
 
-                logger.execution.info(`${symbol.a} delta:\t  ${delta.a < 0 ? '' : ' '}${delta.a.toFixed(8)} (${percent.a < 0 ? '' : ' '}${percent.a.toFixed(4)}%)`);
-                logger.execution.info(`${symbol.b} delta:\t  ${delta.b < 0 ? '' : ' '}${delta.b.toFixed(8)} (${percent.b < 0 ? '' : ' '}${percent.b.toFixed(4)}%)`);
-                logger.execution.info(`${symbol.c} delta:\t  ${delta.c < 0 ? '' : ' '}${delta.c.toFixed(8)} (${percent.c < 0 ? '' : ' '}${percent.c.toFixed(4)}%)`);
+                logger.execution.info(`${symbol.a} delta:\t  ${actual.a.delta < 0 ? '' : ' '}${actual.a.delta.toFixed(8)} (${percent.a < 0 ? '' : ' '}${percent.a.toFixed(4)}%)`);
+                logger.execution.info(`${symbol.b} delta:\t  ${actual.b.delta < 0 ? '' : ' '}${actual.b.delta.toFixed(8)} (${percent.b < 0 ? '' : ' '}${percent.b.toFixed(4)}%)`);
+                logger.execution.info(`${symbol.c} delta:\t  ${actual.c.delta < 0 ? '' : ' '}${actual.c.delta.toFixed(8)} (${percent.c < 0 ? '' : ' '}${percent.c.toFixed(4)}%)`);
                 logger.execution.info(`BNB commission: ${(-1 * actual.fees).toFixed(8)}`);
                 logger.execution.info();
             })
@@ -186,6 +181,10 @@ const ArbitrageExecution = {
 
                     [actual.c.spent, actual.a.earned, fees] = ArbitrageExecution.parseActualResults(calculated.trade.ca.method, resultsCA);
                     actual.fees += fees;
+
+                    actual.a.delta = actual.a.earned - actual.a.spent;
+                    actual.b.delta = actual.b.earned - actual.b.spent;
+                    actual.c.delta = actual.c.earned - actual.c.spent;
                 }
 
                 return actual;
@@ -235,6 +234,12 @@ const ArbitrageExecution = {
                     [actual.c.spent, actual.a.earned, fees] = ArbitrageExecution.parseActualResults(calculated.trade.ca.method, results);
                     actual.fees += fees;
                 }
+                return actual;
+            })
+            .then((actual) => {
+                actual.a.delta = actual.a.earned - actual.a.spent;
+                actual.b.delta = actual.b.earned - actual.b.spent;
+                actual.c.delta = actual.c.earned - actual.c.spent;
                 return actual;
             });
     },
