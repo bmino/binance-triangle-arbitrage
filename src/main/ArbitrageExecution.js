@@ -35,13 +35,13 @@ const ArbitrageExecution = {
                 if (!CONFIG.TRADING.ENABLED) return;
 
                 logger.execution.debug();
-                logger.execution.debug(`AB Expected Conversion:  ${calculated.start.toFixed(8)} ${symbol.a} into ${calculated.b.toFixed(8)} ${symbol.b}`);
+                logger.execution.debug(`AB Expected Conversion:  ${calculated.a.spent.toFixed(8)} ${symbol.a} into ${calculated.b.earned.toFixed(8)} ${symbol.b}`);
                 logger.execution.debug(`AB Observed Conversion:  ${actual.a.spent.toFixed(8)} ${symbol.a} into ${actual.b.earned.toFixed(8)} ${symbol.b}`);
                 logger.execution.debug();
-                logger.execution.debug(`BC Expected Conversion:  ${calculated.b.toFixed(8)} ${symbol.b} into ${calculated.c.toFixed(8)} ${symbol.c}`);
+                logger.execution.debug(`BC Expected Conversion:  ${calculated.b.spent.toFixed(8)} ${symbol.b} into ${calculated.c.earned.toFixed(8)} ${symbol.c}`);
                 logger.execution.debug(`BC Observed Conversion:  ${actual.b.spent.toFixed(8)} ${symbol.b} into ${actual.c.earned.toFixed(8)} ${symbol.c}`);
                 logger.execution.debug();
-                logger.execution.debug(`CA Expected Conversion:  ${calculated.c.toFixed(8)} ${symbol.c} into ${calculated.a.toFixed(8)} ${symbol.a}`);
+                logger.execution.debug(`CA Expected Conversion:  ${calculated.c.spent.toFixed(8)} ${symbol.c} into ${calculated.a.earned.toFixed(8)} ${symbol.a}`);
                 logger.execution.debug(`CA Observed Conversion:  ${actual.c.spent.toFixed(8)} ${symbol.c} into ${actual.a.earned.toFixed(8)} ${symbol.a}`);
                 logger.execution.debug();
 
