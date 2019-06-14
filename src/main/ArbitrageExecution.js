@@ -77,6 +77,7 @@ const ArbitrageExecution = {
 
     isSafeToExecute(calculated) {
         const now = new Date().getTime();
+        const { symbol } = calculated.trade;
 
         // Profit Threshold is Not Satisfied
         if (calculated.percent < CONFIG.TRADING.PROFIT_THRESHOLD) return false;
@@ -89,16 +90,16 @@ const ArbitrageExecution = {
             logger.execution.trace(`Blocking execution because ${ArbitrageExecution.getAttemptedPositionsCount()} executions have been attempted`);
             return false;
         }
-        if (ArbitrageExecution.inProgressSymbols.has(calculated.trade.symbol.a)) {
-            logger.execution.trace(`Blocking execution because ${calculated.trade.symbol.a} is currently involved in an execution`);
+        if (ArbitrageExecution.inProgressSymbols.has(symbol.a)) {
+            logger.execution.trace(`Blocking execution because ${symbol.a} is currently involved in an execution`);
             return false;
         }
-        if (ArbitrageExecution.inProgressSymbols.has(calculated.trade.symbol.b)) {
-            logger.execution.trace(`Blocking execution because ${calculated.trade.symbol.b} is currently involved in an execution`);
+        if (ArbitrageExecution.inProgressSymbols.has(symbol.b)) {
+            logger.execution.trace(`Blocking execution because ${symbol.b} is currently involved in an execution`);
             return false;
         }
-        if (ArbitrageExecution.inProgressSymbols.has(calculated.trade.symbol.c)) {
-            logger.execution.trace(`Blocking execution because ${calculated.trade.symbol.c} is currently involved in an execution`);
+        if (ArbitrageExecution.inProgressSymbols.has(symbol.c)) {
+            logger.execution.trace(`Blocking execution because ${symbol.c} is currently involved in an execution`);
             return false;
         }
         if (ArbitrageExecution.getAttemptedPositionsCountInLastSecond() > 1) {
