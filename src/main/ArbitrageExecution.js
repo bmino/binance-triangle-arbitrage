@@ -40,6 +40,7 @@ const ArbitrageExecution = {
 
                 // Results are only collected when a trade is executed
                 if (!CONFIG.TRADING.ENABLED) return;
+                if ((CONFIG.DEMO != 'undefined') && CONFIG.DEMO) return;
 
                 logger.execution.debug();
                 logger.execution.debug(`AB Expected Conversion:  ${calculated.a.spent.toFixed(8)} ${symbol.a} into ${calculated.b.earned.toFixed(8)} ${symbol.b}`);

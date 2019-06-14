@@ -1,6 +1,13 @@
 const CONFIG = require('../../config/config.json');
 const binance = require('node-binance-api')();
 
+// Force demo off & hud off if we are running prod via the CLI.
+// Not forcing trading mode to be enalbed though...
+if (process.argv[2] && (process.argv[2] === '--prod')) {
+    CONFIG.DEMO = false;
+    CONFIG.HUD.ENABLED = false;
+}
+
 const MarketCache = {
 
     symbols: [],

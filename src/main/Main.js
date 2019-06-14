@@ -9,22 +9,34 @@ const ArbitrageExecution = require('./ArbitrageExecution');
 const CalculationNode = require('./CalculationNode');
 const SpeedTest = require('./SpeedTest');
 
-binance.options({
-    APIKEY: CONFIG.KEYS.API,
-    APISECRET: CONFIG.KEYS.SECRET,
-    test: !CONFIG.TRADING.ENABLED
-});
+if ((CONFIG.TRADING.ENABLED === true) && ((CONFIG.DEMO == 'undefined') || !CONFIG.DEMO)) {
+    binance.options({
+        APIKEY: CONFIG.KEYS.APIPROD,
+        APISECRET: CONFIG.KEYS.SECRETPROD,
+        test: !CONFIG.TRADING.ENABLED
+    });
+} else {
+    binance.options({
+        APIKEY: CONFIG.KEYS.API,
+        APISECRET: CONFIG.KEYS.SECRET,
+        test: !CONFIG.TRADING.ENABLED
+    });
+}
 
 var tradeFees = [];
 
-if (CONFIG.TRADING.ENABLED) console.log(`WARNING! Order execution is enabled!\n`);
+if ((CONFIG.TRADING.ENABLED === true) && ((CONFIG.DEMO == 'undefined') || !CONFIG.DEMO)) {
+    console.log(`WARNING! Order execution is enabled!\n`);
+}
 
 ArbitrageExecution.refreshBalances()
     .then(() => SpeedTest.multiPing(5))
     .then((pings) => {
         const msg = `Successfully pinged the Binance api in ${CalculationNode.average(pings).toFixed(0)} ms`;
         console.log(msg);
-        logger.performance.info(msg);
+        if ((CONFIG.DEMO == 'undefined') || !CONFIG.DEMO) {
+            logger.performance.info(msg);
+        }
     })
     .then(BinanceApi.getFees)
     .then((result) => tradeFees = result)
@@ -48,8 +60,10 @@ ArbitrageExecution.refreshBalances()
         console.log(`Log Level:              ${CONFIG.LOG.LEVEL}`);
         console.log();
 
-        logger.performance.debug(`Operating System: ${os.type()}`);
-        logger.performance.debug(`Cores Speeds: [${os.cpus().map(cpu => cpu.speed)}] MHz`);
+        if ((CONFIG.DEMO == 'undefined') || !CONFIG.DEMO) {
+            logger.performance.debug(`Operating System: ${os.type()}`);
+            logger.performance.debug(`Cores Speeds: [${os.cpus().map(cpu => cpu.speed)}] MHz`);
+        }
 
         // Allow time to read output before starting calculation cycles
         setTimeout(calculateArbitrage, 4000);
@@ -71,7 +85,9 @@ function calculateArbitrage() {
                 ArbitrageExecution.executeCalculatedPosition(calculated);
             }
         } catch (error) {
-            logger.performance.debug(error.message);
+            if ((CONFIG.DEMO == 'undefined') || !CONFIG.DEMO) {
+                logger.performance.debug(error.message);
+            }
             errorCount++;
         }
     });
@@ -81,10 +97,16 @@ function calculateArbitrage() {
     const calculationTime = new Date().getTime() - before;
 
     const msg = `Completed ${completedCalculations}/${totalCalculations} (${((completedCalculations/totalCalculations)*100).toFixed(1)}%) calculations in ${calculationTime} ms`;
-    (errorCount > 0) ? logger.performance.info(msg) : logger.performance.trace(msg);
+
+    if ((CONFIG.DEMO == 'undefined') || !CONFIG.DEMO) {
+        (errorCount > 0) ? logger.performance.info(msg) : logger.performance.trace(msg);
+    }
 
     const tickersWithoutDepthUpdate = MarketCache.getTickersWithoutDepthCacheUpdate();
-    (tickersWithoutDepthUpdate.length > 0) && logger.execution.trace(`Found ${tickersWithoutDepthUpdate.length} tickers without a depth cache update: [${tickersWithoutDepthUpdate}]`);
+
+    if ((CONFIG.DEMO == 'undefined') || !CONFIG.DEMO) {
+        (tickersWithoutDepthUpdate.length > 0) && logger.execution.trace(`Found ${tickersWithoutDepthUpdate.length} tickers without a depth cache update: [${tickersWithoutDepthUpdate}]`);
+    }
 
     if (CONFIG.HUD.ENABLED) refreshHUD(results);
 
@@ -105,60 +127,101 @@ function checkConfig() {
 
     if (MarketCache.getTickerArray().length < 3) {
         const msg = `Watching ${MarketCache.getTickerArray().length} ticker(s) is not sufficient to engage in triangle arbitrage`;
-        logger.execution.debug(`Watched Tickers: [${MarketCache.getTickerArray()}]`);
-        logger.execution.error(msg);
+
+        if ((CONFIG.DEMO == 'undefined') || !CONFIG.DEMO) {
+            logger.execution.debug(`Watched Tickers: [${MarketCache.getTickerArray()}]`);
+            logger.execution.error(msg);
+        }
+
         throw new Error(msg);
     }
     if (MarketCache.symbols.size < 3) {
         const msg = `Watching ${MarketCache.symbols.size} symbol(s) is not sufficient to engage in triangle arbitrage`;
-        logger.execution.debug(`Watched Symbols: [${Array.from(MarketCache.symbols)}]`);
-        logger.execution.error(msg);
+
+        if ((CONFIG.DEMO == 'undefined') || !CONFIG.DEMO) {
+            logger.execution.debug(`Watched Symbols: [${Array.from(MarketCache.symbols)}]`);
+            logger.execution.error(msg);
+        }
         throw new Error(msg);
     }
     if (MarketCache.relationships.length === 0) {
         const msg = `Watching ${MarketCache.relationships.length} triangular relationships is not sufficient to engage in triangle arbitrage`;
-        logger.execution.error(msg);
+
+        if ((CONFIG.DEMO == 'undefined') || !CONFIG.DEMO) {
+            logger.execution.error(msg);
+        }
+
         throw new Error(msg);
     }
     if (CONFIG.INVESTMENT.STEP <= 0) {
         const msg = `INVESTMENT.STEP must be a positive value`;
-        logger.execution.error(msg);
+
+        if ((CONFIG.DEMO == 'undefined') || !CONFIG.DEMO) {
+            logger.execution.error(msg);
+        }
+
         throw new Error(msg);
     }
     if (CONFIG.INVESTMENT.MIN > CONFIG.INVESTMENT.MAX) {
         const msg = `INVESTMENT.MIN cannot be greater than INVESTMENT.MAX`;
-        logger.execution.error(msg);
+
+        if ((CONFIG.DEMO == 'undefined') || !CONFIG.DEMO) {
+            logger.execution.error(msg);
+        }
+
         throw new Error(msg);
     }
     if ((CONFIG.INVESTMENT.MIN !== CONFIG.INVESTMENT.MAX) && (CONFIG.INVESTMENT.MAX - CONFIG.INVESTMENT.MIN) / CONFIG.INVESTMENT.STEP < 1) {
         const msg = `Not enough steps between INVESTMENT.MIN and INVESTMENT.MAX using step size of ${CONFIG.INVESTMENT.STEP}`;
-        logger.execution.error(msg);
+
+        if ((CONFIG.DEMO == 'undefined') || !CONFIG.DEMO) {
+            logger.execution.error(msg);
+        }
+
         throw new Error(msg);
     }
     if (CONFIG.TRADING.WHITELIST.length > 0 && !CONFIG.TRADING.WHITELIST.includes(CONFIG.INVESTMENT.BASE)) {
         const msg = `Whitelist must include the base symbol of ${CONFIG.INVESTMENT.BASE}`;
-        logger.execution.debug(`Whitelist: [${CONFIG.TRADING.WHITELIST}]`);
-        logger.execution.error(msg);
+
+        if ((CONFIG.DEMO == 'undefined') || !CONFIG.DEMO) {
+            logger.execution.debug(`Whitelist: [${CONFIG.TRADING.WHITELIST}]`);
+            logger.execution.error(msg);
+        }
+
         throw new Error(msg);
     }
     if (CONFIG.TRADING.EXECUTION_STRATEGY.toLowerCase() === 'parallel' && CONFIG.TRADING.WHITELIST.length === 0) {
         const msg = `Parallel execution requires defining a whitelist`;
-        logger.execution.error(msg);
+
+        if ((CONFIG.DEMO == 'undefined') || !CONFIG.DEMO) {
+            logger.execution.error(msg);
+        }
+
         throw new Error(msg);
     }
     if (!VALID_VALUES.TRADING.EXECUTION_STRATEGY.includes(CONFIG.TRADING.EXECUTION_STRATEGY.toLowerCase())) {
         const msg = `${CONFIG.TRADING.EXECUTION_STRATEGY} is an invalid execution strategy`;
+
         logger.execution.error(msg);
+
         throw new Error(msg);
     }
     if (CONFIG.TRADING.TAKER_FEE < 0) {
         const msg = `Taker fee (${CONFIG.TRADING.TAKER_FEE}) must be a positive value`;
-        logger.execution.error(msg);
+
+        if ((CONFIG.DEMO == 'undefined') || !CONFIG.DEMO) {
+            logger.execution.error(msg);
+        }
+
         throw new Error(msg);
     }
     if (CONFIG.DEPTH.SIZE > 100 && CONFIG.TRADING.WHITELIST.length === 0) {
         const msg = `Using a depth size higher than 100 requires defining a whitelist`;
-        logger.execution.error(msg);
+
+        if ((CONFIG.DEMO == 'undefined') || !CONFIG.DEMO) {
+            logger.execution.error(msg);
+        }
+
         throw new Error(msg);
     }
     if (!VALID_VALUES.DEPTH.SIZE.includes(CONFIG.DEPTH.SIZE)) {
@@ -169,17 +232,19 @@ function checkConfig() {
 }
 
 function checkBalances() {
-    console.log(`Checking balances ...`);
+    if ((CONFIG.DEMO == 'undefined') || !CONFIG.DEMO) {
+        console.log(`Checking balances ...`);
 
-    if (ArbitrageExecution.balances[CONFIG.INVESTMENT.BASE].available < CONFIG.INVESTMENT.MIN) {
-        const msg = `An available balance of ${CONFIG.INVESTMENT.MIN} ${CONFIG.INVESTMENT.BASE} is required to satisfy your INVESTMENT.MIN configuration`;
-        logger.execution.error(msg);
-        throw new Error(msg);
-    }
-    if (ArbitrageExecution.balances[CONFIG.INVESTMENT.BASE].available < CONFIG.INVESTMENT.MAX) {
-        const msg = `An available balance of ${CONFIG.INVESTMENT.MAX} ${CONFIG.INVESTMENT.BASE} is required to satisfy your INVESTMENT.MAX configuration`;
-        logger.execution.error(msg);
-        throw new Error(msg);
+        if (ArbitrageExecution.balances[CONFIG.INVESTMENT.BASE].available < CONFIG.INVESTMENT.MIN) {
+            const msg = `An available balance of ${CONFIG.INVESTMENT.MIN} ${CONFIG.INVESTMENT.BASE} is required to satisfy your INVESTMENT.MIN configuration`;
+            logger.execution.error(msg);
+            throw new Error(msg);
+        }
+        if (ArbitrageExecution.balances[CONFIG.INVESTMENT.BASE].available < CONFIG.INVESTMENT.MAX) {
+            const msg = `An available balance of ${CONFIG.INVESTMENT.MAX} ${CONFIG.INVESTMENT.BASE} is required to satisfy your INVESTMENT.MAX configuration`;
+            logger.execution.error(msg);
+            throw new Error(msg);
+        }
     }
 }
 

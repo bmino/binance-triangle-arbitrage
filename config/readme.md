@@ -13,11 +13,19 @@ Upon each version update you should copy the new syntax from `config.json.exampl
 
 #### `KEYS.API` (String)
 * Default: `""`
-* Description: Binance api key
+* Description: Binance api key for a demo environment (read-only is preferred)
 
 #### `KEYS.SECRET` (String)
 * Default: `""`
-* Description: Binance api secret
+* Description: Binance api secret for a demo environment (read-only is preferred)
+
+#### `KEYS.APIPROD` (String)
+* Default: `""`
+* Description: Binance api key for production
+
+#### `KEYS.SECRETPROD` (String)
+* Default: `""`
+* Description: Binance api secret for production
 
 
 ---
@@ -153,3 +161,11 @@ Upon each version update you should copy the new syntax from `config.json.exampl
 #### `CALCULATION_DELAY` (Number)
 * Default: `100`
 * Description: Delay (ms) after calculations are performed before starting another cycle
+
+
+---
+
+
+#### `DEMO` (Boolean)
+* Default: `false`
+* Description: Enable demo mode (will not trade, uses a read-only key, and ignores the balance warnings)

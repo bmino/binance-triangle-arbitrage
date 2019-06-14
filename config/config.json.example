@@ -2,7 +2,9 @@
 
     "KEYS": {
         "API": "",
-        "SECRET": ""
+        "SECRET": "",
+        "APIPROD": "",
+        "SECRETPROD": ""
     },
 
     "INVESTMENT": {
@@ -38,6 +40,8 @@
         "INITIALIZATION_INTERVAL": 50
     },
 
-    "CALCULATION_COOLDOWN": 100
+    "CALCULATION_COOLDOWN": 100,
+
+    "DEMO": true
 
 }
