@@ -12,6 +12,15 @@ const BinanceApi = {
         });
     },
 
+    getFees() {
+        return new Promise((resolve, reject) => {
+            binance.tradeFee((error, data) => {
+                if (error) return reject(error);
+                return resolve(data);
+            });
+        });
+    },
+
     getBalances() {
         return new Promise((resolve, reject) => {
             binance.balance((error, balances) => {

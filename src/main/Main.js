@@ -15,6 +15,8 @@ binance.options({
     test: !CONFIG.TRADING.ENABLED
 });
 
+var tradeFees = [];
+
 if (CONFIG.TRADING.ENABLED) console.log(`WARNING! Order execution is enabled!\n`);
 
 ArbitrageExecution.refreshBalances()
@@ -24,8 +26,10 @@ ArbitrageExecution.refreshBalances()
         console.log(msg);
         logger.performance.info(msg);
     })
+    .then(BinanceApi.getFees)
+    .then((result) => tradeFees = result)
     .then(BinanceApi.exchangeInfo)
-    .then(exchangeInfo => MarketCache.initialize(exchangeInfo, CONFIG.TRADING.WHITELIST, CONFIG.INVESTMENT.BASE))
+    .then(exchangeInfo => MarketCache.initialize(exchangeInfo, CONFIG.TRADING.WHITELIST, CONFIG.INVESTMENT.BASE, tradeFees))
     .then(() => logger.execution.debug({configuration: CONFIG}))
     .then(checkConfig)
     .then(checkBalances)

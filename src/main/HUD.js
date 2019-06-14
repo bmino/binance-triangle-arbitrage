@@ -7,7 +7,7 @@ const HUD = {
         arbTable: null
     },
     headers: {
-        arb: ['Trade', 'Profit', 'AB Age', 'BC Age', 'CA Age', 'Age']
+        arb: ['Trade', 'Net Profit', 'Trade Cost', 'AB Age', 'BC Age', 'CA Age', 'Trade Age']
     },
 
     initScreen() {
@@ -44,12 +44,13 @@ const HUD = {
         let tableData = [HUD.headers.arb];
         arbs.forEach(arb => {
             tableData.push([
-                `${arb.trade.symbol.a}-${arb.trade.symbol.b}-${arb.trade.symbol.c}`,
-                `${arb.percent.toFixed(4)}%`,
-                `${((now - arb.depth.ab.eventTime)/1000).toFixed(2)}`,
-                `${((now - arb.depth.bc.eventTime)/1000).toFixed(2)}`,
-                `${((now - arb.depth.ca.eventTime)/1000).toFixed(2)}`,
-                `${((now - Math.min(arb.depth.ab.eventTime, arb.depth.bc.eventTime, arb.depth.ca.eventTime))/1000).toFixed(2)}`
+                `${arb.trade.symbol.a}-${arb.trade.symbol.b}-${arb.trade.symbol.c}`, // The trade
+                `${arb.percent.toFixed(4)}%`, // The profit %
+                `${arb.totalFee}`, // The total fee we would pay
+                `${((now - arb.depth.ab.eventTime)/1000).toFixed(2)}`, // AB Age
+                `${((now - arb.depth.bc.eventTime)/1000).toFixed(2)}`, // BC Age
+                `${((now - arb.depth.ca.eventTime)/1000).toFixed(2)}`, // CA Age
+                `${((now - Math.min(arb.depth.ab.eventTime, arb.depth.bc.eventTime, arb.depth.ca.eventTime))/1000).toFixed(2)}` // Trade age
             ]);
         });
 

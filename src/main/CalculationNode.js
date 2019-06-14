@@ -19,6 +19,37 @@ const CalculationNode = {
     },
 
     calculate(investmentA, trade) {
+        var feeAB = CONFIG.TRADING.TAKER_FEE;
+        var feeBC = CONFIG.TRADING.TAKER_FEE;
+        var feeCA = CONFIG.TRADING.TAKER_FEE;
+        var totalFee = 0;
+
+        if (MarketCache.fees[trade.ab.ticker]) {
+            if (trade.ab.method === 'Buy') {
+                feeAB = MarketCache.fees[trade.ab.ticker].maker;
+            } else {
+                feeAB = MarketCache.fees[trade.ab.ticker].taker;
+            }
+        }
+
+        if (MarketCache.fees[trade.bc.ticker]) {
+            if (trade.bc.method === 'Buy') {
+                feeBC = MarketCache.fees[trade.ab.ticker].maker;
+            } else {
+                feeBC = MarketCache.fees[trade.ab.ticker].taker;
+            }
+        }
+
+        if (MarketCache.fees[trade.ca.ticker]) {
+            if (trade.ca.method === 'Buy') {
+                feeCA = MarketCache.fees[trade.ca.ticker].maker;
+            } else {
+                feeCA = MarketCache.fees[trade.ca.ticker].taker;
+            }
+        }
+
+        totalFee = feeAB + feeBC + feeCA;
+
         let calculated = {
             id: `${trade.symbol.a}-${trade.symbol.b}-${trade.symbol.c}`,
             trade: trade,
@@ -44,7 +75,8 @@ const CalculationNode = {
                 spent: 0,
                 earned: 0,
                 delta: 0
-            }
+            },
+            totalFee: totalFee
         };
 
         if (trade.ab.method === 'Buy') {
@@ -85,7 +117,7 @@ const CalculationNode = {
         calculated.b.delta = calculated.b.earned - calculated.b.spent;
         calculated.c.delta = calculated.c.earned - calculated.c.spent;
 
-        calculated.percent = (calculated.a.delta / calculated.a.spent * 100) - (CONFIG.TRADING.TAKER_FEE * 3);
+        calculated.percent = (calculated.a.delta / calculated.a.spent * 100) - totalFee;
         if (!calculated.percent) calculated.percent = 0;
 
         return calculated;

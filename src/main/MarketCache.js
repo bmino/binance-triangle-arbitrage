@@ -7,10 +7,11 @@ const MarketCache = {
     tickers: {},
     relationships: [],
 
-    initialize(exchangeInfo, whitelistSymbols, baseSymbol) {
+    initialize(exchangeInfo, whitelistSymbols, baseSymbol, tradeFees) {
         let tickers = [];
         let tradingSymbolObjects = exchangeInfo.symbols.filter(symbolObj => symbolObj.status === 'TRADING');
         let symbols = new Set();
+        let fees = [];
 
         console.log(`Found ${tradingSymbolObjects.length}/${exchangeInfo.symbols.length} currently trading tickers`);
 
@@ -26,10 +27,16 @@ const MarketCache = {
             tickers[symbolObj.symbol] = symbolObj;
         });
 
+        // Extract fees
+        tradeFees.tradeFee.forEach(fee => {
+            fees[fee.symbol] = fee;
+        });
+
         // Initialize market cache
         MarketCache.symbols = symbols;
         MarketCache.tickers = tickers;
         MarketCache.relationships = MarketCache.getTradesFromSymbol(baseSymbol);
+        MarketCache.fees = fees;
 
         console.log(`Found ${MarketCache.relationships.length} triangular relationships`);
     },
