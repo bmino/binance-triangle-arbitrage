@@ -19,6 +19,14 @@ arbitrage opportunities. To disable the HUD, set `HUD.ENABLED` to false.
 * **CA Age** - Time in seconds since the most recent update of the market ticker relating the third and first symbols in the arbitrage.
 * **Age** - Time in seconds since the least recently updated market ticker involved in the triangle arbitrage.
 
+## The Web Interface
+* There is a simple apache based web interface to view logs, view the HUD, start & stop the process (hacked to work on a FreeBSD server)
+* To start, run it with Gotty
+    ```
+    gotty -p 3030 npm start
+    ```
+* **Note** - This is designed to run on a local server, not the public web.
+
 
 ## Getting Started
 These instructions will get a copy of the project up and running on your local machine for development and testing purposes.
@@ -84,8 +92,9 @@ See also the list of [contributors](https://github.com/bmino/binance-triangle-ar
 The developers listed above created and currently maintain this project for free.
 We don't expect any compensation nor donations, but if you appreciate our work feel free to donate to the following addresses:
 
-* Bitcoin (BTC): 1KLBb9qzFN19RxaQwD35CQmnYZvW1819XZ
-* Binance Coin (BNB): 0xb046b6991eb1bdc838cae567cff838b542e9f19d
+* Bitcoin (BTC): 1ARWLRA1UDTPKUYx18CVqRJWiFiR9ap7Eh
+* Binance Coin (BNB): 0x9aa8af8495f4ed33d3e9d6413cf01144c75f6d4a
+* Ether (ETH): 0x9aa8af8495f4ed33d3e9d6413cf01144c75f6d4a
 
 
 ## License
