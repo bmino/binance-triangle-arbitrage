@@ -65,6 +65,9 @@ const ArbitrageExecution = {
                 logger.execution.info(`${symbol.b} delta:\t  ${actual.b.delta < 0 ? '' : ' '}${actual.b.delta.toFixed(8)} (${percent.b < 0 ? '' : ' '}${percent.b.toFixed(4)}%)`);
                 logger.execution.info(`${symbol.c} delta:\t  ${actual.c.delta < 0 ? '' : ' '}${actual.c.delta.toFixed(8)} (${percent.c < 0 ? '' : ' '}${percent.c.toFixed(4)}%)`);
                 logger.execution.info(`BNB commission: ${(-1 * actual.fees).toFixed(8)}`);
+                logger.execution.info(`${calculated.trade.symbol.a} commission: ${(-1 * actual.assetFees.a).toFixed(8)}`);
+                logger.execution.info(`${calculated.trade.symbol.b} commission: ${(-1 * actual.assetFees.b).toFixed(8)}`);
+                logger.execution.info(`${calculated.trade.symbol.c} commission: ${(-1 * actual.assetFees.c).toFixed(8)}`);
                 logger.execution.info();
             })
             .catch((err) => logger.execution.error(err.message))
@@ -168,18 +171,26 @@ const ArbitrageExecution = {
                         spent: 0,
                         earned: 0
                     },
-                    fees: 0
+                    fees: 0,
+                    assetFees: {
+                        a: 0,
+                        b: 0,
+                        c: 0
+                    }
                 };
 
                 if (resultsAB.orderId && resultsBC.orderId && resultsCA.orderId) {
-                    [actual.a.spent, actual.b.earned, fees] = ArbitrageExecution.parseActualResults(calculated.trade.ab.method, resultsAB);
+                    [actual.a.spent, actual.b.earned, fees] = ArbitrageExecution.parseActualResults(calculated.trade.ab.method, calculated.trade.symbol.b, resultsAB);
                     actual.fees += fees;
+                    actual.assetFees.b += assetFees;
 
-                    [actual.b.spent, actual.c.earned, fees] = ArbitrageExecution.parseActualResults(calculated.trade.bc.method, resultsBC);
+                    [actual.b.spent, actual.c.earned, fees] = ArbitrageExecution.parseActualResults(calculated.trade.bc.method, calculated.trade.symbol.c, resultsBC);
                     actual.fees += fees;
+                    actual.assetFees.c += assetFees;
 
-                    [actual.c.spent, actual.a.earned, fees] = ArbitrageExecution.parseActualResults(calculated.trade.ca.method, resultsCA);
+                    [actual.c.spent, actual.a.earned, fees] = ArbitrageExecution.parseActualResults(calculated.trade.ca.method, calculated.trade.symbol.a, resultsCA);
                     actual.fees += fees;
+                    actual.assetFees.a += assetFees;
 
                     actual.a.delta = actual.a.earned - actual.a.spent;
                     actual.b.delta = actual.b.earned - actual.b.spent;
@@ -204,7 +215,12 @@ const ArbitrageExecution = {
                 spent: 0,
                 earned: 0
             },
-            fees: 0
+            fees: 0,
+            assetFees: {
+                a: 0,
+                b: 0,
+                c: 0
+            }
         };
         let recalculated = {
             bc: calculated.bc,
@@ -214,24 +230,27 @@ const ArbitrageExecution = {
         return BinanceApi.marketBuyOrSell(calculated.trade.ab.method)(calculated.trade.ab.ticker, calculated.ab)
             .then((results) => {
                 if (results.orderId) {
-                    [actual.a.spent, actual.b.earned, fees] = ArbitrageExecution.parseActualResults(calculated.trade.ab.method, results);
+                    [actual.a.spent, actual.b.earned, fees] = ArbitrageExecution.parseActualResults(calculated.trade.ab.method, calculated.trade.symbol.b, results);
                     actual.fees += fees;
+                    actual.assetFees.b += assetFees;
                     recalculated.bc = CalculationNode.recalculateTradeLeg(calculated.trade.bc, actual.b.earned);
                 }
                 return BinanceApi.marketBuyOrSell(calculated.trade.bc.method)(calculated.trade.bc.ticker, recalculated.bc);
             })
             .then((results) => {
                 if (results.orderId) {
-                    [actual.b.spent, actual.c.earned, fees] = ArbitrageExecution.parseActualResults(calculated.trade.bc.method, results);
+                    [actual.b.spent, actual.c.earned, fees] = ArbitrageExecution.parseActualResults(calculated.trade.bc.method, calculated.trade.symbol.c, results);
                     actual.fees += fees;
+                    actual.assetFees.c += assetFees;
                     recalculated.ca = CalculationNode.recalculateTradeLeg(calculated.trade.ca, actual.c.earned);
                 }
                 return BinanceApi.marketBuyOrSell(calculated.trade.ca.method)(calculated.trade.ca.ticker, recalculated.ca);
             })
             .then((results) => {
                 if (results.orderId) {
-                    [actual.c.spent, actual.a.earned, fees] = ArbitrageExecution.parseActualResults(calculated.trade.ca.method, results);
+                    [actual.c.spent, actual.a.earned, fees] = ArbitrageExecution.parseActualResults(calculated.trade.ca.method, calculated.trade.symbol.a, results);
                     actual.fees += fees;
+                    actual.assetFees.a += assetFees;
                 }
                 return actual;
             })
@@ -243,11 +262,36 @@ const ArbitrageExecution = {
             });
     },
 
-    parseActualResults(method, { executedQty, cummulativeQuoteQty, fills }) {
+    parseActualResults(method, ticker, { executedQty, cummulativeQuoteQty, fills }) {
         const spent = method.toUpperCase() === 'BUY' ? parseFloat(cummulativeQuoteQty) : parseFloat(executedQty);
-        const earned = method.toUpperCase() === 'SELL' ? parseFloat(cummulativeQuoteQty) : parseFloat(executedQty);
-        const fees = fills.filter(f => f.commissionAsset === 'BNB').map(f => parseFloat(f.commission)).reduce((total, fee) => total + fee, 0);
-        return [spent, earned, fees];
+        var earned = method.toUpperCase() === 'SELL' ? parseFloat(cummulativeQuoteQty) : parseFloat(executedQty);
+
+        // Taking the fees from the asset first.
+        const assetFees = fills.filter(f => (f.commissionAsset) === ticker).map(f => parseFloat(f.commission)).reduce((total, fee) => total + fee, 0);
+        earned = earned - assetFees;
+
+        // Now taking the BNB fees into account for logging, unless it's an asset fee in which case it's accounted for above.
+        // A BNB trade *will* reduce your earned coins, so it needs to come into account above.
+        const fees = fills.filter(f => (f.commissionAsset === 'BNB' && f.commissionAsset !== ticker)).map(f => parseFloat(f.commission)).reduce((total, fee) => total + fee, 0);
+
+        if ((fees <= 0) || !fees) {
+            logger.execution.warn(`Probably a failed trade from fee set as 0.  Which can happen when fills is null.`);
+        }
+
+        logger.execution.debug(`Method: ${method}`);
+        logger.execution.debug(`Ticker: ${ticker}`);
+        logger.execution.debug(`Fills: ${JSON.stringify(fills)}`);
+
+        if (CONFIG.LOG.LEVEL == 'debug') {
+            console.log(fills);
+        }
+
+        logger.execution.debug(`Spent: ${spent}`);
+        logger.execution.debug(`Earned: ${earned}`);
+        logger.execution.debug(`BNB Fees: ${fees}`);
+        logger.execution.debug(`Asset Fees: ${assetFees}`);
+
+        return [spent, earned, fees, assetFees];
     }
 
 };
