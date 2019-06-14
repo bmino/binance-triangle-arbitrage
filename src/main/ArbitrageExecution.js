@@ -13,10 +13,14 @@ const ArbitrageExecution = {
     executeCalculatedPosition(calculated) {
         const startTime = new Date().getTime();
 
-        const { depth } = calculated;
-        const { symbol } = calculated.trade;
-
         if (!ArbitrageExecution.isSafeToExecute(calculated)) return false;
+
+        const { symbol } = calculated.trade;
+        const age = {
+            ab: startTime - calculated.depth.ab.eventTime,
+            bc: startTime - calculated.depth.bc.eventTime,
+            ca: startTime - calculated.depth.ca.eventTime
+        };
 
         // Register position as being attempted
         ArbitrageExecution.attemptedPositions[startTime] = calculated.id;
@@ -25,7 +29,10 @@ const ArbitrageExecution = {
         ArbitrageExecution.inProgressSymbols.add(symbol.b);
         ArbitrageExecution.inProgressSymbols.add(symbol.c);
 
-        logger.execution.info(`Attempting to execute ${calculated.id} with an age of ${(startTime - Math.min(depth.ab.eventTime, depth.bc.eventTime, depth.ca.eventTime)).toFixed(0)} ms and expected profit of ${calculated.percent.toFixed(4)}%`);
+        logger.execution.info(`Attempting to execute ${calculated.id} with an age of ${Math.max(age.ab, age.bc, age.ca).toFixed(0)} ms and expected profit of ${calculated.percent.toFixed(4)}%`);
+        logger.execution.debug(`${calculated.trade.ab.ticker} depth cache age: ${age.ab.toFixed(0)} ms`);
+        logger.execution.debug(`${calculated.trade.bc.ticker} depth cache age: ${age.bc.toFixed(0)} ms`);
+        logger.execution.debug(`${calculated.trade.ca.ticker} depth cache age: ${age.ca.toFixed(0)} ms`);
 
         return ArbitrageExecution.execute(calculated)
             .then((actual) => {
