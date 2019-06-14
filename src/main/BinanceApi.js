@@ -25,6 +25,20 @@ const BinanceApi = {
         });
     },
 
+    cloneDepth(ticker) {
+        const tmp = binance.depthCache(ticker);
+        return {
+            eventTime: tmp.eventTime,
+            lastUpdateId: tmp.lastUpdateId,
+            asks: {...tmp.asks},
+            bids: {...tmp.bids}
+        };
+    },
+
+    cloneDepths(...tickers) {
+        return tickers.map(ticker => BinanceApi.cloneDepth(ticker));
+    },
+
     marketBuy(ticker, quantity) {
         logger.execution.info(`${binance.getOption('test') ? 'Test: Buying' : 'Buying'} ${quantity} ${ticker} @ market price`);
         return new Promise((resolve, reject) => {

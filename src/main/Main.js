@@ -19,7 +19,11 @@ if (CONFIG.TRADING.ENABLED) console.log(`WARNING! Order execution is enabled!\n`
 
 ArbitrageExecution.refreshBalances()
     .then(() => SpeedTest.multiPing(5))
-    .then((pings) => console.log(`Successfully pinged the Binance api in ${CalculationNode.average(pings).toFixed(0)} ms`))
+    .then((pings) => {
+        const msg = `Successfully pinged the Binance api in ${CalculationNode.average(pings).toFixed(0)} ms`;
+        console.log(msg);
+        logger.performance.info(msg);
+    })
     .then(BinanceApi.exchangeInfo)
     .then(exchangeInfo => MarketCache.initialize(exchangeInfo, CONFIG.TRADING.WHITELIST, CONFIG.INVESTMENT.BASE))
     .then(() => logger.execution.debug({configuration: CONFIG}))
@@ -34,7 +38,6 @@ ArbitrageExecution.refreshBalances()
     .then(() => {
         console.log();
         console.log(`Execution Strategy:     ${CONFIG.TRADING.EXECUTION_STRATEGY}`);
-        console.log(`Optimization Ticks:     ${((CONFIG.INVESTMENT.MAX - CONFIG.INVESTMENT.MIN) / CONFIG.INVESTMENT.STEP).toFixed(0)} ticks(s)`);
         console.log(`Execution Limit:        ${CONFIG.TRADING.EXECUTION_CAP} execution(s)`);
         console.log(`Profit Threshold:       ${CONFIG.TRADING.PROFIT_THRESHOLD.toFixed(2)}%`);
         console.log(`Age Threshold:          ${CONFIG.TRADING.AGE_THRESHOLD} ms`);
@@ -55,8 +58,6 @@ function calculateArbitrage() {
 
     let errorCount = 0;
     let results = {};
-
-    MarketCache.pruneDepthsAboveThreshold(CONFIG.DEPTH.SIZE);
 
     MarketCache.relationships.forEach(relationship => {
         try {
@@ -112,6 +113,21 @@ function checkConfig() {
     }
     if (MarketCache.relationships.length === 0) {
         const msg = `Watching ${MarketCache.relationships.length} triangular relationships is not sufficient to engage in triangle arbitrage`;
+        logger.execution.error(msg);
+        throw new Error(msg);
+    }
+    if (CONFIG.INVESTMENT.STEP <= 0) {
+        const msg = `INVESTMENT.STEP must be a positive value`;
+        logger.execution.error(msg);
+        throw new Error(msg);
+    }
+    if (CONFIG.INVESTMENT.MIN > CONFIG.INVESTMENT.MAX) {
+        const msg = `INVESTMENT.MIN cannot be greater than INVESTMENT.MAX`;
+        logger.execution.error(msg);
+        throw new Error(msg);
+    }
+    if ((CONFIG.INVESTMENT.MIN !== CONFIG.INVESTMENT.MAX) && (CONFIG.INVESTMENT.MAX - CONFIG.INVESTMENT.MIN) / CONFIG.INVESTMENT.STEP < 1) {
+        const msg = `Not enough steps between INVESTMENT.MIN and INVESTMENT.MAX using step size of ${CONFIG.INVESTMENT.STEP}`;
         logger.execution.error(msg);
         throw new Error(msg);
     }
