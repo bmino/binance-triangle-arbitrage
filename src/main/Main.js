@@ -61,7 +61,7 @@ function calculateArbitrage() {
 
     MarketCache.relationships.forEach(relationship => {
         try {
-            const calculated = CalculationNode.optimize(relationship);
+            const calculated = CalculationNode.optimize(relationship, BinanceApi.cloneDepths(relationship.ab.ticker, relationship.bc.ticker, relationship.ca.ticker));
             if (calculated) {
                 if (CONFIG.HUD.ENABLED) results[calculated.id] = calculated;
                 ArbitrageExecution.executeCalculatedPosition(calculated);

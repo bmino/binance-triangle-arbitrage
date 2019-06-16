@@ -98,13 +98,15 @@ const MarketCache = {
             method: 'Sell',
             ticker: a+b,
             base: a,
-            quote: b
+            quote: b,
+            dustDecimals: MarketCache.tickers[a+b].dustDecimals
         };
         if (MarketCache.tickers[b+a]) return {
             method: 'Buy',
             ticker: b+a,
             base: b,
-            quote: a
+            quote: a,
+            dustDecimals: MarketCache.tickers[b+a].dustDecimals
         };
         return null;
     }

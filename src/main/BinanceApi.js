@@ -35,8 +35,12 @@ const BinanceApi = {
         };
     },
 
-    cloneDepths(...tickers) {
-        return tickers.map(ticker => BinanceApi.cloneDepth(ticker));
+    cloneDepths(abTicker, bcTicker, caTicker) {
+        return {
+            ab: BinanceApi.cloneDepth(abTicker),
+            bc: BinanceApi.cloneDepth(bcTicker),
+            ca: BinanceApi.cloneDepth(caTicker)
+        };
     },
 
     marketBuy(ticker, quantity) {
@@ -83,10 +87,10 @@ const BinanceApi = {
     },
 
     depthCache(tickers, limit=100, stagger=200) {
-        return binance.websockets.depthCacheStaggered(tickers, BinanceApi.processDepth, limit, stagger);
+        return binance.websockets.depthCacheStaggered(tickers, BinanceApi.sortDepthCache, limit, stagger);
     },
 
-    processDepth(ticker, depth) {
+    sortDepthCache(ticker, depth) {
         depth.bids = binance.sortBids(depth.bids);
         depth.asks = binance.sortAsks(depth.asks);
     }
