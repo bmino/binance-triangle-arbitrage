@@ -38,16 +38,17 @@ const MarketCache = {
         return Object.keys(MarketCache.tickers);
     },
 
-    pruneDepthsAboveThreshold(threshold=100) {
-        MarketCache.getTickerArray().forEach(ticker => {
-            let depth = binance.depthCache(ticker);
-            Object.keys(depth.bids).forEach((bid, index) => {
-                index >= threshold && delete depth.bids[bid];
-            });
-            Object.keys(depth.asks).forEach((ask, index) => {
-                index >= threshold && delete depth.asks[ask];
-            });
+    getAggregateDepthSizes(tickers=MarketCache.getTickerArray()) {
+        let bidCounts = [];
+        let askCounts = [];
+
+        tickers.forEach(ticker => {
+            const depth = binance.depthCache(ticker);
+            bidCounts.push(Object.values(depth.bids).length);
+            askCounts.push(Object.values(depth.asks).length);
         });
+
+        return { bidCounts, askCounts };
     },
 
     getTradesFromSymbol(symbol1) {
