@@ -21,7 +21,7 @@ let CALCULATIONS_CYCLES = 0;
 ArbitrageExecution.refreshBalances()
     .then(() => SpeedTest.multiPing(5))
     .then((pings) => {
-        const msg = `Successfully pinged the Binance api in ${CalculationNode.average(pings).toFixed(0)} ms`;
+        const msg = `Successfully pinged the Binance api in ${(binance.sum(pings) / pings.length).toFixed(0)} ms`;
         console.log(msg);
         logger.performance.info(msg);
     })

@@ -182,11 +182,6 @@ const CalculationNode = {
         const amountString = amount.toFixed(12);
         const decimalIndex = amountString.indexOf('.');
         return parseFloat(amountString.slice(0, decimalIndex + trade.dustDecimals + 1));
-    },
-
-    average(array) {
-        const sum = array.reduce((a, b) => a + b, 0);
-        return sum / array.length;
     }
 
 };
