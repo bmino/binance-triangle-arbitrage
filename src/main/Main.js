@@ -57,6 +57,8 @@ ArbitrageExecution.refreshBalances()
 function calculateArbitrage() {
     const before = new Date().getTime();
 
+    //MarketCache.pruneDepthsAboveThreshold(CONFIG.DEPTH.SIZE);
+
     let errorCount = 0;
     let results = {};
 

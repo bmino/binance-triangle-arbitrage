@@ -38,6 +38,22 @@ const MarketCache = {
         return Object.keys(MarketCache.tickers);
     },
 
+    pruneDepthsAboveThreshold(threshold=100) {
+        const prune = (depthSnapshot, threshold) => {
+            return Object.keys(depthSnapshot)
+                .slice(0, threshold)
+                .reduce((prunedDepthSnapshot, key) => {
+                    prunedDepthSnapshot[key] = depthSnapshot[key];
+                    return prunedDepthSnapshot;
+                }, {});
+        };
+        MarketCache.getTickerArray().forEach(ticker => {
+            let depth = binance.depthCache(ticker);
+            depth.bids = prune(depth.bids, threshold);
+            depth.asks = prune(depth.asks, threshold);
+        });
+    },
+
     getAggregateDepthSizes(tickers=MarketCache.getTickerArray()) {
         let bidCounts = [];
         let askCounts = [];
