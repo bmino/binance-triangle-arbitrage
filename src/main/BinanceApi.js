@@ -25,21 +25,30 @@ const BinanceApi = {
         });
     },
 
-    cloneDepth(ticker) {
+    cloneDepth(ticker, levels) {
         const tmp = binance.depthCache(ticker);
+        const prune = (depthSnapshot, levels) => {
+            if (!levels) return depthSnapshot;
+            return Object.keys(depthSnapshot)
+                .slice(0, levels)
+                .reduce((prunedDepthSnapshot, key) => {
+                    prunedDepthSnapshot[key] = depthSnapshot[key];
+                    return prunedDepthSnapshot;
+                }, {});
+        };
         return {
             eventTime: tmp.eventTime,
             lastUpdateId: tmp.lastUpdateId,
-            asks: {...tmp.asks},
-            bids: {...tmp.bids}
+            asks: prune({...tmp.asks}, levels),
+            bids: prune({...tmp.bids}, levels)
         };
     },
 
-    cloneDepths(abTicker, bcTicker, caTicker) {
+    cloneDepths(abTicker, bcTicker, caTicker, levels) {
         return {
-            ab: BinanceApi.cloneDepth(abTicker),
-            bc: BinanceApi.cloneDepth(bcTicker),
-            ca: BinanceApi.cloneDepth(caTicker)
+            ab: BinanceApi.cloneDepth(abTicker, levels),
+            bc: BinanceApi.cloneDepth(bcTicker, levels),
+            ca: BinanceApi.cloneDepth(caTicker, levels)
         };
     },
 
