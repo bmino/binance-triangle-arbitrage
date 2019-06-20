@@ -179,6 +179,8 @@ function checkConfig() {
 }
 
 function checkBalances() {
+    if (!CONFIG.TRADING.ENABLED) return;
+
     console.log(`Checking balances ...`);
 
     if (ArbitrageExecution.balances[CONFIG.INVESTMENT.BASE].available < CONFIG.INVESTMENT.MIN) {
