@@ -83,6 +83,10 @@ const MarketCache = {
     },
 
     createTrade(a, b, c) {
+        a = a.toUpperCase();
+        b = b.toUpperCase();
+        c = c.toUpperCase();
+
         const ab = MarketCache.getRelationship(a, b);
         if (!ab) return;
         if (CONFIG.TRADING.EXECUTION_TEMPLATE[0] && CONFIG.TRADING.EXECUTION_TEMPLATE[0].toUpperCase() !== ab.method.toUpperCase()) return;
@@ -96,21 +100,14 @@ const MarketCache = {
         if (CONFIG.TRADING.EXECUTION_TEMPLATE[2] && CONFIG.TRADING.EXECUTION_TEMPLATE[2].toUpperCase() !== ca.method.toUpperCase()) return;
 
         return {
-            ab: ab,
-            bc: bc,
-            ca: ca,
-            symbol: {
-                a: a.toUpperCase(),
-                b: b.toUpperCase(),
-                c: c.toUpperCase()
-            }
+            ab,
+            bc,
+            ca,
+            symbol: { a, b, c }
         };
     },
 
     getRelationship(a, b) {
-        a = a.toUpperCase();
-        b = b.toUpperCase();
-
         if (MarketCache.tickers[a+b]) return {
             method: 'Sell',
             ticker: a+b,
