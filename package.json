@@ -11,8 +11,8 @@
   },
   "dependencies": {
     "blessed": "^0.1.81",
-    "node-binance-api": "^0.9.1",
-    "pino": "^5.12.2",
-    "pino-pretty": "^2.6.0"
+    "node-binance-api": "^0.9.3",
+    "pino": "^5.12.6",
+    "pino-pretty": "^3.2.0"
   }
 }
