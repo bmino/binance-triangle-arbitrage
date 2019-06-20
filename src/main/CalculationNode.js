@@ -2,6 +2,42 @@ const CONFIG = require('../../config/config');
 
 const CalculationNode = {
 
+    cycleCount: 0,
+    timings: [],
+
+    cycle(relationships, depthCacheClone, errorCallback, executionCallback) {
+        const startTime = new Date().getTime();
+
+        let successCount = 0;
+        let errorCount = 0;
+        let results = {};
+
+        relationships.forEach(relationship => {
+            try {
+                const depthSnapshot = {
+                    ab: depthCacheClone[relationship.ab.ticker],
+                    bc: depthCacheClone[relationship.bc.ticker],
+                    ca: depthCacheClone[relationship.ca.ticker]
+                };
+                const calculated = CalculationNode.optimize(relationship, depthSnapshot);
+                if (calculated) {
+                    successCount++;
+                    if (CONFIG.HUD.ENABLED) results[calculated.id] = calculated;
+                    executionCallback(calculated);
+                }
+            } catch (error) {
+                errorCount++;
+                errorCallback(error);
+            }
+        });
+
+        const calculationTime = new Date().getTime() - startTime;
+        CalculationNode.timings.push(calculationTime);
+        CalculationNode.cycleCount++;
+
+        return { calculationTime, successCount, errorCount, results };
+    },
+
     optimize(trade, depthSnapshot) {
         let quantity, calculation;
         let bestCalculation = null;

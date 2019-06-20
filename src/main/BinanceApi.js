@@ -44,12 +44,11 @@ const BinanceApi = {
         };
     },
 
-    cloneDepths(abTicker, bcTicker, caTicker, levels) {
-        return {
-            ab: BinanceApi.cloneDepth(abTicker, levels),
-            bc: BinanceApi.cloneDepth(bcTicker, levels),
-            ca: BinanceApi.cloneDepth(caTicker, levels)
-        };
+    cloneDepths(tickers, levels) {
+        return tickers.reduce((clone, ticker) => {
+            clone[ticker] = BinanceApi.cloneDepth(ticker, levels);
+            return clone;
+        }, {});
     },
 
     marketBuy(ticker, quantity) {
