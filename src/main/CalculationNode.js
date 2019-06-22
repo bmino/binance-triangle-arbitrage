@@ -27,7 +27,7 @@ const CalculationNode = {
                 }
             } catch (error) {
                 errorCount++;
-                errorCallback(error);
+                errorCallback(error.message);
             }
         });
 

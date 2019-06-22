@@ -146,7 +146,7 @@ Upon each version update you should copy the new syntax from `config.json.exampl
 
 #### `DEPTH.PRUNE` (Boolean)
 * Default: `false`
-* Description: Remove depth cache entries with a depth greater than `DEPTH.SIZE`. Calculation cycles may grow longer over time when set to false
+* Description: Remove depth cache entries with a depth greater than `DEPTH.SIZE` before each calculation cycle
 
 #### `DEPTH.INITIALIZATION_INTERVAL` (Number)
 * Default: `50`
