@@ -20,7 +20,7 @@ if (CONFIG.TRADING.ENABLED) console.log(`WARNING! Order execution is enabled!\n`
 ArbitrageExecution.refreshBalances()
     .then(() => SpeedTest.multiPing(5))
     .then((pings) => {
-        const msg = `Successfully pinged the Binance api in ${CalculationNode.average(pings).toFixed(0)} ms`;
+        const msg = `Successfully pinged the Binance api in ${(binance.sum(pings) / pings.length).toFixed(0)} ms`;
         console.log(msg);
         logger.performance.info(msg);
     })
@@ -52,39 +52,37 @@ ArbitrageExecution.refreshBalances()
     })
     .catch(console.error);
 
-
 function calculateArbitrage() {
-    const before = new Date().getTime();
+    if (CONFIG.DEPTH.PRUNE) MarketCache.pruneDepthsAboveThreshold(CONFIG.DEPTH.SIZE);
 
-    let errorCount = 0;
-    let results = {};
-
-    MarketCache.relationships.forEach(relationship => {
-        try {
-            const calculated = CalculationNode.optimize(relationship);
-            if (calculated) {
-                if (CONFIG.HUD.ENABLED) results[calculated.id] = calculated;
-                ArbitrageExecution.executeCalculatedPosition(calculated);
-            }
-        } catch (error) {
-            logger.performance.debug(error.message);
-            errorCount++;
-        }
-    });
-
-    const totalCalculations = MarketCache.relationships.length;
-    const completedCalculations = totalCalculations - errorCount;
-    const calculationTime = new Date().getTime() - before;
-
-    const msg = `Completed ${completedCalculations}/${totalCalculations} (${((completedCalculations/totalCalculations)*100).toFixed(1)}%) calculations in ${calculationTime} ms`;
-    (errorCount > 0) ? logger.performance.info(msg) : logger.performance.trace(msg);
-
-    const tickersWithoutDepthUpdate = MarketCache.getTickersWithoutDepthCacheUpdate();
-    (tickersWithoutDepthUpdate.length > 0) && logger.execution.trace(`Found ${tickersWithoutDepthUpdate.length} tickers without a depth cache update: [${tickersWithoutDepthUpdate}]`);
+    const { calculationTime, successCount, errorCount, results } = CalculationNode.cycle(MarketCache.relationships, BinanceApi.cloneDepths(MarketCache.getTickerArray(), CONFIG.DEPTH.SIZE), (e) => logger.performance.warn(e), ArbitrageExecution.executeCalculatedPosition);
 
     if (CONFIG.HUD.ENABLED) refreshHUD(results);
-
+    displayCalculationResults(successCount, errorCount, calculationTime);
     setTimeout(calculateArbitrage, CONFIG.CALCULATION_COOLDOWN);
+}
+
+function displayCalculationResults(successCount, errorCount, calculationTime) {
+    const totalCalculations = successCount + errorCount;
+
+    const msg = `Completed ${successCount}/${totalCalculations} (${((successCount/totalCalculations)*100).toFixed(1)}%) calculations in ${calculationTime} ms`;
+    (errorCount > 0) ? logger.performance.debug(msg) : logger.performance.trace(msg);
+
+    if (CalculationNode.cycleCount % 300 === 0) {
+        const { bidCounts, askCounts } = MarketCache.getAggregateDepthSizes();
+        const bidAvg = (binance.sum(bidCounts) / bidCounts.length).toFixed(0);
+        const askAvg = (binance.sum(askCounts) / askCounts.length).toFixed(0);
+        const calAvg = (binance.sum(CalculationNode.timings.slice(-300)) / Math.min(300, CalculationNode.timings.length)).toFixed(0);
+        logger.performance.debug(`                      [[min] - [max]] ~ [avg]`);
+        logger.performance.debug(`Calculation times:    [${Math.min(...CalculationNode.timings)} - ${Math.max(...CalculationNode.timings)}] ~ ${calAvg} ms`);
+        logger.performance.debug(`Bid depth cache size: [${Math.min(...bidCounts)} - ${Math.max(...bidCounts)}] ~ ${bidAvg}`);
+        logger.performance.debug(`Ask depth cache size: [${Math.min(...askCounts)} - ${Math.max(...askCounts)}] ~ ${askAvg}`);
+
+        const tickersWithoutDepthUpdate = MarketCache.getTickersWithoutDepthCacheUpdate();
+        if (tickersWithoutDepthUpdate.length > 0) {
+            logger.execution.trace(`Found ${tickersWithoutDepthUpdate.length} tickers without a depth cache update: [${tickersWithoutDepthUpdate}]`);
+        }
+    }
 }
 
 function checkConfig() {
@@ -165,6 +163,8 @@ function checkConfig() {
 }
 
 function checkBalances() {
+    if (!CONFIG.TRADING.ENABLED) return;
+
     console.log(`Checking balances ...`);
 
     if (ArbitrageExecution.balances[CONFIG.INVESTMENT.BASE].available < CONFIG.INVESTMENT.MIN) {

@@ -59,7 +59,7 @@ Upon each version update you should copy the new syntax from `config.json.exampl
     * `"linear"` - each trade of the triangle arbitrage is executed sequentially
     * `"parallel"` - all three trades of the triangle arbitrage are executed at the same time
 
-#### `EXECUTION_TEMPLATE` (Array | String)
+#### `TRADING.EXECUTION_TEMPLATE` (Array | String)
 * Default: `["BUY", "SELL", "SELL"]`
 * Description: Restricts the order type of each leg in the position
 * Special Values:
@@ -71,13 +71,15 @@ Upon each version update you should copy the new syntax from `config.json.exampl
 * Special Values:
     * `0` - No limit on executions
 
-#### `TAKER_FEE` (Number)
+#### `TRADING.TAKER_FEE` (Number)
 * Default: `0.00`
 * Description: Market taker fee (percent)
+* Example: 0.015% would be entered as 0.015
 
 #### `TRADING.PROFIT_THRESHOLD` (Number)
 * Default: `0.30`
 * Description: Minimum profit (percent) required to consider executing a position
+* Example: 0.30% would be entered as 0.30
 
 #### `TRADING.AGE_THRESHOLD` (Number)
 * Default: `300`
@@ -121,7 +123,7 @@ Upon each version update you should copy the new syntax from `config.json.exampl
 
 #### `LOG.PRETTY_PRINT` (Boolean)
 * Default: `true`
-* Description: Format the logs with pino-pretty
+* Description: Format the logs with pino-pretty. Read the logs via a terminal for best results
 
 
 ---
@@ -142,6 +144,10 @@ Upon each version update you should copy the new syntax from `config.json.exampl
     * `500`
     * `1000`
 
+#### `DEPTH.PRUNE` (Boolean)
+* Default: `false`
+* Description: Remove depth cache entries with a depth greater than `DEPTH.SIZE` before each calculation cycle
+
 #### `DEPTH.INITIALIZATION_INTERVAL` (Number)
 * Default: `50`
 * Description: Delay (ms) between the initialization of each depth websocket
@@ -150,6 +156,6 @@ Upon each version update you should copy the new syntax from `config.json.exampl
 ---
 
 
-#### `CALCULATION_DELAY` (Number)
-* Default: `100`
+#### `CALCULATION_COOLDOWN` (Number)
+* Default: `500`
 * Description: Delay (ms) after calculations are performed before starting another cycle

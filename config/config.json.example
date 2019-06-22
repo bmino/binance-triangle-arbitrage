@@ -35,9 +35,10 @@
 
     "DEPTH": {
         "SIZE": 50,
-        "INITIALIZATION_INTERVAL": 50
+        "PRUNE": false,
+        "INITIALIZATION_INTERVAL": 75
     },
 
-    "CALCULATION_COOLDOWN": 100
+    "CALCULATION_COOLDOWN": 250
 
 }

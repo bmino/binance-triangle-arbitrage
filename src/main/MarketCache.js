@@ -39,15 +39,32 @@ const MarketCache = {
     },
 
     pruneDepthsAboveThreshold(threshold=100) {
+        const prune = (depthSnapshot, threshold) => {
+            return Object.keys(depthSnapshot)
+                .slice(0, threshold)
+                .reduce((prunedDepthSnapshot, key) => {
+                    prunedDepthSnapshot[key] = depthSnapshot[key];
+                    return prunedDepthSnapshot;
+                }, {});
+        };
         MarketCache.getTickerArray().forEach(ticker => {
             let depth = binance.depthCache(ticker);
-            Object.keys(depth.bids).forEach((bid, index) => {
-                index >= threshold && delete depth.bids[bid];
-            });
-            Object.keys(depth.asks).forEach((ask, index) => {
-                index >= threshold && delete depth.asks[ask];
-            });
+            depth.bids = prune(depth.bids, threshold);
+            depth.asks = prune(depth.asks, threshold);
         });
+    },
+
+    getAggregateDepthSizes(tickers=MarketCache.getTickerArray()) {
+        let bidCounts = [];
+        let askCounts = [];
+
+        tickers.forEach(ticker => {
+            const depth = binance.depthCache(ticker);
+            bidCounts.push(Object.values(depth.bids).length);
+            askCounts.push(Object.values(depth.asks).length);
+        });
+
+        return { bidCounts, askCounts };
     },
 
     getTradesFromSymbol(symbol1) {
@@ -66,6 +83,10 @@ const MarketCache = {
     },
 
     createTrade(a, b, c) {
+        a = a.toUpperCase();
+        b = b.toUpperCase();
+        c = c.toUpperCase();
+
         const ab = MarketCache.getRelationship(a, b);
         if (!ab) return;
         if (CONFIG.TRADING.EXECUTION_TEMPLATE[0] && CONFIG.TRADING.EXECUTION_TEMPLATE[0].toUpperCase() !== ab.method.toUpperCase()) return;
@@ -79,32 +100,27 @@ const MarketCache = {
         if (CONFIG.TRADING.EXECUTION_TEMPLATE[2] && CONFIG.TRADING.EXECUTION_TEMPLATE[2].toUpperCase() !== ca.method.toUpperCase()) return;
 
         return {
-            ab: ab,
-            bc: bc,
-            ca: ca,
-            symbol: {
-                a: a.toUpperCase(),
-                b: b.toUpperCase(),
-                c: c.toUpperCase()
-            }
+            ab,
+            bc,
+            ca,
+            symbol: { a, b, c }
         };
     },
 
     getRelationship(a, b) {
-        a = a.toUpperCase();
-        b = b.toUpperCase();
-
         if (MarketCache.tickers[a+b]) return {
             method: 'Sell',
             ticker: a+b,
             base: a,
-            quote: b
+            quote: b,
+            dustDecimals: MarketCache.tickers[a+b].dustDecimals
         };
         if (MarketCache.tickers[b+a]) return {
             method: 'Buy',
             ticker: b+a,
             base: b,
-            quote: a
+            quote: a,
+            dustDecimals: MarketCache.tickers[b+a].dustDecimals
         };
         return null;
     }
