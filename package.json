@@ -20,5 +20,6 @@
     "node-binance-api": "^0.9.3",
     "pino": "^5.12.6",
     "pino-pretty": "^3.2.0"
-  }
+  },
+  "license": "MIT"
 }
