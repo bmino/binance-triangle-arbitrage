@@ -1,6 +1,6 @@
 {
   "name": "binance-triangle-arbitrage",
-  "version": "5.2.0",
+  "version": "5.2.1",
   "repository": {
     "type": "git",
     "url": "https://github.com/bmino/binance-triangle-arbitrage.git"
@@ -10,7 +10,7 @@
   },
   "engines": {
     "node": "11.10.1",
-    "npm": "6.9.0"
+    "npm": "6.10.0"
   },
   "scripts": {
     "start": "node src/main/Main.js"
