@@ -32,7 +32,9 @@ const CalculationNode = {
         });
 
         const calculationTime = new Date().getTime() - startTime;
+        if (CalculationNode.timings.length > 300) CalculationNode.timings.shift();
         CalculationNode.timings.push(calculationTime);
+
         CalculationNode.cycleCount++;
 
         return { calculationTime, successCount, errorCount, results };
