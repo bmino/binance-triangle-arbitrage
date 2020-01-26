@@ -30,9 +30,6 @@ const ArbitrageExecution = {
         ArbitrageExecution.inProgressSymbols.add(symbol.c);
 
         logger.execution.info(`Attempting to execute ${calculated.id} with an age of ${Math.max(age.ab, age.bc, age.ca).toFixed(0)} ms and expected profit of ${calculated.percent.toFixed(4)}%`);
-        logger.execution.debug(`${calculated.trade.ab.ticker} depth cache age: ${age.ab.toFixed(0)} ms`);
-        logger.execution.debug(`${calculated.trade.bc.ticker} depth cache age: ${age.bc.toFixed(0)} ms`);
-        logger.execution.debug(`${calculated.trade.ca.ticker} depth cache age: ${age.ca.toFixed(0)} ms`);
 
         return ArbitrageExecution.execute(calculated)
             .then((actual) => {
