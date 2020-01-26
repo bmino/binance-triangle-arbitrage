@@ -38,16 +38,32 @@ const ArbitrageExecution = {
                 // Results are only collected when a trade is executed
                 if (!CONFIG.TRADING.ENABLED) return;
 
+                const calculateVariation = (calculatedFrom, calculatedTo, actualFrom, actualTo) => {
+                    const calculatedPrice = calculatedFrom.spent / calculatedTo.earned;
+                    const actualPrice = actualFrom.spent / actualTo.earned;
+                    return (actualPrice - calculatedPrice) / calculatedPrice * 100;
+                };
+
+                const variation = {
+                    ab: calculateVariation(calculated.a, calculated.b, actual.a, actual.b),
+                    bc: calculateVariation(calculated.b, calculated.c, actual.b, actual.c),
+                    ca: calculateVariation(calculated.c, calculated.a, actual.c, actual.a)
+                };
+
+                logger.execution.debug(`${calculated.trade.ab.ticker} Stats:`);
+                logger.execution.debug(`Expected Conversion:  ${calculated.a.spent.toFixed(8)} ${symbol.a} into ${calculated.b.earned.toFixed(8)} ${symbol.b}`);
+                logger.execution.debug(`Observed Conversion:  ${actual.a.spent.toFixed(8)} ${symbol.a} into ${actual.b.earned.toFixed(8)} ${symbol.b}`);
+                logger.execution.debug(`Price Error:          ${variation.ab.toFixed(8)}%`);
                 logger.execution.debug();
-                logger.execution.debug(`AB Expected Conversion:  ${calculated.a.spent.toFixed(8)} ${symbol.a} into ${calculated.b.earned.toFixed(8)} ${symbol.b}`);
-                logger.execution.debug(`AB Observed Conversion:  ${actual.a.spent.toFixed(8)} ${symbol.a} into ${actual.b.earned.toFixed(8)} ${symbol.b}`);
-                logger.execution.debug();
+                logger.execution.debug(`${calculated.trade.bc.ticker} Stats:`);
                 logger.execution.debug(`BC Expected Conversion:  ${calculated.b.spent.toFixed(8)} ${symbol.b} into ${calculated.c.earned.toFixed(8)} ${symbol.c}`);
                 logger.execution.debug(`BC Observed Conversion:  ${actual.b.spent.toFixed(8)} ${symbol.b} into ${actual.c.earned.toFixed(8)} ${symbol.c}`);
+                logger.execution.debug(`BC Price Error:          ${variation.bc.toFixed(8)}%`);
                 logger.execution.debug();
-                logger.execution.debug(`CA Expected Conversion:  ${calculated.c.spent.toFixed(8)} ${symbol.c} into ${calculated.a.earned.toFixed(8)} ${symbol.a}`);
-                logger.execution.debug(`CA Observed Conversion:  ${actual.c.spent.toFixed(8)} ${symbol.c} into ${actual.a.earned.toFixed(8)} ${symbol.a}`);
-                logger.execution.debug();
+                logger.execution.debug(`${calculated.trade.ca.ticker} Stats:`);
+                logger.execution.debug(`Expected Conversion:  ${calculated.c.spent.toFixed(8)} ${symbol.c} into ${calculated.a.earned.toFixed(8)} ${symbol.a}`);
+                logger.execution.debug(`Observed Conversion:  ${actual.c.spent.toFixed(8)} ${symbol.c} into ${actual.a.earned.toFixed(8)} ${symbol.a}`);
+                logger.execution.debug(`Price Error:          ${variation.ca.toFixed(8)}%`);
 
                 logger.execution.trace(`Depth cache used for calculation:`);
                 logger.execution.trace(calculated.depth);
