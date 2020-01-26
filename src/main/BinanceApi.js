@@ -62,8 +62,8 @@ const BinanceApi = {
                     logger.execution.info(`Successfully bought ${response.executedQty} ${ticker} @ a quote of ${response.cummulativeQuoteQty}`);
                 }
                 return resolve(response);
-            })
-        })
+            });
+        });
     },
 
     marketSell(ticker, quantity) {
