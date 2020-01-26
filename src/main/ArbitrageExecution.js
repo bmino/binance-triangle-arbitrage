@@ -61,10 +61,11 @@ const ArbitrageExecution = {
                     c: actual.c.delta / actual.c.spent * 100
                 };
 
+                logger.execution.info();
                 logger.execution.info(`${symbol.a} delta:\t  ${actual.a.delta < 0 ? '' : ' '}${actual.a.delta.toFixed(8)} (${percent.a < 0 ? '' : ' '}${percent.a.toFixed(4)}%)`);
                 logger.execution.info(`${symbol.b} delta:\t  ${actual.b.delta < 0 ? '' : ' '}${actual.b.delta.toFixed(8)} (${percent.b < 0 ? '' : ' '}${percent.b.toFixed(4)}%)`);
                 logger.execution.info(`${symbol.c} delta:\t  ${actual.c.delta < 0 ? '' : ' '}${actual.c.delta.toFixed(8)} (${percent.c < 0 ? '' : ' '}${percent.c.toFixed(4)}%)`);
-                logger.execution.info(`BNB commission: ${(-1 * actual.fees).toFixed(8)}`);
+                logger.execution.info(`BNB commission:  ${(-1 * actual.fees).toFixed(8)}`);
                 logger.execution.info();
             })
             .catch((err) => logger.execution.error(err.message))
@@ -246,7 +247,10 @@ const ArbitrageExecution = {
     parseActualResults(method, { executedQty, cummulativeQuoteQty, fills }) {
         const spent = method.toUpperCase() === 'BUY' ? parseFloat(cummulativeQuoteQty) : parseFloat(executedQty);
         const earned = method.toUpperCase() === 'SELL' ? parseFloat(cummulativeQuoteQty) : parseFloat(executedQty);
-        const fees = fills.filter(f => f.commissionAsset === 'BNB').map(f => parseFloat(f.commission)).reduce((total, fee) => total + fee, 0);
+        const fees = fills
+            .filter(fill => fill.commissionAsset === 'BNB')
+            .map(fill => parseFloat(fill.commission))
+            .reduce((total, fee) => total + fee, 0);
         return [spent, earned, fees];
     }
 

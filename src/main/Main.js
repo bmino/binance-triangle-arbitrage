@@ -55,7 +55,12 @@ ArbitrageExecution.refreshBalances()
 function calculateArbitrage() {
     if (CONFIG.DEPTH.PRUNE) MarketCache.pruneDepthsAboveThreshold(CONFIG.DEPTH.SIZE);
 
-    const { calculationTime, successCount, errorCount, results } = CalculationNode.cycle(MarketCache.relationships, BinanceApi.cloneDepths(MarketCache.getTickerArray(), CONFIG.DEPTH.SIZE), (e) => logger.performance.warn(e), ArbitrageExecution.executeCalculatedPosition);
+    const { calculationTime, successCount, errorCount, results } = CalculationNode.cycle(
+        MarketCache.relationships,
+        BinanceApi.cloneDepths(MarketCache.getTickerArray(), CONFIG.DEPTH.SIZE),
+        (e) => logger.performance.warn(e),
+        ArbitrageExecution.executeCalculatedPosition
+    );
 
     if (CONFIG.HUD.ENABLED) refreshHUD(results);
     displayCalculationResults(successCount, errorCount, calculationTime);
