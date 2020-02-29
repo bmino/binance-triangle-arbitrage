@@ -149,7 +149,7 @@ Upon each version update you should copy the new syntax from `config.json.exampl
 * Description: Remove depth cache entries with a depth greater than `DEPTH.SIZE` before each calculation cycle
 
 #### `DEPTH.INITIALIZATION_INTERVAL` (Number)
-* Default: `50`
+* Default: `75`
 * Description: Delay (ms) between the initialization of each depth websocket
 
 
@@ -157,5 +157,5 @@ Upon each version update you should copy the new syntax from `config.json.exampl
 
 
 #### `CALCULATION_COOLDOWN` (Number)
-* Default: `500`
+* Default: `250`
 * Description: Delay (ms) after calculations are performed before starting another cycle
