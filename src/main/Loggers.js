@@ -6,10 +6,6 @@ const LOG_DIR = `${__dirname}/../../logs`;
 const PINO_OPTS = {
     level: CONFIG.LOG.LEVEL.toLowerCase(),
     timestamp: () => `,"time":"${new Date().toLocaleString()}"`,
-    redact: {
-        paths: ['[*].KEYS.API','[*].KEYS.SECRET'],
-        censor: '**********'
-    },
     prettyPrint: CONFIG.LOG.PRETTY_PRINT,
     useLevelLabels: true,
     base: null
@@ -22,6 +18,7 @@ if (!fs.existsSync(LOG_DIR)){
 
 
 const Loggers = {
+    LINE: '-'.repeat(50),
     'performance': pino(PINO_OPTS, pino.destination(`${LOG_DIR}/performance.log`)),
     'execution': pino(PINO_OPTS, pino.destination(`${LOG_DIR}/execution.log`))
 };

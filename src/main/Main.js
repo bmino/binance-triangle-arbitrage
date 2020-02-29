@@ -15,6 +15,10 @@ binance.options({
     test: !CONFIG.TRADING.ENABLED
 });
 
+// Helps identify application startup
+logger.execution.info(logger.LINE);
+logger.performance.info(logger.LINE);
+
 if (CONFIG.TRADING.ENABLED) console.log(`WARNING! Order execution is enabled!\n`);
 
 ArbitrageExecution.refreshBalances()
