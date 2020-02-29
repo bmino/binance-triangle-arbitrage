@@ -21,16 +21,15 @@ logger.performance.info(logger.LINE);
 
 if (CONFIG.TRADING.ENABLED) console.log(`WARNING! Order execution is enabled!\n`);
 
-ArbitrageExecution.refreshBalances()
-    .then(() => SpeedTest.multiPing(5))
+SpeedTest.multiPing()
     .then((pings) => {
         const msg = `Successfully pinged the Binance api in ${(binance.sum(pings) / pings.length).toFixed(0)} ms`;
         console.log(msg);
         logger.performance.info(msg);
     })
+    .then(ArbitrageExecution.refreshBalances)
     .then(BinanceApi.exchangeInfo)
     .then(exchangeInfo => MarketCache.initialize(exchangeInfo, CONFIG.TRADING.WHITELIST, CONFIG.INVESTMENT.BASE))
-    .then(() => logger.execution.debug({configuration: CONFIG}))
     .then(checkConfig)
     .then(checkBalances)
     .then(() => {
@@ -52,7 +51,7 @@ ArbitrageExecution.refreshBalances()
         logger.performance.debug(`Cores Speeds: [${os.cpus().map(cpu => cpu.speed)}] MHz`);
 
         // Allow time to read output before starting calculation cycles
-        setTimeout(calculateArbitrage, 4000);
+        setTimeout(calculateArbitrage, 5000);
     })
     .catch(console.error);
 
@@ -81,15 +80,14 @@ function displayCalculationResults(successCount, errorCount, calculationTime) {
         const { bidCounts, askCounts } = MarketCache.getAggregateDepthSizes();
         const bidAvg = (binance.sum(bidCounts) / bidCounts.length).toFixed(0);
         const askAvg = (binance.sum(askCounts) / askCounts.length).toFixed(0);
-        const calAvg = (binance.sum(CalculationNode.timings.slice(-300)) / Math.min(300, CalculationNode.timings.length)).toFixed(0);
-        logger.performance.debug(`                      [[min] - [max]] ~ [avg]`);
-        logger.performance.debug(`Calculation times:    [${Math.min(...CalculationNode.timings)} - ${Math.max(...CalculationNode.timings)}] ~ ${calAvg} ms`);
-        logger.performance.debug(`Bid depth cache size: [${Math.min(...bidCounts)} - ${Math.max(...bidCounts)}] ~ ${bidAvg}`);
-        logger.performance.debug(`Ask depth cache size: [${Math.min(...askCounts)} - ${Math.max(...askCounts)}] ~ ${askAvg}`);
+        const calAvg = (binance.sum(CalculationNode.timings) / CalculationNode.timings.length).toFixed(0);
+        logger.performance.debug(`Calculation time:     ${Math.min(...CalculationNode.timings)} ~ [${calAvg}] ~ ${Math.max(...CalculationNode.timings)}`);
+        logger.performance.debug(`Bid depth cache size: ${Math.min(...bidCounts)} ~ [${bidAvg}] ~ ${Math.max(...bidCounts)}`);
+        logger.performance.debug(`Ask depth cache size: ${Math.min(...askCounts)} ~ [${askAvg}] ~ ${Math.max(...askCounts)}`);
 
         const tickersWithoutDepthUpdate = MarketCache.getTickersWithoutDepthCacheUpdate();
         if (tickersWithoutDepthUpdate.length > 0) {
-            logger.execution.trace(`Found ${tickersWithoutDepthUpdate.length} tickers without a depth cache update: [${tickersWithoutDepthUpdate}]`);
+            logger.performance.trace(`Found ${tickersWithoutDepthUpdate.length} tickers without a depth cache update: [${tickersWithoutDepthUpdate}]`);
         }
     }
 }
