@@ -73,20 +73,16 @@ function calculateArbitrage() {
 function displayCalculationResults(successCount, errorCount, calculationTime) {
     const totalCalculations = successCount + errorCount;
 
-    const msg = `Completed ${successCount}/${totalCalculations} (${((successCount/totalCalculations)*100).toFixed(1)}%) calculations in ${calculationTime} ms`;
-    (errorCount > 0) ? logger.performance.debug(msg) : logger.performance.trace(msg);
+    if (errorCount > 0) {
+        logger.performance.warn(`Completed ${successCount}/${totalCalculations} (${((successCount/totalCalculations) * 100).toFixed(1)}%) calculations in ${calculationTime} ms`);
+    }
 
-    if (CalculationNode.cycleCount % 300 === 0) {
-        const { bidCounts, askCounts } = MarketCache.getAggregateDepthSizes();
-        const bidAvg = (binance.sum(bidCounts) / bidCounts.length).toFixed(0);
-        const askAvg = (binance.sum(askCounts) / askCounts.length).toFixed(0);
-        logger.performance.debug(`Bid depth cache size: ${Math.min(...bidCounts)} ~ [${bidAvg}] ~ ${Math.max(...bidCounts)}`);
-        logger.performance.debug(`Ask depth cache size: ${Math.min(...askCounts)} ~ [${askAvg}] ~ ${Math.max(...askCounts)}`);
-
+    if (CalculationNode.cycleCount % 500 === 0) {
         const tickersWithoutDepthUpdate = MarketCache.getTickersWithoutDepthCacheUpdate();
         if (tickersWithoutDepthUpdate.length > 0) {
-            logger.performance.trace(`Found ${tickersWithoutDepthUpdate.length} tickers without a depth cache update: [${tickersWithoutDepthUpdate}]`);
+            logger.performance.debug(`Tickers without a depth cache update: [${tickersWithoutDepthUpdate}]`);
         }
+
     }
 }
 
