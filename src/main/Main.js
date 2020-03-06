@@ -100,7 +100,7 @@ function checkConfig() {
             EXECUTION_STRATEGY: ['linear', 'parallel']
         },
         DEPTH: {
-            SIZE: [5, 10, 20, 50, 100, 500, 1000]
+            SIZE: [5, 10, 20, 50, 100, 500]
         }
     };
 

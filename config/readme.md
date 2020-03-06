@@ -142,7 +142,6 @@ Upon each version update you should copy the new syntax from `config.json.exampl
     * `50`
     * `100`
     * `500`
-    * `1000`
 
 #### `DEPTH.PRUNE` (Boolean)
 * Default: `false`
