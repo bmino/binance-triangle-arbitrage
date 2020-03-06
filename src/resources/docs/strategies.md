@@ -39,6 +39,7 @@ Given the following assumptions:
 * `ETHBTC` is trading at 0.0332
 
 ```
+Recommended BTC >= 0.4
 Recommended LTC >= (0.4 / 0.0122) = 32.787
 Recommended ETH >= (0.4 / 0.0332) = 12.048
 ```
