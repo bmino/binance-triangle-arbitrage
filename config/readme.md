@@ -110,7 +110,7 @@ Upon each version update you should copy the new syntax from `config.json.exampl
 ### `LOG`
 
 #### `LOG.LEVEL` (String)
-* Default: `"info"`
+* Default: `"debug"`
 * Description: Log level to configure how verbose logging messages are
 * Values:
     * `"fatal"`
