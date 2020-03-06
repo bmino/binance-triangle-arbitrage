@@ -80,8 +80,6 @@ function displayCalculationResults(successCount, errorCount, calculationTime) {
         const { bidCounts, askCounts } = MarketCache.getAggregateDepthSizes();
         const bidAvg = (binance.sum(bidCounts) / bidCounts.length).toFixed(0);
         const askAvg = (binance.sum(askCounts) / askCounts.length).toFixed(0);
-        const calAvg = (binance.sum(CalculationNode.timings) / CalculationNode.timings.length).toFixed(0);
-        logger.performance.debug(`Calculation time:     ${Math.min(...CalculationNode.timings)} ~ [${calAvg}] ~ ${Math.max(...CalculationNode.timings)}`);
         logger.performance.debug(`Bid depth cache size: ${Math.min(...bidCounts)} ~ [${bidAvg}] ~ ${Math.max(...bidCounts)}`);
         logger.performance.debug(`Ask depth cache size: ${Math.min(...askCounts)} ~ [${askAvg}] ~ ${Math.max(...askCounts)}`);
 

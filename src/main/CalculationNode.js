@@ -3,7 +3,6 @@ const CONFIG = require('../../config/config');
 const CalculationNode = {
 
     cycleCount: 0,
-    timings: [],
 
     cycle(relationships, depthCacheClone, errorCallback, executionCallback) {
         const startTime = new Date().getTime();
@@ -32,8 +31,6 @@ const CalculationNode = {
         });
 
         const calculationTime = new Date().getTime() - startTime;
-        if (CalculationNode.timings.length > 300) CalculationNode.timings.shift();
-        CalculationNode.timings.push(calculationTime);
 
         CalculationNode.cycleCount++;
 
@@ -156,6 +153,7 @@ const CalculationNode = {
                     return amountTo + (amountFrom * rate);
                 }
             }
+            throw new Error(`Bid depth (${bidRates.length}) too shallow to reverse convert ${amountFrom} ${symbolFrom} to ${symbolTo} using ${ticker}`);
         } else {
             for (i=0; i<askRates.length; i++) {
                 rate = parseFloat(askRates[i]);
@@ -169,9 +167,8 @@ const CalculationNode = {
                     return amountTo + (amountFrom / rate);
                 }
             }
+            throw new Error(`Ask depth (${askRates.length}) too shallow to reverse convert ${amountFrom} ${symbolFrom} to ${symbolTo} using ${ticker}`);
         }
-
-        throw new Error(`Bid depth (${bidRates.length}) or ask depth (${askRates.length}) too shallow to convert ${amountFrom} ${symbolFrom} to ${symbolTo} using ${ticker}`);
     },
 
     orderBookReverseConversion(amountFrom, symbolFrom, symbolTo, ticker, depthSnapshot) {
@@ -197,6 +194,7 @@ const CalculationNode = {
                     return amountTo + (amountFrom * rate);
                 }
             }
+            throw new Error(`Ask depth (${askRates.length}) too shallow to reverse convert ${amountFrom} ${symbolFrom} to ${symbolTo} using ${ticker}`);
         } else {
             for (i=0; i<bidRates.length; i++) {
                 rate = parseFloat(bidRates[i]);
@@ -210,9 +208,8 @@ const CalculationNode = {
                     return amountTo + (amountFrom / rate);
                 }
             }
+            throw new Error(`Bid depth (${bidRates.length}) too shallow to reverse convert ${amountFrom} ${symbolFrom} to ${symbolTo} using ${ticker}`);
         }
-
-        throw new Error(`Bid depth (${bidRates.length}) or ask depth (${askRates.length}) too shallow to reverse convert ${amountFrom} ${symbolFrom} to ${symbolTo} using ${ticker}`);
     },
 
     calculateDustless(trade, amount) {
