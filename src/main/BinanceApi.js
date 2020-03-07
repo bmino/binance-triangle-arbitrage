@@ -35,13 +35,14 @@ const BinanceApi = {
 
     marketBuy(ticker, quantity) {
         logger.execution.info(`${binance.getOption('test') ? 'Test: Buying' : 'Buying'} ${quantity} ${ticker} @ market price`);
+        const before = new Date().getTime();
         return new Promise((resolve, reject) => {
             binance.marketBuy(ticker, quantity, (error, response) => {
                 if (error) return BinanceApi.handleBuyOrSellError(error, reject);
                 if (binance.getOption('test')) {
                     logger.execution.info(`Test: Successfully bought ${ticker} @ market price`);
                 } else {
-                    logger.execution.info(`Successfully bought ${response.executedQty} ${ticker} @ a quote of ${response.cummulativeQuoteQty}`);
+                    logger.execution.info(`Successfully bought ${response.executedQty} ${ticker} @ a quote of ${response.cummulativeQuoteQty} in ${new Date().getTime() - before} ms`);
                 }
                 return resolve(response);
             });
@@ -50,13 +51,14 @@ const BinanceApi = {
 
     marketSell(ticker, quantity) {
         logger.execution.info(`${binance.getOption('test') ? 'Test: Selling' : 'Selling'} ${quantity} ${ticker} @ market price`);
+        const before = new Date().getTime();
         return new Promise((resolve, reject) => {
             binance.marketSell(ticker, quantity, (error, response) => {
                 if (error) return BinanceApi.handleBuyOrSellError(error, reject);
                 if (binance.getOption('test')) {
                     logger.execution.info(`Test: Successfully sold ${ticker} @ market price`);
                 } else {
-                    logger.execution.info(`Successfully sold ${response.executedQty} ${ticker} @ a quote of ${response.cummulativeQuoteQty}`);
+                    logger.execution.info(`Successfully sold ${response.executedQty} ${ticker} @ a quote of ${response.cummulativeQuoteQty} in ${new Date().getTime() - before} ms`);
                 }
                 return resolve(response);
             });
