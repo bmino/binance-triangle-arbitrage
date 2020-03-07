@@ -110,7 +110,7 @@ Upon each version update you should copy the new syntax from `config.json.exampl
 ### `LOG`
 
 #### `LOG.LEVEL` (String)
-* Default: `"info"`
+* Default: `"debug"`
 * Description: Log level to configure how verbose logging messages are
 * Values:
     * `"fatal"`
@@ -142,14 +142,13 @@ Upon each version update you should copy the new syntax from `config.json.exampl
     * `50`
     * `100`
     * `500`
-    * `1000`
 
 #### `DEPTH.PRUNE` (Boolean)
 * Default: `false`
 * Description: Remove depth cache entries with a depth greater than `DEPTH.SIZE` before each calculation cycle
 
 #### `DEPTH.INITIALIZATION_INTERVAL` (Number)
-* Default: `50`
+* Default: `75`
 * Description: Delay (ms) between the initialization of each depth websocket
 
 
@@ -157,5 +156,5 @@ Upon each version update you should copy the new syntax from `config.json.exampl
 
 
 #### `CALCULATION_COOLDOWN` (Number)
-* Default: `500`
+* Default: `250`
 * Description: Delay (ms) after calculations are performed before starting another cycle

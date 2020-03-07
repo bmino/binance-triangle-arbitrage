@@ -29,7 +29,7 @@
     },
 
     "LOG": {
-        "LEVEL": "info",
+        "LEVEL": "debug",
         "PRETTY_PRINT": true
     },
 

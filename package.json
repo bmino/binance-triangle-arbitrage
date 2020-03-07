@@ -1,6 +1,6 @@
 {
   "name": "binance-triangle-arbitrage",
-  "version": "5.2.4",
+  "version": "5.2.5",
   "repository": {
     "type": "git",
     "url": "https://github.com/bmino/binance-triangle-arbitrage.git"
@@ -17,9 +17,9 @@
   },
   "dependencies": {
     "blessed": "^0.1.81",
-    "node-binance-api": "^0.9.9",
-    "pino": "^5.16.0",
-    "pino-pretty": "^3.5.0"
+    "node-binance-api": "^0.10.3",
+    "pino": "^5.17.0",
+    "pino-pretty": "^3.6.1"
   },
   "license": "MIT"
 }
