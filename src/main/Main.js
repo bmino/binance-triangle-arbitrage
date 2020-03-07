@@ -82,7 +82,7 @@ function displayCalculationResults(successCount, errorCount, calculationTime) {
         if (tickersWithoutDepthUpdate.length > 0) {
             logger.performance.debug(`Tickers without a depth cache update: [${tickersWithoutDepthUpdate}]`);
         }
-
+        logger.performance.debug(`Recent calculations completed in ${calculationTime} ms`);
     }
 }
 
