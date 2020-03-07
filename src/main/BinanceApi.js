@@ -25,30 +25,12 @@ const BinanceApi = {
         });
     },
 
-    cloneDepth(ticker, levels) {
-        const tmp = binance.depthCache(ticker);
-        const prune = (depthSnapshot, levels) => {
-            if (!levels) return depthSnapshot;
-            return Object.keys(depthSnapshot)
-                .slice(0, levels)
-                .reduce((prunedDepthSnapshot, key) => {
-                    prunedDepthSnapshot[key] = depthSnapshot[key];
-                    return prunedDepthSnapshot;
-                }, {});
-        };
-        return {
-            eventTime: tmp.eventTime,
-            lastUpdateId: tmp.lastUpdateId,
-            asks: prune({...tmp.asks}, levels),
-            bids: prune({...tmp.bids}, levels)
-        };
-    },
-
-    cloneDepths(tickers, levels) {
-        return tickers.reduce((clone, ticker) => {
-            clone[ticker] = BinanceApi.cloneDepth(ticker, levels);
-            return clone;
-        }, {});
+    getDepthSnapshots(tickers) {
+        const depthSnapshot = {};
+        tickers.forEach((ticker) => {
+            depthSnapshot[ticker] = binance.depthCache(ticker);
+        });
+        return depthSnapshot;
     },
 
     marketBuy(ticker, quantity) {

@@ -60,7 +60,7 @@ function calculateArbitrage() {
 
     const { calculationTime, successCount, errorCount, results } = CalculationNode.cycle(
         MarketCache.relationships,
-        BinanceApi.cloneDepths(MarketCache.getTickerArray(), CONFIG.DEPTH.SIZE),
+        BinanceApi.getDepthSnapshots(MarketCache.getTickerArray()),
         (e) => logger.performance.warn(e),
         ArbitrageExecution.executeCalculatedPosition
     );
