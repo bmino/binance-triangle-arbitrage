@@ -31,7 +31,7 @@ const ArbitrageExecution = {
 
         logger.execution.info(`Attempting to execute ${calculated.id} with an age of ${Math.max(age.ab, age.bc, age.ca).toFixed(0)} ms and expected profit of ${calculated.percent.toFixed(4)}%`);
 
-        return ArbitrageExecution.execute(calculated)
+        return ArbitrageExecution.getExecutionStrategy()(calculated)
             .then((actual) => {
                 logger.execution.info(`${CONFIG.TRADING.ENABLED ? 'Executed' : 'Test: Executed'} ${calculated.id} position in ${new Date().getTime() - startTime} ms`);
 
@@ -147,10 +147,6 @@ const ArbitrageExecution = {
     getAttemptedPositionsCountInLastSecond() {
         const timeFloor = new Date().getTime() - 1000;
         return Object.keys(ArbitrageExecution.attemptedPositions).filter(time => time > timeFloor).length;
-    },
-
-    execute(calculated) {
-        return ArbitrageExecution.getExecutionStrategy()(calculated);
     },
 
     getExecutionStrategy() {

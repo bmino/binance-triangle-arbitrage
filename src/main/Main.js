@@ -36,7 +36,7 @@ SpeedTest.multiPing()
         // Listen for depth updates
         const tickers = MarketCache.getTickerArray();
         console.log(`Opening ${tickers.length} depth websockets ...`);
-        return BinanceApi.depthCache(tickers, CONFIG.DEPTH.SIZE, CONFIG.DEPTH.INITIALIZATION_INTERVAL);
+        return BinanceApi.depthCacheStaggered(tickers, CONFIG.DEPTH.SIZE, CONFIG.DEPTH.INITIALIZATION_INTERVAL);
     })
     .then(() => {
         console.log();

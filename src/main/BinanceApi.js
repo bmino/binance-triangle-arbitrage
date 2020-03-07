@@ -103,7 +103,7 @@ const BinanceApi = {
         });
     },
 
-    depthCache(tickers, limit=100, stagger=200) {
+    depthCacheStaggered(tickers, limit, stagger) {
         return binance.websockets.depthCacheStaggered(tickers, BinanceApi.sortDepthCache, limit, stagger);
     },
 
