@@ -27,6 +27,7 @@ const BinanceApi = {
 
     getDepthSnapshots(tickers) {
         const depthSnapshot = {};
+        if (!Array.isArray(tickers)) tickers = [tickers];
         tickers.forEach((ticker) => {
             depthSnapshot[ticker] = binance.depthCache(ticker);
         });
