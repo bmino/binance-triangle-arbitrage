@@ -90,7 +90,7 @@ const ArbitrageExecution = {
                 ArbitrageExecution.inProgressSymbols.delete(symbol.c);
 
                 if (CONFIG.TRADING.EXECUTION_CAP && ArbitrageExecution.inProgressIds.size === 0 && ArbitrageExecution.getAttemptedPositionsCount() >= CONFIG.TRADING.EXECUTION_CAP) {
-                    logger.execution.fatal(`Cannot exceed user defined execution cap of ${CONFIG.TRADING.EXECUTION_CAP} executions`);
+                    logger.execution.info(`Cannot exceed user defined execution cap of ${CONFIG.TRADING.EXECUTION_CAP} executions`);
                     process.exit();
                 }
             });
