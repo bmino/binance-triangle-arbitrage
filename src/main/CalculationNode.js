@@ -153,7 +153,7 @@ const CalculationNode = {
                     return amountTo + (amountFrom * rate);
                 }
             }
-            throw new Error(`Bid depth (${bidRates.length}) too shallow to reverse convert ${amountFrom} ${symbolFrom} to ${symbolTo} using ${ticker}`);
+            throw new Error(`Bid depth (${bidRates.length}) too shallow to convert ${amountFrom} ${symbolFrom} to ${symbolTo} using ${ticker}`);
         } else {
             for (i=0; i<askRates.length; i++) {
                 rate = parseFloat(askRates[i]);
@@ -167,7 +167,7 @@ const CalculationNode = {
                     return amountTo + (amountFrom / rate);
                 }
             }
-            throw new Error(`Ask depth (${askRates.length}) too shallow to reverse convert ${amountFrom} ${symbolFrom} to ${symbolTo} using ${ticker}`);
+            throw new Error(`Ask depth (${askRates.length}) too shallow to convert ${amountFrom} ${symbolFrom} to ${symbolTo} using ${ticker}`);
         }
     },
 
