@@ -95,6 +95,10 @@ const BinanceApi = {
     sortDepthCache(ticker, depth) {
         depth.bids = binance.sortBids(depth.bids);
         depth.asks = binance.sortAsks(depth.asks);
+    },
+
+    depthCache(ticker) {
+        return binance.depthCache(ticker);
     }
 
 };
