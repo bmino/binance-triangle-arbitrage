@@ -1,5 +1,10 @@
+const CONFIG = require('../../config/config');
 const logger = require('./Loggers');
-const binance = require('node-binance-api')();
+const binance = require('node-binance-api')({
+    APIKEY: CONFIG.KEYS.API,
+    APISECRET: CONFIG.KEYS.SECRET,
+    test: !CONFIG.TRADING.ENABLED
+});
 
 const BinanceApi = {
 
@@ -95,6 +100,10 @@ const BinanceApi = {
     sortDepthCache(ticker, depth) {
         depth.bids = binance.sortBids(depth.bids);
         depth.asks = binance.sortAsks(depth.asks);
+    },
+
+    depthCache(ticker) {
+        return binance.depthCache(ticker);
     }
 
 };

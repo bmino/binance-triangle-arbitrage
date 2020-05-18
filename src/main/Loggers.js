@@ -7,7 +7,11 @@ const PINO_OPTS = {
     level: CONFIG.LOG.LEVEL.toLowerCase(),
     timestamp: () => `,"time":"${new Date().toLocaleString()}"`,
     prettyPrint: CONFIG.LOG.PRETTY_PRINT,
-    useLevelLabels: true,
+    formatters: {
+        level: (label, number) => {
+            return { level: number }
+        }
+    },
     base: null
 };
 
