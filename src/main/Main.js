@@ -16,7 +16,7 @@ if (CONFIG.TRADING.ENABLED) console.log(`WARNING! Order execution is enabled!\n`
 
 SpeedTest.multiPing()
     .then((pings) => {
-        const msg = `Successfully pinged the Binance api in ${(pings.reduce((a,b) => a+b, 0) / pings.length).toFixed(0)} ms`;
+        const msg = `Successfully pinged Binance in ${(pings.reduce((a,b) => a+b, 0) / pings.length).toFixed(0)} ms`;
         console.log(msg);
         logger.performance.info(msg);
     })
