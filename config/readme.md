@@ -122,7 +122,7 @@ Upon each version update you should copy the new syntax from `config.json.exampl
     * `"silent"`
 
 ### `LOG.VERBOSE` (Boolean)
-* Default: `false`
+* Default: `true`
 * Description: Enables more detailed log messages from the Binance api wrapper
 
 #### `LOG.PRETTY_PRINT` (Boolean)
