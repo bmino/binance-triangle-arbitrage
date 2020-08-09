@@ -1,6 +1,6 @@
 # Depth Sizes
 
-Internally the app maintains a copy of the order book. The depth of this order book's bid and ask spread is configured via `DEPTH.SIZE`.
+Internally the app maintains a copy of the order book. This order book's bid and ask depth is configured via `DEPTH.SIZE`.
 
 
 ### How Local Order Book is Maintained
@@ -26,6 +26,6 @@ This is because higher depth values have a higher weight assigned by Binance.
 
 **Q**. How high should I increase `DEPTH.SIZE`?
 
-**A**. Values higher than `100` will lead to an IP ban on startup without using `TRADING.WHITELIST`
+**A**. Values higher than `100` could lead to an IP ban on startup without using `TRADING.WHITELIST`
 
 ---

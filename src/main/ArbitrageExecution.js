@@ -8,7 +8,6 @@ const ArbitrageExecution = {
     inProgressIds: new Set(),
     inProgressSymbols: new Set(),
     attemptedPositions: {},
-    balances: {},
 
     executeCalculatedPosition(calculated) {
         const startTime = new Date().getTime();
@@ -82,7 +81,6 @@ const ArbitrageExecution = {
                 logger.execution.info();
             })
             .catch((err) => logger.execution.error(err.message))
-            .then(ArbitrageExecution.refreshBalances)
             .then(() => {
                 ArbitrageExecution.inProgressIds.delete(calculated.id);
                 ArbitrageExecution.inProgressSymbols.delete(symbol.a);
@@ -133,11 +131,6 @@ const ArbitrageExecution = {
         }
 
         return true;
-    },
-
-    refreshBalances() {
-        return BinanceApi.getBalances()
-            .then(balances => ArbitrageExecution.balances = balances);
     },
 
     getAttemptedPositionsCount() {

@@ -23,7 +23,7 @@ Recommended BTC >= 0.4
 
 ## Parallel Execution
 
-Each of the three trades are initiated at the same time. This reduces total execution time from identification to completion.
+Each of the three trades is initiated at the same time. This reduces total execution time from identification to completion.
 
 #### Balance Requirements
 
