@@ -30,7 +30,6 @@
 
     "LOG": {
         "LEVEL": "debug",
-        "VERBOSE": true,
         "PRETTY_PRINT": true
     },
 

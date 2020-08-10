@@ -121,10 +121,6 @@ Upon each version update you should copy the new syntax from `config.json.exampl
     * `"trace"`
     * `"silent"`
 
-### `LOG.VERBOSE` (Boolean)
-* Default: `true`
-* Description: Enables more detailed log messages from the Binance api wrapper
-
 #### `LOG.PRETTY_PRINT` (Boolean)
 * Default: `true`
 * Description: Format the logs with pino-pretty. Read the logs via a terminal for best results
