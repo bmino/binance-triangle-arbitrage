@@ -121,10 +121,6 @@ Upon each version update you should copy the new syntax from `config.json.exampl
     * `"trace"`
     * `"silent"`
 
-### `LOG.VERBOSE` (Boolean)
-* Default: `true`
-* Description: Enables more detailed log messages from the Binance api wrapper
-
 #### `LOG.PRETTY_PRINT` (Boolean)
 * Default: `true`
 * Description: Format the logs with pino-pretty. Read the logs via a terminal for best results
@@ -159,6 +155,16 @@ Upon each version update you should copy the new syntax from `config.json.exampl
 ---
 
 
-#### `CALCULATION_COOLDOWN` (Number)
+### `TIMING`
+
+#### `TIMING.RECEIVE_WINDOW` (Number)
+* Default: `5000`
+* Description: Time (ms) after a given timestamp until a request is no longer considered valid
+
+#### `TIMING.USE_SERVER_TIME` (Boolean)
+* Default: `false`
+* Description: Synchronize with the Binance API server time and modify request timestamps
+
+#### `TIMING.CALCULATION_COOLDOWN` (Number)
 * Default: `250`
 * Description: Delay (ms) between completing calculations and starting another cycle

@@ -30,7 +30,6 @@
 
     "LOG": {
         "LEVEL": "debug",
-        "VERBOSE": true,
         "PRETTY_PRINT": true
     },
 
@@ -40,6 +39,10 @@
         "INITIALIZATION_INTERVAL": 75
     },
 
-    "CALCULATION_COOLDOWN": 250
+    "TIMING": {
+        "RECEIVE_WINDOW": 5000,
+        "USE_SERVER_TIME": false,
+        "CALCULATION_COOLDOWN": 250
+    }
 
 }

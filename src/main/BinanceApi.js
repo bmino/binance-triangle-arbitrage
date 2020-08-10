@@ -1,11 +1,14 @@
 const CONFIG = require('../../config/config');
 const logger = require('./Loggers');
-const binance = require('node-binance-api')({
+const Binance = require('node-binance-api');
+const binance = new Binance().options({
     APIKEY: CONFIG.KEYS.API,
     APISECRET: CONFIG.KEYS.SECRET,
     test: !CONFIG.TRADING.ENABLED,
-    log: (msg) => logger.binance.info(msg),
-    verbose: CONFIG.LOG.VERBOSE,
+    log: (...args) => logger.binance.info(args.length > 1 ? args : args[0]),
+    verbose: true,
+    recvWindow: CONFIG.TIMING.RECEIVE_WINDOW,
+    useServerTime: CONFIG.TIMING.USE_SERVER_TIME,
 });
 
 const BinanceApi = {

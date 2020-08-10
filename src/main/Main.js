@@ -59,7 +59,7 @@ function calculateArbitrage() {
 
     if (CONFIG.HUD.ENABLED) refreshHUD(results);
     displayCalculationResults(successCount, errorCount, calculationTime);
-    setTimeout(calculateArbitrage, CONFIG.CALCULATION_COOLDOWN);
+    setTimeout(calculateArbitrage, CONFIG.TIMING.CALCULATION_COOLDOWN);
 }
 
 function displayCalculationResults(successCount, errorCount, calculationTime) {
@@ -150,6 +150,21 @@ function checkConfig() {
     }
     if (!VALID_VALUES.DEPTH.SIZE.includes(CONFIG.DEPTH.SIZE)) {
         const msg = `Depth size can only contain one of the following values: ${VALID_VALUES.DEPTH.SIZE}`;
+        logger.execution.error(msg);
+        throw new Error(msg);
+    }
+    if (CONFIG.TIMING.RECEIVE_WINDOW > 60000) {
+        const msg = `Receive window (${CONFIG.TIMING.RECEIVE_WINDOW}) must be less than 60000`;
+        logger.execution.error(msg);
+        throw new Error(msg);
+    }
+    if (CONFIG.TIMING.RECEIVE_WINDOW <= 0) {
+        const msg = `Receive window (${CONFIG.TIMING.RECEIVE_WINDOW}) must be a positive value`;
+        logger.execution.error(msg);
+        throw new Error(msg);
+    }
+    if (CONFIG.TIMING.CALCULATION_COOLDOWN <= 0) {
+        const msg = `Calculation cooldown (${CONFIG.TIMING.CALCULATION_COOLDOWN}) must be a positive value`;
         logger.execution.error(msg);
         throw new Error(msg);
     }
