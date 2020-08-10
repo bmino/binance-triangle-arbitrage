@@ -4,7 +4,7 @@ const binance = require('node-binance-api')({
     APIKEY: CONFIG.KEYS.API,
     APISECRET: CONFIG.KEYS.SECRET,
     test: !CONFIG.TRADING.ENABLED,
-    log: (msg) => logger.binance.info(msg),
+    log: (...args) => logger.binance.info(args.length > 1 ? args : args[0]),
     verbose: true,
 });
 
