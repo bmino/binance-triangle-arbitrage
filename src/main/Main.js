@@ -26,7 +26,7 @@ checkConfig()
     .then(checkBalances)
     .then(() => {
         // Listen for depth updates
-        const tickers = MarketCache.getTickerArray();
+        const tickers = MarketCache.tickers.watching;
         console.log(`Opening ${tickers.length} depth websockets ...`);
         return BinanceApi.depthCacheStaggered(tickers, CONFIG.DEPTH.SIZE, CONFIG.DEPTH.INITIALIZATION_INTERVAL);
     })
@@ -52,7 +52,7 @@ function calculateArbitrage() {
 
     const { calculationTime, successCount, errorCount, results } = CalculationNode.cycle(
         MarketCache.relationships,
-        BinanceApi.getDepthSnapshots(MarketCache.getTickerArray()),
+        BinanceApi.getDepthSnapshots(MarketCache.tickers.watching),
         (e) => logger.performance.warn(e),
         ArbitrageExecution.executeCalculatedPosition
     );
@@ -70,7 +70,7 @@ function displayCalculationResults(successCount, errorCount, calculationTime) {
     }
 
     if (CalculationNode.cycleCount % 500 === 0) {
-        const tickersWithoutDepthUpdate = MarketCache.getTickersWithoutDepthCacheUpdate();
+        const tickersWithoutDepthUpdate = MarketCache.getWatchedTickersWithoutDepthCacheUpdate();
         if (tickersWithoutDepthUpdate.length > 0) {
             logger.performance.debug(`Tickers without a depth cache update: [${tickersWithoutDepthUpdate}]`);
         }
