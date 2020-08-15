@@ -10,7 +10,7 @@ const ArbitrageExecution = {
     attemptedPositions: {},
 
     executeCalculatedPosition(calculated) {
-        const startTime = new Date().getTime();
+        const startTime = Date.now();
 
         if (!ArbitrageExecution.isSafeToExecute(calculated)) return false;
 
@@ -32,7 +32,7 @@ const ArbitrageExecution = {
 
         return ArbitrageExecution.getExecutionStrategy()(calculated)
             .then((actual) => {
-                logger.execution.info(`${CONFIG.TRADING.ENABLED ? 'Executed' : 'Test: Executed'} ${calculated.id} position in ${new Date().getTime() - startTime} ms`);
+                logger.execution.info(`${CONFIG.TRADING.ENABLED ? 'Executed' : 'Test: Executed'} ${calculated.id} position in ${Date.now() - startTime} ms`);
 
                 // Results are only collected when a trade is executed
                 if (!CONFIG.TRADING.ENABLED) return;
@@ -95,7 +95,7 @@ const ArbitrageExecution = {
     },
 
     isSafeToExecute(calculated) {
-        const now = new Date().getTime();
+        const now = Date.now();
         const { symbol } = calculated.trade;
 
         // Profit Threshold is Not Satisfied
@@ -138,7 +138,7 @@ const ArbitrageExecution = {
     },
 
     getAttemptedPositionsCountInLastSecond() {
-        const timeFloor = new Date().getTime() - 1000;
+        const timeFloor = Date.now() - 1000;
         return Object.keys(ArbitrageExecution.attemptedPositions).filter(time => time > timeFloor).length;
     },
 

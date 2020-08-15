@@ -3,9 +3,9 @@ const BinanceApi = require('./BinanceApi');
 const SpeedTest = {
 
     ping() {
-        const before = new Date().getTime();
+        const before = Date.now();
         return BinanceApi.time()
-            .then(() => new Date().getTime() - before);
+            .then(() => Date.now() - before);
     },
 
     multiPing(pingCount=5) {

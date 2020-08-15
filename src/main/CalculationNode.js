@@ -5,7 +5,7 @@ const CalculationNode = {
     cycleCount: 0,
 
     cycle(relationships, depthCacheClone, errorCallback, executionCallback) {
-        const startTime = new Date().getTime();
+        const startTime = Date.now();
 
         let successCount = 0;
         let errorCount = 0;
@@ -30,7 +30,7 @@ const CalculationNode = {
             }
         });
 
-        const calculationTime = new Date().getTime() - startTime;
+        const calculationTime = Date.now() - startTime;
 
         CalculationNode.cycleCount++;
 
