@@ -90,6 +90,11 @@ function checkConfig() {
         }
     };
 
+    if (CONFIG.INVESTMENT.MIN <= 0) {
+        const msg = `INVESTMENT.MIN must be a positive value`;
+        logger.execution.error(msg);
+        throw new Error(msg);
+    }
     if (CONFIG.INVESTMENT.STEP <= 0) {
         const msg = `INVESTMENT.STEP must be a positive value`;
         logger.execution.error(msg);

@@ -41,7 +41,7 @@ const CalculationNode = {
         let quantity, calculation;
         let bestCalculation = null;
 
-        for (quantity = CONFIG.INVESTMENT.MIN || CONFIG.INVESTMENT.STEP; quantity <= CONFIG.INVESTMENT.MAX; quantity += CONFIG.INVESTMENT.STEP) {
+        for (quantity = CONFIG.INVESTMENT.MIN; quantity <= CONFIG.INVESTMENT.MAX; quantity += CONFIG.INVESTMENT.STEP) {
             calculation = CalculationNode.calculate(quantity, trade, depthSnapshot);
             if (!bestCalculation || calculation.percent > bestCalculation.percent) {
                 bestCalculation = calculation;
