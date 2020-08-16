@@ -10,7 +10,7 @@ const ArbitrageExecution = {
     attemptedPositions: {},
 
     executeCalculatedPosition(calculated) {
-        const startTime = new Date().getTime();
+        const startTime = Date.now();
 
         if (!ArbitrageExecution.isSafeToExecute(calculated)) return false;
 
@@ -32,7 +32,7 @@ const ArbitrageExecution = {
 
         return ArbitrageExecution.getExecutionStrategy()(calculated)
             .then((actual) => {
-                logger.execution.info(`${CONFIG.TRADING.ENABLED ? 'Executed' : 'Test: Executed'} ${calculated.id} position in ${new Date().getTime() - startTime} ms`);
+                logger.execution.info(`${CONFIG.TRADING.ENABLED ? 'Executed' : 'Test: Executed'} ${calculated.id} position in ${Date.now() - startTime} ms`);
 
                 // Results are only collected when a trade is executed
                 if (!CONFIG.TRADING.ENABLED) return;
@@ -95,7 +95,7 @@ const ArbitrageExecution = {
     },
 
     isSafeToExecute(calculated) {
-        const now = new Date().getTime();
+        const now = Date.now();
         const { symbol } = calculated.trade;
 
         // Profit Threshold is Not Satisfied
@@ -138,7 +138,7 @@ const ArbitrageExecution = {
     },
 
     getAttemptedPositionsCountInLastSecond() {
-        const timeFloor = new Date().getTime() - 1000;
+        const timeFloor = Date.now() - 1000;
         return Object.keys(ArbitrageExecution.attemptedPositions).filter(time => time > timeFloor).length;
     },
 
@@ -219,7 +219,7 @@ const ArbitrageExecution = {
                 if (results.orderId) {
                     [actual.a.spent, actual.b.earned, fees] = ArbitrageExecution.parseActualResults(calculated.trade.ab.method, results);
                     actual.fees += fees;
-                    recalculated.bc = CalculationNode.recalculateTradeLeg(calculated.trade.bc, actual.b.earned, BinanceApi.getDepthSnapshots(calculated.trade.bc.ticker));
+                    recalculated.bc = CalculationNode.recalculateTradeLeg(calculated.trade.bc, actual.b.earned, BinanceApi.depthCache(calculated.trade.bc.ticker));
                 }
                 return BinanceApi.marketBuyOrSell(calculated.trade.bc.method)(calculated.trade.bc.ticker, recalculated.bc);
             })
@@ -227,7 +227,7 @@ const ArbitrageExecution = {
                 if (results.orderId) {
                     [actual.b.spent, actual.c.earned, fees] = ArbitrageExecution.parseActualResults(calculated.trade.bc.method, results);
                     actual.fees += fees;
-                    recalculated.ca = CalculationNode.recalculateTradeLeg(calculated.trade.ca, actual.c.earned, BinanceApi.getDepthSnapshots(calculated.trade.ca.ticker));
+                    recalculated.ca = CalculationNode.recalculateTradeLeg(calculated.trade.ca, actual.c.earned, BinanceApi.depthCache(calculated.trade.ca.ticker));
                 }
                 return BinanceApi.marketBuyOrSell(calculated.trade.ca.method)(calculated.trade.ca.ticker, recalculated.ca);
             })

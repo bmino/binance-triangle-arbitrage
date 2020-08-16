@@ -39,7 +39,7 @@ const HUD = {
             HUD.screen.append(HUD.objects.arbTable);
         }
 
-        const now = new Date().getTime();
+        const now = Date.now();
 
         let tableData = [HUD.headers.arb];
         arbs.forEach(arb => {

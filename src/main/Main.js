@@ -14,7 +14,8 @@ logger.performance.info(logger.LINE);
 
 if (CONFIG.TRADING.ENABLED) console.log(`WARNING! Order execution is enabled!\n`);
 
-SpeedTest.multiPing()
+checkConfig()
+    .then(SpeedTest.multiPing)
     .then((pings) => {
         const msg = `Successfully pinged Binance in ${(pings.reduce((a,b) => a+b, 0) / pings.length).toFixed(0)} ms`;
         console.log(msg);
@@ -22,11 +23,10 @@ SpeedTest.multiPing()
     })
     .then(BinanceApi.exchangeInfo)
     .then(exchangeInfo => MarketCache.initialize(exchangeInfo, CONFIG.TRADING.WHITELIST, CONFIG.INVESTMENT.BASE))
-    .then(checkConfig)
     .then(checkBalances)
     .then(() => {
         // Listen for depth updates
-        const tickers = MarketCache.getTickerArray();
+        const tickers = MarketCache.tickers.watching;
         console.log(`Opening ${tickers.length} depth websockets ...`);
         return BinanceApi.depthCacheStaggered(tickers, CONFIG.DEPTH.SIZE, CONFIG.DEPTH.INITIALIZATION_INTERVAL);
     })
@@ -52,7 +52,7 @@ function calculateArbitrage() {
 
     const { calculationTime, successCount, errorCount, results } = CalculationNode.cycle(
         MarketCache.relationships,
-        BinanceApi.getDepthSnapshots(MarketCache.getTickerArray()),
+        BinanceApi.getDepthSnapshots(MarketCache.tickers.watching),
         (e) => logger.performance.warn(e),
         ArbitrageExecution.executeCalculatedPosition
     );
@@ -70,7 +70,7 @@ function displayCalculationResults(successCount, errorCount, calculationTime) {
     }
 
     if (CalculationNode.cycleCount % 500 === 0) {
-        const tickersWithoutDepthUpdate = MarketCache.getTickersWithoutDepthCacheUpdate();
+        const tickersWithoutDepthUpdate = MarketCache.getWatchedTickersWithoutDepthCacheUpdate();
         if (tickersWithoutDepthUpdate.length > 0) {
             logger.performance.debug(`Tickers without a depth cache update: [${tickersWithoutDepthUpdate}]`);
         }
@@ -90,20 +90,8 @@ function checkConfig() {
         }
     };
 
-    if (MarketCache.getTickerArray().length < 3) {
-        const msg = `Watching ${MarketCache.getTickerArray().length} ticker(s) is not sufficient to engage in triangle arbitrage`;
-        logger.execution.debug(`Watched Tickers: [${MarketCache.getTickerArray()}]`);
-        logger.execution.error(msg);
-        throw new Error(msg);
-    }
-    if (MarketCache.symbols.size < 3) {
-        const msg = `Watching ${MarketCache.symbols.size} symbol(s) is not sufficient to engage in triangle arbitrage`;
-        logger.execution.debug(`Watched Symbols: [${Array.from(MarketCache.symbols)}]`);
-        logger.execution.error(msg);
-        throw new Error(msg);
-    }
-    if (MarketCache.relationships.length === 0) {
-        const msg = `Watching ${MarketCache.relationships.length} triangular relationships is not sufficient to engage in triangle arbitrage`;
+    if (CONFIG.INVESTMENT.MIN <= 0) {
+        const msg = `INVESTMENT.MIN must be a positive value`;
         logger.execution.error(msg);
         throw new Error(msg);
     }
@@ -119,6 +107,11 @@ function checkConfig() {
     }
     if ((CONFIG.INVESTMENT.MIN !== CONFIG.INVESTMENT.MAX) && (CONFIG.INVESTMENT.MAX - CONFIG.INVESTMENT.MIN) / CONFIG.INVESTMENT.STEP < 1) {
         const msg = `Not enough steps between INVESTMENT.MIN and INVESTMENT.MAX using step size of ${CONFIG.INVESTMENT.STEP}`;
+        logger.execution.error(msg);
+        throw new Error(msg);
+    }
+    if (CONFIG.TRADING.WHITELIST.some(sym => sym !== sym.toUpperCase())) {
+        const msg = `Whitelist symbols must all be uppercase`;
         logger.execution.error(msg);
         throw new Error(msg);
     }
@@ -168,6 +161,8 @@ function checkConfig() {
         logger.execution.error(msg);
         throw new Error(msg);
     }
+
+    return Promise.resolve();
 }
 
 function checkBalances() {
