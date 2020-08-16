@@ -1,0 +1,1 @@
+docker build -t gabrielmilan/binance-triangle-arbitrage --compress --no-cache .
