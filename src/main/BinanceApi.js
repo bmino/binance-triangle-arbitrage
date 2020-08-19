@@ -38,7 +38,7 @@ const BinanceApi = {
     getDepthSnapshots(tickers) {
         const depthSnapshot = {};
         tickers.forEach((ticker) => {
-            depthSnapshot[ticker] = binance.depthCache(ticker);
+            depthSnapshot[ticker] = { ...binance.depthCache(ticker) };
         });
         return depthSnapshot;
     },
