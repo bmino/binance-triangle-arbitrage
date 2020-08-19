@@ -1,5 +1,6 @@
 const CONFIG = require('../../config/config');
 const logger = require('./Loggers');
+const Util = require('./Util');
 const os = require('os');
 const BinanceApi = require('./BinanceApi');
 const MarketCache = require('./MarketCache');
@@ -19,7 +20,7 @@ if (CONFIG.TRADING.ENABLED) console.log(`WARNING! Order execution is enabled!\n`
 checkConfig()
     .then(SpeedTest.multiPing)
     .then((pings) => {
-        const msg = `Experiencing approximately ${(pings.reduce((a,b) => a+b, 0) / pings.length).toFixed(0)} ms of latency`;
+        const msg = `Experiencing approximately ${Util.average(pings).toFixed(0)} ms of latency`;
         console.log(msg);
         logger.performance.info(msg);
     })
@@ -77,7 +78,7 @@ function displayCalculationResults(successCount, errorCount, calculationTime) {
         if (tickersWithoutDepthUpdate.length > 0) {
             logger.performance.debug(`Tickers without a depth cache update: [${tickersWithoutDepthUpdate}]`);
         }
-        logger.performance.debug(`Recent calculations completed in ${recentCalculationTimes.reduce((sum,t) => sum + t, 0) / recentCalculationTimes.length} ms`);
+        logger.performance.debug(`Recent calculations completed in ${Util.average(recentCalculationTimes)} ms`);
         recentCalculationTimes = [];
     }
 }
