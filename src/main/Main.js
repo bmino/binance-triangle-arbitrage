@@ -8,6 +8,8 @@ const ArbitrageExecution = require('./ArbitrageExecution');
 const CalculationNode = require('./CalculationNode');
 const SpeedTest = require('./SpeedTest');
 
+let recentCalculationTimes = [];
+
 // Helps identify application startup
 logger.execution.info(logger.LINE);
 logger.performance.info(logger.LINE);
@@ -64,6 +66,7 @@ function calculateArbitrage() {
 
 function displayCalculationResults(successCount, errorCount, calculationTime) {
     const totalCalculations = successCount + errorCount;
+    recentCalculationTimes.push(calculationTime);
 
     if (errorCount > 0) {
         logger.performance.warn(`Completed ${successCount}/${totalCalculations} (${((successCount/totalCalculations) * 100).toFixed(1)}%) calculations in ${calculationTime} ms`);
@@ -74,7 +77,8 @@ function displayCalculationResults(successCount, errorCount, calculationTime) {
         if (tickersWithoutDepthUpdate.length > 0) {
             logger.performance.debug(`Tickers without a depth cache update: [${tickersWithoutDepthUpdate}]`);
         }
-        logger.performance.debug(`Recent calculations completed in ${calculationTime} ms`);
+        logger.performance.debug(`Recent calculations completed in ${recentCalculationTimes.reduce((sum,t) => sum + t, 0) / recentCalculationTimes.length} ms`);
+        recentCalculationTimes = [];
     }
 }
 
