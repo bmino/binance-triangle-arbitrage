@@ -1,8 +1,10 @@
+const logger = require('./Loggers');
 const BinanceApi = require('./BinanceApi');
 
 const SpeedTest = {
 
     ping() {
+        logger.performance.debug(`Pinging the Binance API ...`);
         const before = Date.now();
         return BinanceApi.time()
             .then(() => Date.now() - before);
