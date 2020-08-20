@@ -53,11 +53,12 @@ checkConfig()
     .catch(handleError);
 
 function calculateArbitrage() {
-    if (CONFIG.DEPTH.PRUNE) MarketCache.pruneDepthsAboveThreshold(CONFIG.DEPTH.SIZE);
+    const depthSnapshots = BinanceApi.getDepthSnapshots(MarketCache.tickers.watching);
+    if (CONFIG.DEPTH.PRUNE) MarketCache.pruneDepthCacheAboveThreshold(depthSnapshots, CONFIG.DEPTH.SIZE);
 
     const { calculationTime, successCount, errorCount, results } = CalculationNode.cycle(
         MarketCache.relationships,
-        BinanceApi.getDepthSnapshots(MarketCache.tickers.watching),
+        depthSnapshots,
         (e) => logger.performance.warn(e),
         ArbitrageExecution.executeCalculatedPosition
     );

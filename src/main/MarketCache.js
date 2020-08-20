@@ -37,12 +37,15 @@ const MarketCache = {
         MarketCache.tickers.watching = Array.from(uniqueTickers);
     },
 
-    pruneDepthsAboveThreshold(threshold) {
-        MarketCache.tickers.watching.forEach(ticker => {
-            const depth = BinanceApi.depthCache(ticker);
-            depth.bids = Util.prune(depth.bids, threshold);
-            depth.asks = Util.prune(depth.asks, threshold);
+    pruneDepthCacheAboveThreshold(depthCache, threshold) {
+        Object.values(depthCache).forEach(depth => {
+            MarketCache.pruneDepthAboveThreshold(depth, threshold);
         });
+    },
+
+    pruneDepthAboveThreshold(depth, threshold) {
+        depth.bids = Util.prune(depth.bids, threshold);
+        depth.asks = Util.prune(depth.asks, threshold);
     },
 
     getWatchedTickersWithoutDepthCacheUpdate() {
