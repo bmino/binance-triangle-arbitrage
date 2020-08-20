@@ -17,6 +17,8 @@ logger.performance.info(logger.LINE);
 
 if (CONFIG.TRADING.ENABLED) console.log(`WARNING! Order execution is enabled!\n`);
 
+process.on('uncaughtException', handleError);
+
 checkConfig()
     .then(SpeedTest.multiPing)
     .then((pings) => {
@@ -48,7 +50,7 @@ checkConfig()
         // Allow time to read output before starting calculation cycles
         setTimeout(calculateArbitrage, 5000);
     })
-    .catch(console.error);
+    .catch(handleError);
 
 function calculateArbitrage() {
     if (CONFIG.DEPTH.PRUNE) MarketCache.pruneDepthsAboveThreshold(CONFIG.DEPTH.SIZE);
@@ -81,6 +83,12 @@ function displayCalculationResults(successCount, errorCount, calculationTime) {
         logger.performance.debug(`Recent calculations completed in ${Util.average(recentCalculationTimes)} ms`);
         recentCalculationTimes = [];
     }
+}
+
+function handleError(err) {
+    console.error(err);
+    logger.binance.error(err);
+    process.exit(1);
 }
 
 function checkConfig() {
