@@ -36,6 +36,10 @@
     "DEPTH": {
         "SIZE": 50,
         "PRUNE": true,
+    },
+
+    "WEBSOCKETS": {
+        "BUNDLE_SIZE": 1,
         "INITIALIZATION_INTERVAL": 75
     },
 

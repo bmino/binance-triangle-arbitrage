@@ -101,6 +101,21 @@ const BinanceApi = {
         return binance.websockets.depthCacheStaggered(tickers, BinanceApi.sortDepthCache, limit, stagger);
     },
 
+    depthCacheWebsockets(tickers, limit, groupSize, stagger) {
+        let chain = null;
+
+        for (let i=0; i < tickers.length; i += groupSize) {
+            const tickerGroup = tickers.slice(i, i + groupSize);
+            let promise = () => new Promise( resolve => {
+                binance.websockets.depthCache( tickerGroup, BinanceApi.sortDepthCache, limit );
+                setTimeout( resolve, stagger );
+            } );
+            chain = chain ? chain.then( promise ) : promise();
+        }
+
+        return chain;
+    },
+
     sortDepthCache(ticker, depth) {
         depth.bids = binance.sortBids(depth.bids);
         depth.asks = binance.sortAsks(depth.asks);

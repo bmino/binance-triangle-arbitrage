@@ -147,7 +147,17 @@ Upon each version update you should copy the new syntax from `config.json.exampl
 * Default: `true`
 * Description: Remove depth cache entries with a depth greater than `DEPTH.SIZE` before each calculation cycle
 
-#### `DEPTH.INITIALIZATION_INTERVAL` (Number)
+
+---
+
+
+### `WEBSOCKETS`
+
+#### `WEBSOCKETS.BUNDLE_SIZE` (Number)
+* Default: `1`
+* Description: Number of tickers combined/included in each depth websocket
+
+#### `WEBSOCKETS.INITIALIZATION_INTERVAL` (Number)
 * Default: `75`
 * Description: Delay (ms) between the initialization of each depth websocket
 

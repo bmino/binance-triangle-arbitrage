@@ -32,8 +32,12 @@ checkConfig()
     .then(() => {
         // Listen for depth updates
         const tickers = MarketCache.tickers.watching;
-        console.log(`Opening ${tickers.length} depth websockets ...`);
-        return BinanceApi.depthCacheStaggered(tickers, CONFIG.DEPTH.SIZE, CONFIG.DEPTH.INITIALIZATION_INTERVAL);
+        console.log(`Opening ${Math.ceil(tickers.length / CONFIG.WEBSOCKETS.BUNDLE_SIZE)} depth websockets ...`);
+        if (CONFIG.WEBSOCKETS.BUNDLE_SIZE === 1) {
+            return BinanceApi.depthCacheStaggered(tickers, CONFIG.DEPTH.SIZE, CONFIG.WEBSOCKETS.INITIALIZATION_INTERVAL);
+        } else {
+            return BinanceApi.depthCacheWebsockets(tickers, CONFIG.DEPTH.SIZE, CONFIG.WEBSOCKETS.BUNDLE_SIZE, CONFIG.WEBSOCKETS.INITIALIZATION_INTERVAL);
+        }
     })
     .then(() => {
         console.log();
@@ -47,8 +51,8 @@ checkConfig()
         logger.performance.debug(`Operating System: ${os.type()}`);
         logger.performance.debug(`Cores Speeds: [${os.cpus().map(cpu => cpu.speed)}] MHz`);
 
-        // Allow time to read output before starting calculation cycles
-        setTimeout(calculateArbitrage, 5000);
+        // Allow time for depth caches to populate
+        setTimeout(calculateArbitrage, 6000);
     })
     .catch(handleError);
 
@@ -157,6 +161,16 @@ function checkConfig() {
     }
     if (!VALID_VALUES.DEPTH.SIZE.includes(CONFIG.DEPTH.SIZE)) {
         const msg = `Depth size can only contain one of the following values: ${VALID_VALUES.DEPTH.SIZE}`;
+        logger.execution.error(msg);
+        throw new Error(msg);
+    }
+    if (isNaN(CONFIG.WEBSOCKETS.BUNDLE_SIZE) || CONFIG.WEBSOCKETS.BUNDLE_SIZE <= 0) {
+        const msg = `Websocket bundle size (${CONFIG.WEBSOCKETS.BUNDLE_SIZE}) must be a positive integer`;
+        logger.execution.error(msg);
+        throw new Error(msg);
+    }
+    if (isNaN(CONFIG.WEBSOCKETS.INITIALIZATION_INTERVAL) || CONFIG.WEBSOCKETS.INITIALIZATION_INTERVAL < 0) {
+        const msg = `Websocket initialization interval (${CONFIG.WEBSOCKETS.INITIALIZATION_INTERVAL}) must be a positive integer`;
         logger.execution.error(msg);
         throw new Error(msg);
     }
