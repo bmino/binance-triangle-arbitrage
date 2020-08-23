@@ -12,6 +12,7 @@ const SpeedTest = require('./SpeedTest');
 let recentCalculationTimes = [];
 
 // Helps identify application startup
+logger.binance.info(logger.LINE);
 logger.execution.info(logger.LINE);
 logger.performance.info(logger.LINE);
 
