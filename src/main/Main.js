@@ -61,6 +61,7 @@ checkConfig()
 
         // Allow time for depth caches to populate
         setTimeout(calculateArbitrage, 6000);
+        setInterval(displayStatusUpdate, CONFIG.TIMING.STATUS_UPDATE_INTERVAL);
     })
     .catch(handleError);
 
@@ -75,27 +76,27 @@ function calculateArbitrage() {
         ArbitrageExecution.executeCalculatedPosition
     );
 
+    recentCalculationTimes.push(calculationTime);
     if (CONFIG.HUD.ENABLED) refreshHUD(results);
+
     displayCalculationResults(successCount, errorCount, calculationTime);
     setTimeout(calculateArbitrage, CONFIG.TIMING.CALCULATION_COOLDOWN);
 }
 
 function displayCalculationResults(successCount, errorCount, calculationTime) {
+    if (errorCount === 0) return;
     const totalCalculations = successCount + errorCount;
-    recentCalculationTimes.push(calculationTime);
+    logger.performance.warn(`Completed ${successCount}/${totalCalculations} (${((successCount/totalCalculations) * 100).toFixed(1)}%) calculations in ${calculationTime} ms`);
+}
 
-    if (errorCount > 0) {
-        logger.performance.warn(`Completed ${successCount}/${totalCalculations} (${((successCount/totalCalculations) * 100).toFixed(1)}%) calculations in ${calculationTime} ms`);
+function displayStatusUpdate() {
+    const tickersWithoutDepthUpdate = MarketCache.getWatchedTickersWithoutDepthCacheUpdate();
+    if (tickersWithoutDepthUpdate.length > 0) {
+        logger.performance.debug(`Tickers without a depth cache update: [${tickersWithoutDepthUpdate}]`);
     }
-
-    if (CalculationNode.cycleCount % 500 === 0) {
-        const tickersWithoutDepthUpdate = MarketCache.getWatchedTickersWithoutDepthCacheUpdate();
-        if (tickersWithoutDepthUpdate.length > 0) {
-            logger.performance.debug(`Tickers without a depth cache update: [${tickersWithoutDepthUpdate}]`);
-        }
-        logger.performance.debug(`Recent calculations completed in ${Util.average(recentCalculationTimes)} ms`);
-        recentCalculationTimes = [];
-    }
+    logger.performance.debug(`Latest ${recentCalculationTimes.length} calculation cycles averaging ${Util.average(recentCalculationTimes).toFixed(2)} ms`);
+    logger.performance.debug(`CPU 1 minute load averaging ${os.loadavg()[0].toFixed(1)}%`);
+    recentCalculationTimes = [];
 }
 
 function handleError(err) {
@@ -194,6 +195,11 @@ function checkConfig() {
     }
     if (CONFIG.TIMING.CALCULATION_COOLDOWN <= 0) {
         const msg = `Calculation cooldown (${CONFIG.TIMING.CALCULATION_COOLDOWN}) must be a positive value`;
+        logger.execution.error(msg);
+        throw new Error(msg);
+    }
+    if (CONFIG.TIMING.STATUS_UPDATE_INTERVAL <= 0) {
+        const msg = `Status update interval (${CONFIG.TIMING.STATUS_UPDATE_INTERVAL}) must be a positive value`;
         logger.execution.error(msg);
         throw new Error(msg);
     }

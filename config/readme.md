@@ -178,3 +178,7 @@ Upon each version update you should copy the new syntax from `config.json.exampl
 #### `TIMING.CALCULATION_COOLDOWN` (Number)
 * Default: `250`
 * Description: Delay (ms) between completing calculations and starting another cycle
+
+#### `TIMING.STATUS_UPDATE_INTERVAL` (Number)
+* Default: `300000`
+* Description: Interval (ms) between each status update

@@ -46,7 +46,8 @@
     "TIMING": {
         "RECEIVE_WINDOW": 5000,
         "USE_SERVER_TIME": false,
-        "CALCULATION_COOLDOWN": 250
+        "CALCULATION_COOLDOWN": 250,
+        "STATUS_UPDATE_INTERVAL": 300000
     }
 
 }
