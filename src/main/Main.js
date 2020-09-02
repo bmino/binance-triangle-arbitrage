@@ -21,13 +21,19 @@ if (CONFIG.TRADING.ENABLED) console.log(`WARNING! Order execution is enabled!\n`
 process.on('uncaughtException', handleError);
 
 checkConfig()
-    .then(SpeedTest.multiPing)
+    .then(() => {
+        console.log(`Checking latency ...`);
+        return SpeedTest.multiPing(5);
+    })
     .then((pings) => {
         const msg = `Experiencing approximately ${Util.average(pings).toFixed(0)} ms of latency`;
         console.log(msg);
         logger.performance.info(msg);
     })
-    .then(BinanceApi.exchangeInfo)
+    .then(() => {
+        console.log(`Fetching exchange info ...`);
+        return BinanceApi.exchangeInfo();
+    })
     .then(exchangeInfo => MarketCache.initialize(exchangeInfo, CONFIG.TRADING.WHITELIST, CONFIG.INVESTMENT.BASE))
     .then(checkBalances)
     .then(() => {
@@ -49,8 +55,9 @@ checkConfig()
         console.log(`Log Level:              ${CONFIG.LOG.LEVEL}`);
         console.log();
 
-        logger.performance.debug(`Operating System: ${os.type()}`);
-        logger.performance.debug(`Cores Speeds: [${os.cpus().map(cpu => cpu.speed)}] MHz`);
+        logger.performance.debug(`Operating System: ${os.type()} ${os.release()}`);
+        logger.performance.debug(`System Total Memory: ${(os.totalmem() / 1073741824).toFixed(1)} GB`)
+        logger.performance.debug(`CPU Core Speeds: [${os.cpus().map(cpu => cpu.speed)}] MHz`);
 
         // Allow time for depth caches to populate
         setTimeout(calculateArbitrage, 6000);
