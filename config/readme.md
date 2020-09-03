@@ -176,5 +176,5 @@ Upon each version update you should copy the new syntax from `config.json.exampl
 * Description: Delay (ms) between completing calculations and starting another cycle
 
 #### `TIMING.STATUS_UPDATE_INTERVAL` (Number)
-* Default: `300000`
+* Default: `120000`
 * Description: Interval (ms) between each status update
