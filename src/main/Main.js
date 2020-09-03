@@ -26,7 +26,7 @@ checkConfig()
         return SpeedTest.multiPing(5);
     })
     .then((pings) => {
-        const msg = `Experiencing approximately ${Util.average(pings).toFixed(0)} ms of latency`;
+        const msg = `Experiencing ${Util.average(pings).toFixed(0)} ms of latency`;
         console.log(msg);
         logger.performance.info(msg);
     })
