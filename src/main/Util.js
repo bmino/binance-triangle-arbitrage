@@ -15,6 +15,15 @@ const Util = {
                 return prunedObject;
             }, {});
     },
+
+    pruneSnapshot: (snapshot, threshold) => {
+        return {
+            ...snapshot,
+            bids: Util.prune(snapshot.bids, threshold),
+            asks: Util.prune(snapshot.asks, threshold)
+        };
+    }
+
 };
 
 module.exports = Util;
