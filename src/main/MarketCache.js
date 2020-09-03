@@ -1,4 +1,5 @@
 const CONFIG = require('../../config/config.json');
+const Util = require('./Util');
 const BinanceApi = require('./BinanceApi');
 
 const MarketCache = {
@@ -36,20 +37,15 @@ const MarketCache = {
         MarketCache.tickers.watching = Array.from(uniqueTickers);
     },
 
-    pruneDepthsAboveThreshold(threshold=100) {
-        const prune = (depthSnapshot, threshold) => {
-            return Object.keys(depthSnapshot)
-                .slice(0, threshold)
-                .reduce((prunedDepthSnapshot, key) => {
-                    prunedDepthSnapshot[key] = depthSnapshot[key];
-                    return prunedDepthSnapshot;
-                }, {});
-        };
-        MarketCache.tickers.watching.forEach(ticker => {
-            const depth = BinanceApi.depthCache(ticker);
-            depth.bids = prune(depth.bids, threshold);
-            depth.asks = prune(depth.asks, threshold);
+    pruneDepthCacheAboveThreshold(depthCache, threshold) {
+        Object.values(depthCache).forEach(depth => {
+            depth.bids = Util.prune(depth.bids, threshold);
+            depth.asks = Util.prune(depth.asks, threshold);
         });
+    },
+
+    getWatchedTickersWithoutDepthCacheUpdate() {
+        return MarketCache.tickers.watching.filter(ticker => !BinanceApi.depthCache(ticker).eventTime);
     },
 
     getTradesFromSymbol(symbol1) {
@@ -61,10 +57,6 @@ const MarketCache = {
             });
         });
         return trades;
-    },
-
-    getWatchedTickersWithoutDepthCacheUpdate() {
-        return MarketCache.tickers.watching.filter(ticker => !BinanceApi.depthCache(ticker).eventTime);
     },
 
     createTrade(a, b, c) {

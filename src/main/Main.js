@@ -1,5 +1,6 @@
 const CONFIG = require('../../config/config');
 const logger = require('./Loggers');
+const Util = require('./Util');
 const os = require('os');
 const BinanceApi = require('./BinanceApi');
 const MarketCache = require('./MarketCache');
@@ -8,27 +9,42 @@ const ArbitrageExecution = require('./ArbitrageExecution');
 const CalculationNode = require('./CalculationNode');
 const SpeedTest = require('./SpeedTest');
 
+let recentCalculationTimes = [];
+
 // Helps identify application startup
+logger.binance.info(logger.LINE);
 logger.execution.info(logger.LINE);
 logger.performance.info(logger.LINE);
 
 if (CONFIG.TRADING.ENABLED) console.log(`WARNING! Order execution is enabled!\n`);
 
+process.on('uncaughtException', handleError);
+
 checkConfig()
-    .then(SpeedTest.multiPing)
+    .then(() => {
+        console.log(`Checking latency ...`);
+        return SpeedTest.multiPing(5);
+    })
     .then((pings) => {
-        const msg = `Successfully pinged Binance in ${(pings.reduce((a,b) => a+b, 0) / pings.length).toFixed(0)} ms`;
+        const msg = `Experiencing ${Util.average(pings).toFixed(0)} ms of latency`;
         console.log(msg);
         logger.performance.info(msg);
     })
-    .then(BinanceApi.exchangeInfo)
+    .then(() => {
+        console.log(`Fetching exchange info ...`);
+        return BinanceApi.exchangeInfo();
+    })
     .then(exchangeInfo => MarketCache.initialize(exchangeInfo, CONFIG.TRADING.WHITELIST, CONFIG.INVESTMENT.BASE))
     .then(checkBalances)
     .then(() => {
         // Listen for depth updates
         const tickers = MarketCache.tickers.watching;
-        console.log(`Opening ${tickers.length} depth websockets ...`);
-        return BinanceApi.depthCacheStaggered(tickers, CONFIG.DEPTH.SIZE, CONFIG.DEPTH.INITIALIZATION_INTERVAL);
+        console.log(`Opening ${Math.ceil(tickers.length / CONFIG.WEBSOCKETS.BUNDLE_SIZE)} depth websockets ...`);
+        if (CONFIG.WEBSOCKETS.BUNDLE_SIZE === 1) {
+            return BinanceApi.depthCacheStaggered(tickers, CONFIG.DEPTH.SIZE, CONFIG.WEBSOCKETS.INITIALIZATION_INTERVAL);
+        } else {
+            return BinanceApi.depthCacheWebsockets(tickers, CONFIG.DEPTH.SIZE, CONFIG.WEBSOCKETS.BUNDLE_SIZE, CONFIG.WEBSOCKETS.INITIALIZATION_INTERVAL);
+        }
     })
     .then(() => {
         console.log();
@@ -39,43 +55,54 @@ checkConfig()
         console.log(`Log Level:              ${CONFIG.LOG.LEVEL}`);
         console.log();
 
-        logger.performance.debug(`Operating System: ${os.type()}`);
-        logger.performance.debug(`Cores Speeds: [${os.cpus().map(cpu => cpu.speed)}] MHz`);
+        logger.performance.debug(`Operating System: ${os.type()} ${os.release()}`);
+        logger.performance.debug(`System Total Memory: ${(os.totalmem() / 1073741824).toFixed(1)} GB`)
+        logger.performance.debug(`CPU Core Speeds: [${os.cpus().map(cpu => cpu.speed)}] MHz`);
 
-        // Allow time to read output before starting calculation cycles
-        setTimeout(calculateArbitrage, 5000);
+        // Allow time for depth caches to populate
+        setTimeout(calculateArbitrage, 6000);
+        setInterval(displayStatusUpdate, CONFIG.TIMING.STATUS_UPDATE_INTERVAL);
     })
-    .catch(console.error);
+    .catch(handleError);
 
 function calculateArbitrage() {
-    if (CONFIG.DEPTH.PRUNE) MarketCache.pruneDepthsAboveThreshold(CONFIG.DEPTH.SIZE);
+    const depthSnapshots = BinanceApi.getDepthSnapshots(MarketCache.tickers.watching);
+    MarketCache.pruneDepthCacheAboveThreshold(depthSnapshots, CONFIG.DEPTH.SIZE);
 
     const { calculationTime, successCount, errorCount, results } = CalculationNode.cycle(
         MarketCache.relationships,
-        BinanceApi.getDepthSnapshots(MarketCache.tickers.watching),
+        depthSnapshots,
         (e) => logger.performance.warn(e),
         ArbitrageExecution.executeCalculatedPosition
     );
 
+    recentCalculationTimes.push(calculationTime);
     if (CONFIG.HUD.ENABLED) refreshHUD(results);
+
     displayCalculationResults(successCount, errorCount, calculationTime);
     setTimeout(calculateArbitrage, CONFIG.TIMING.CALCULATION_COOLDOWN);
 }
 
 function displayCalculationResults(successCount, errorCount, calculationTime) {
+    if (errorCount === 0) return;
     const totalCalculations = successCount + errorCount;
+    logger.performance.warn(`Completed ${successCount}/${totalCalculations} (${((successCount/totalCalculations) * 100).toFixed(1)}%) calculations in ${calculationTime} ms`);
+}
 
-    if (errorCount > 0) {
-        logger.performance.warn(`Completed ${successCount}/${totalCalculations} (${((successCount/totalCalculations) * 100).toFixed(1)}%) calculations in ${calculationTime} ms`);
+function displayStatusUpdate() {
+    const tickersWithoutDepthUpdate = MarketCache.getWatchedTickersWithoutDepthCacheUpdate();
+    if (tickersWithoutDepthUpdate.length > 0) {
+        logger.performance.debug(`Tickers without a depth cache update: [${tickersWithoutDepthUpdate}]`);
     }
+    logger.performance.debug(`Latest ${recentCalculationTimes.length} calculation cycles averaging ${Util.average(recentCalculationTimes).toFixed(2)} ms`);
+    logger.performance.debug(`CPU 1 minute load averaging ${os.loadavg()[0].toFixed(1)}%`);
+    recentCalculationTimes = [];
+}
 
-    if (CalculationNode.cycleCount % 500 === 0) {
-        const tickersWithoutDepthUpdate = MarketCache.getWatchedTickersWithoutDepthCacheUpdate();
-        if (tickersWithoutDepthUpdate.length > 0) {
-            logger.performance.debug(`Tickers without a depth cache update: [${tickersWithoutDepthUpdate}]`);
-        }
-        logger.performance.debug(`Recent calculations completed in ${calculationTime} ms`);
-    }
+function handleError(err) {
+    console.error(err);
+    logger.binance.error(err);
+    process.exit(1);
 }
 
 function checkConfig() {
@@ -146,6 +173,16 @@ function checkConfig() {
         logger.execution.error(msg);
         throw new Error(msg);
     }
+    if (isNaN(CONFIG.WEBSOCKETS.BUNDLE_SIZE) || CONFIG.WEBSOCKETS.BUNDLE_SIZE <= 0) {
+        const msg = `Websocket bundle size (${CONFIG.WEBSOCKETS.BUNDLE_SIZE}) must be a positive integer`;
+        logger.execution.error(msg);
+        throw new Error(msg);
+    }
+    if (isNaN(CONFIG.WEBSOCKETS.INITIALIZATION_INTERVAL) || CONFIG.WEBSOCKETS.INITIALIZATION_INTERVAL < 0) {
+        const msg = `Websocket initialization interval (${CONFIG.WEBSOCKETS.INITIALIZATION_INTERVAL}) must be a positive integer`;
+        logger.execution.error(msg);
+        throw new Error(msg);
+    }
     if (CONFIG.TIMING.RECEIVE_WINDOW > 60000) {
         const msg = `Receive window (${CONFIG.TIMING.RECEIVE_WINDOW}) must be less than 60000`;
         logger.execution.error(msg);
@@ -158,6 +195,11 @@ function checkConfig() {
     }
     if (CONFIG.TIMING.CALCULATION_COOLDOWN <= 0) {
         const msg = `Calculation cooldown (${CONFIG.TIMING.CALCULATION_COOLDOWN}) must be a positive value`;
+        logger.execution.error(msg);
+        throw new Error(msg);
+    }
+    if (CONFIG.TIMING.STATUS_UPDATE_INTERVAL <= 0) {
+        const msg = `Status update interval (${CONFIG.TIMING.STATUS_UPDATE_INTERVAL}) must be a positive value`;
         logger.execution.error(msg);
         throw new Error(msg);
     }

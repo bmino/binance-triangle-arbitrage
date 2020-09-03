@@ -34,15 +34,19 @@
     },
 
     "DEPTH": {
-        "SIZE": 50,
-        "PRUNE": true,
+        "SIZE": 50
+    },
+
+    "WEBSOCKETS": {
+        "BUNDLE_SIZE": 1,
         "INITIALIZATION_INTERVAL": 75
     },
 
     "TIMING": {
         "RECEIVE_WINDOW": 5000,
         "USE_SERVER_TIME": false,
-        "CALCULATION_COOLDOWN": 250
+        "CALCULATION_COOLDOWN": 250,
+        "STATUS_UPDATE_INTERVAL": 120000
     }
 
 }

@@ -212,6 +212,32 @@ const CalculationNode = {
         }
     },
 
+    getOrderBookDepthRequirement(method, quantity, depthSnapshot) {
+        let exchanged = 0;
+        let i;
+        const bidRates = Object.keys(depthSnapshot.bids || {});
+        const askRates = Object.keys(depthSnapshot.asks || {});
+
+        if (method === 'Sell') {
+            for (i=0; i<bidRates.length; i++) {
+                exchanged += depthSnapshot.bids[bidRates[i]];
+                if (exchanged >= quantity) {
+                    return i+1;
+                }
+            }
+        } else if (method === 'Buy') {
+            for (i=0; i<askRates.length; i++) {
+                exchanged += depthSnapshot.asks[askRates[i]];
+                if (exchanged >= quantity) {
+                    return i+1;
+                }
+            }
+        } else {
+            throw new Error(`Unknown method: ${method}`);
+        }
+        return i;
+    },
+
     calculateDustless(trade, amount) {
         if (Number.isInteger(amount)) return amount;
         const amountString = amount.toFixed(12);

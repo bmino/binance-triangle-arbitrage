@@ -38,7 +38,7 @@ const BinanceApi = {
     getDepthSnapshots(tickers) {
         const depthSnapshot = {};
         tickers.forEach((ticker) => {
-            depthSnapshot[ticker] = binance.depthCache(ticker);
+            depthSnapshot[ticker] = { ...binance.depthCache(ticker) };
         });
         return depthSnapshot;
     },
@@ -99,6 +99,21 @@ const BinanceApi = {
 
     depthCacheStaggered(tickers, limit, stagger) {
         return binance.websockets.depthCacheStaggered(tickers, BinanceApi.sortDepthCache, limit, stagger);
+    },
+
+    depthCacheWebsockets(tickers, limit, groupSize, stagger) {
+        let chain = null;
+
+        for (let i=0; i < tickers.length; i += groupSize) {
+            const tickerGroup = tickers.slice(i, i + groupSize);
+            let promise = () => new Promise( resolve => {
+                binance.websockets.depthCache( tickerGroup, BinanceApi.sortDepthCache, limit );
+                setTimeout( resolve, stagger );
+            } );
+            chain = chain ? chain.then( promise ) : promise();
+        }
+
+        return chain;
     },
 
     sortDepthCache(ticker, depth) {

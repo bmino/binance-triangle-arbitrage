@@ -2,6 +2,7 @@ const CONFIG = require('../../config/config');
 const logger = require('./Loggers');
 const BinanceApi = require('./BinanceApi');
 const CalculationNode = require('./CalculationNode');
+const Util = require('./Util');
 
 const ArbitrageExecution = {
 
@@ -64,8 +65,14 @@ const ArbitrageExecution = {
                 logger.execution.debug(`Observed Conversion:  ${actual.c.spent.toFixed(8)} ${symbol.c} into ${actual.a.earned.toFixed(8)} ${symbol.a}`);
                 logger.execution.debug(`Price Error:          ${variation.ca.toFixed(8)}%`);
 
-                logger.execution.trace(`Depth cache used for calculation:`);
-                logger.execution.trace(calculated.depth);
+                const prunedDepthSnapshot = {
+                    ab: Util.pruneSnapshot(calculated.depth.ab, CalculationNode.getOrderBookDepthRequirement(calculated.trade.ab.method, calculated.ab, calculated.depth.ab) + 1),
+                    bc: Util.pruneSnapshot(calculated.depth.bc, CalculationNode.getOrderBookDepthRequirement(calculated.trade.bc.method, calculated.bc, calculated.depth.bc) + 1),
+                    ca: Util.pruneSnapshot(calculated.depth.ca, CalculationNode.getOrderBookDepthRequirement(calculated.trade.ca.method, calculated.ca, calculated.depth.ca) + 1)
+                };
+
+                logger.execution.trace(`Pruned depth cache used for calculation:`);
+                logger.execution.trace(prunedDepthSnapshot);
 
                 const percent = {
                     a: actual.a.delta / actual.a.spent * 100,

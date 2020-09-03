@@ -143,11 +143,17 @@ Upon each version update you should copy the new syntax from `config.json.exampl
     * `100`
     * `500`
 
-#### `DEPTH.PRUNE` (Boolean)
-* Default: `true`
-* Description: Remove depth cache entries with a depth greater than `DEPTH.SIZE` before each calculation cycle
 
-#### `DEPTH.INITIALIZATION_INTERVAL` (Number)
+---
+
+
+### `WEBSOCKETS`
+
+#### `WEBSOCKETS.BUNDLE_SIZE` (Number)
+* Default: `1`
+* Description: Number of tickers combined/included in each depth websocket
+
+#### `WEBSOCKETS.INITIALIZATION_INTERVAL` (Number)
 * Default: `75`
 * Description: Delay (ms) between the initialization of each depth websocket
 
@@ -168,3 +174,7 @@ Upon each version update you should copy the new syntax from `config.json.exampl
 #### `TIMING.CALCULATION_COOLDOWN` (Number)
 * Default: `250`
 * Description: Delay (ms) between completing calculations and starting another cycle
+
+#### `TIMING.STATUS_UPDATE_INTERVAL` (Number)
+* Default: `120000`
+* Description: Interval (ms) between each status update
