@@ -143,10 +143,6 @@ Upon each version update you should copy the new syntax from `config.json.exampl
     * `100`
     * `500`
 
-#### `DEPTH.PRUNE` (Boolean)
-* Default: `true`
-* Description: Remove depth cache entries with a depth greater than `DEPTH.SIZE` before each calculation cycle
-
 
 ---
 

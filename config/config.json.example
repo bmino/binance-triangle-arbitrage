@@ -34,8 +34,7 @@
     },
 
     "DEPTH": {
-        "SIZE": 50,
-        "PRUNE": true,
+        "SIZE": 50
     },
 
     "WEBSOCKETS": {

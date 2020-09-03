@@ -39,13 +39,9 @@ const MarketCache = {
 
     pruneDepthCacheAboveThreshold(depthCache, threshold) {
         Object.values(depthCache).forEach(depth => {
-            MarketCache.pruneDepthAboveThreshold(depth, threshold);
+            depth.bids = Util.prune(depth.bids, threshold);
+            depth.asks = Util.prune(depth.asks, threshold);
         });
-    },
-
-    pruneDepthAboveThreshold(depth, threshold) {
-        depth.bids = Util.prune(depth.bids, threshold);
-        depth.asks = Util.prune(depth.asks, threshold);
     },
 
     getWatchedTickersWithoutDepthCacheUpdate() {

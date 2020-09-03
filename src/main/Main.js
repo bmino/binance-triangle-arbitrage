@@ -67,7 +67,7 @@ checkConfig()
 
 function calculateArbitrage() {
     const depthSnapshots = BinanceApi.getDepthSnapshots(MarketCache.tickers.watching);
-    if (CONFIG.DEPTH.PRUNE) MarketCache.pruneDepthCacheAboveThreshold(depthSnapshots, CONFIG.DEPTH.SIZE);
+    MarketCache.pruneDepthCacheAboveThreshold(depthSnapshots, CONFIG.DEPTH.SIZE);
 
     const { calculationTime, successCount, errorCount, results } = CalculationNode.cycle(
         MarketCache.relationships,
