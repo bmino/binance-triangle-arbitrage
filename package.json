@@ -19,7 +19,8 @@
     "blessed": "^0.1.81",
     "node-binance-api": "^0.11.11",
     "pino": "^6.5.0",
-    "pino-pretty": "^4.1.0"
+    "pino-pretty": "^4.1.0",
+    "systeminformation": "^4.27.3"
   },
   "license": "MIT"
 }

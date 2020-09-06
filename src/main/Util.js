@@ -7,6 +7,18 @@ const Util = {
         return Util.sum(array) / array.length
     },
 
+    toKB: (bytes) => {
+        return bytes / 1024;
+    },
+
+    toMB: (bytes) => {
+        return bytes / 1024 / 1024;
+    },
+
+    toGB: (bytes) => {
+        return bytes / 1024 / 1024 / 1024;
+    },
+
     prune: (object, threshold) => {
         return Object.keys(object)
             .slice(0, threshold)
