@@ -1,7 +1,7 @@
 const CONFIG = require('../../config/config');
 const logger = require('./Loggers');
 const Util = require('./Util');
-const os = require('os');
+const si = require('systeminformation');
 const BinanceApi = require('./BinanceApi');
 const MarketCache = require('./MarketCache');
 const HUD = require('./HUD');
@@ -21,6 +21,7 @@ if (CONFIG.TRADING.ENABLED) console.log(`WARNING! Order execution is enabled!\n`
 process.on('uncaughtException', handleError);
 
 checkConfig()
+    .then(si.networkStats)
     .then(() => {
         console.log(`Checking latency ...`);
         return SpeedTest.multiPing(5);
@@ -54,10 +55,6 @@ checkConfig()
         console.log(`Age Threshold:          ${CONFIG.TRADING.AGE_THRESHOLD} ms`);
         console.log(`Log Level:              ${CONFIG.LOG.LEVEL}`);
         console.log();
-
-        logger.performance.debug(`Operating System: ${os.type()} ${os.release()}`);
-        logger.performance.debug(`System Total Memory: ${(os.totalmem() / 1073741824).toFixed(1)} GB`)
-        logger.performance.debug(`CPU Core Speeds: [${os.cpus().map(cpu => cpu.speed)}] MHz`);
 
         // Allow time for depth caches to populate
         setTimeout(calculateArbitrage, 6000);
@@ -94,9 +91,21 @@ function displayStatusUpdate() {
     if (tickersWithoutDepthUpdate.length > 0) {
         logger.performance.debug(`Tickers without a depth cache update: [${tickersWithoutDepthUpdate}]`);
     }
-    logger.performance.debug(`Latest ${recentCalculationTimes.length} calculation cycles averaging ${Util.average(recentCalculationTimes).toFixed(2)} ms`);
-    logger.performance.debug(`CPU 1 minute load averaging ${os.loadavg()[0].toFixed(1)}%`);
+    logger.performance.debug(`Calculation cycle average speed: ${Util.average(recentCalculationTimes).toFixed(2)} ms`);
     recentCalculationTimes = [];
+
+    Promise.all([
+        si.currentLoad(),
+        si.mem(),
+        si.networkStats(),
+        SpeedTest.ping()
+    ])
+        .then(([load, memory, network, latency]) => {
+            logger.performance.debug(`CPU Load: ${(load.avgload * 100).toFixed(0)}% [${load.cpus.map(cpu => cpu.load.toFixed(0) + '%')}]`);
+            logger.performance.debug(`Memory Usage: ${Util.toGB(memory.used).toFixed(1)} GB`);
+            logger.performance.debug(`Network Usage: ${Util.toKB(network[0].rx_sec).toFixed(1)} KBps (up) and ${Util.toKB(network[0].tx_sec).toFixed(1)} KBps (down)`);
+            logger.performance.debug(`API Latency: ${latency} ms`);
+        });
 }
 
 function handleError(err) {
@@ -221,6 +230,11 @@ function checkBalances() {
             }
             if (balances[CONFIG.INVESTMENT.BASE].available < CONFIG.INVESTMENT.MAX) {
                 const msg = `Only detected ${balances[CONFIG.INVESTMENT.BASE].available} ${CONFIG.INVESTMENT.BASE}, but ${CONFIG.INVESTMENT.MAX} ${CONFIG.INVESTMENT.BASE} is required to satisfy your INVESTMENT.MAX configuration`;
+                logger.execution.error(msg);
+                throw new Error(msg);
+            }
+            if (balances['BNB'].available <= 0.001) {
+                const msg = `Only detected ${balances['BNB'].available} BNB which is not sufficient to pay for trading fees via BNB`;
                 logger.execution.error(msg);
                 throw new Error(msg);
             }
