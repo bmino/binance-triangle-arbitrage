@@ -21,6 +21,7 @@ if (CONFIG.TRADING.ENABLED) console.log(`WARNING! Order execution is enabled!\n`
 process.on('uncaughtException', handleError);
 
 checkConfig()
+    .then(si.networkStats)
     .then(() => {
         console.log(`Checking latency ...`);
         return SpeedTest.multiPing(5);
@@ -101,7 +102,7 @@ function displayStatusUpdate() {
     ])
         .then(([load, memory, network, latency]) => {
             logger.performance.debug(`CPU Load: ${(load.avgload * 100).toFixed(0)}% [${load.cpus.map(cpu => cpu.load.toFixed(0) + '%')}]`);
-            logger.performance.debug(`Memory Usage: ${Util.toGB(memory.used).toFixed(1)} / ${Util.toGB(memory.total).toFixed(1)} GB`);
+            logger.performance.debug(`Memory Usage: ${Util.toGB(memory.used).toFixed(1)} GB`);
             logger.performance.debug(`Network Usage: ${Util.toKB(network[0].rx_sec).toFixed(1)} KBps (up) and ${Util.toKB(network[0].tx_sec).toFixed(1)} KBps (down)`);
             logger.performance.debug(`API Latency: ${latency} ms`);
         });
