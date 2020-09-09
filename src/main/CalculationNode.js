@@ -76,7 +76,7 @@ const CalculationNode = {
             }
         };
 
-        if (trade.ab.method === 'Buy') {
+        if (trade.ab.method === 'BUY') {
             // Buying BA
             const dustedB = CalculationNode.orderBookConversion(investmentA, trade.symbol.a, trade.symbol.b, trade.ab.ticker, depthSnapshot.ab);
             calculated.b.earned = calculated.ab = CalculationNode.calculateDustless(trade.ab, dustedB);
@@ -87,7 +87,7 @@ const CalculationNode = {
             calculated.b.earned = CalculationNode.orderBookConversion(calculated.a.spent, trade.symbol.a, trade.symbol.b, trade.ab.ticker, depthSnapshot.ab);
         }
 
-        if (trade.bc.method === 'Buy') {
+        if (trade.bc.method === 'BUY') {
             // Buying CB
             const dustedC = CalculationNode.orderBookConversion(calculated.b.earned, trade.symbol.b, trade.symbol.c, trade.bc.ticker, depthSnapshot.bc);
             calculated.c.earned = calculated.bc = CalculationNode.calculateDustless(trade.bc, dustedC);
@@ -98,7 +98,7 @@ const CalculationNode = {
             calculated.c.earned = CalculationNode.orderBookConversion(calculated.b.spent, trade.symbol.b, trade.symbol.c, trade.bc.ticker, depthSnapshot.bc);
         }
 
-        if (trade.ca.method === 'Buy') {
+        if (trade.ca.method === 'BUY') {
             // Buying AC
             const dustedA = CalculationNode.orderBookConversion(calculated.c.earned, trade.symbol.c, trade.symbol.a, trade.ca.ticker, depthSnapshot.ca);
             calculated.a.earned = calculated.ca = CalculationNode.calculateDustless(trade.ca, dustedA);
@@ -122,7 +122,7 @@ const CalculationNode = {
 
     recalculateTradeLeg(trade, quantityEarned, depthSnapshot) {
         const { base, quote, method, ticker } = trade;
-        if (method.toUpperCase() === 'BUY') {
+        if (method === 'BUY') {
             const dustedQuantity = CalculationNode.orderBookConversion(quantityEarned, quote, base, ticker, depthSnapshot);
             return CalculationNode.calculateDustless(trade, dustedQuantity);
         } else {
@@ -218,14 +218,14 @@ const CalculationNode = {
         const bidRates = Object.keys(depthSnapshot.bids || {});
         const askRates = Object.keys(depthSnapshot.asks || {});
 
-        if (method === 'Sell') {
+        if (method === 'SELL') {
             for (i=0; i<bidRates.length; i++) {
                 exchanged += depthSnapshot.bids[bidRates[i]];
                 if (exchanged >= quantity) {
                     return i+1;
                 }
             }
-        } else if (method === 'Buy') {
+        } else if (method === 'BUY') {
             for (i=0; i<askRates.length; i++) {
                 exchanged += depthSnapshot.asks[askRates[i]];
                 if (exchanged >= quantity) {

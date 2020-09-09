@@ -119,10 +119,14 @@ function checkConfig() {
 
     const VALID_VALUES = {
         TRADING: {
-            EXECUTION_STRATEGY: ['linear', 'parallel']
+            EXECUTION_STRATEGY: ['linear', 'parallel'],
+            EXECUTION_TEMPLATE: ['BUY', 'SELL', null]
         },
         DEPTH: {
             SIZE: [5, 10, 20, 50, 100, 500]
+        },
+        LOG: {
+            LEVEL: ['trace', 'debug', 'info', 'warn', 'error', 'fatal', 'silent']
         }
     };
 
@@ -157,13 +161,18 @@ function checkConfig() {
         logger.execution.error(msg);
         throw new Error(msg);
     }
-    if (CONFIG.TRADING.EXECUTION_STRATEGY.toLowerCase() === 'parallel' && CONFIG.TRADING.WHITELIST.length === 0) {
+    if (CONFIG.TRADING.EXECUTION_STRATEGY === 'parallel' && CONFIG.TRADING.WHITELIST.length === 0) {
         const msg = `Parallel execution requires defining a whitelist`;
         logger.execution.error(msg);
         throw new Error(msg);
     }
-    if (!VALID_VALUES.TRADING.EXECUTION_STRATEGY.includes(CONFIG.TRADING.EXECUTION_STRATEGY.toLowerCase())) {
+    if (!VALID_VALUES.TRADING.EXECUTION_STRATEGY.includes(CONFIG.TRADING.EXECUTION_STRATEGY)) {
         const msg = `${CONFIG.TRADING.EXECUTION_STRATEGY} is an invalid execution strategy`;
+        logger.execution.error(msg);
+        throw new Error(msg);
+    }
+    if (!CONFIG.TRADING.EXECUTION_TEMPLATE.every(template => VALID_VALUES.TRADING.EXECUTION_TEMPLATE.includes(template))) {
+        const msg = `${CONFIG.TRADING.EXECUTION_TEMPLATE} is an invalid execution template`;
         logger.execution.error(msg);
         throw new Error(msg);
     }
@@ -179,6 +188,11 @@ function checkConfig() {
     }
     if (!VALID_VALUES.DEPTH.SIZE.includes(CONFIG.DEPTH.SIZE)) {
         const msg = `Depth size can only contain one of the following values: ${VALID_VALUES.DEPTH.SIZE}`;
+        logger.execution.error(msg);
+        throw new Error(msg);
+    }
+    if (!VALID_VALUES.LOG.LEVEL.includes(CONFIG.LOG.LEVEL)) {
+        const msg = `Log level can only contain one of the following values: ${VALID_VALUES.LOG.LEVEL}`;
         logger.execution.error(msg);
         throw new Error(msg);
     }

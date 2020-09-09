@@ -72,15 +72,15 @@ const MarketCache = {
 
         const ab = MarketCache.getRelationship(a, b);
         if (!ab) return;
-        if (CONFIG.TRADING.EXECUTION_TEMPLATE[0] && CONFIG.TRADING.EXECUTION_TEMPLATE[0].toUpperCase() !== ab.method.toUpperCase()) return;
+        if (CONFIG.TRADING.EXECUTION_TEMPLATE[0] && CONFIG.TRADING.EXECUTION_TEMPLATE[0] !== ab.method) return;
 
         const bc = MarketCache.getRelationship(b, c);
         if (!bc) return;
-        if (CONFIG.TRADING.EXECUTION_TEMPLATE[1] && CONFIG.TRADING.EXECUTION_TEMPLATE[1].toUpperCase() !== bc.method.toUpperCase()) return;
+        if (CONFIG.TRADING.EXECUTION_TEMPLATE[1] && CONFIG.TRADING.EXECUTION_TEMPLATE[1] !== bc.method) return;
 
         const ca = MarketCache.getRelationship(c, a);
         if (!ca) return;
-        if (CONFIG.TRADING.EXECUTION_TEMPLATE[2] && CONFIG.TRADING.EXECUTION_TEMPLATE[2].toUpperCase() !== ca.method.toUpperCase()) return;
+        if (CONFIG.TRADING.EXECUTION_TEMPLATE[2] && CONFIG.TRADING.EXECUTION_TEMPLATE[2] !== ca.method) return;
 
         return {
             ab,
@@ -92,14 +92,14 @@ const MarketCache = {
 
     getRelationship(a, b) {
         if (MarketCache.tickers.trading[a+b]) return {
-            method: 'Sell',
+            method: 'SELL',
             ticker: a+b,
             base: a,
             quote: b,
             dustDecimals: MarketCache.tickers.trading[a+b].dustDecimals
         };
         if (MarketCache.tickers.trading[b+a]) return {
-            method: 'Buy',
+            method: 'BUY',
             ticker: b+a,
             base: b,
             quote: a,
