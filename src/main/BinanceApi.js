@@ -76,7 +76,7 @@ const BinanceApi = {
     },
 
     marketBuyOrSell(method) {
-        return method.toUpperCase() === 'BUY' ? BinanceApi.marketBuy : BinanceApi.marketSell;
+        return method === 'BUY' ? BinanceApi.marketBuy : BinanceApi.marketSell;
     },
 
     handleBuyOrSellError(error, reject) {

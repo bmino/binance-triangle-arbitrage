@@ -150,7 +150,7 @@ const ArbitrageExecution = {
     },
 
     getExecutionStrategy() {
-        switch (CONFIG.TRADING.EXECUTION_STRATEGY.toLowerCase()) {
+        switch (CONFIG.TRADING.EXECUTION_STRATEGY) {
             case 'parallel':
                 return ArbitrageExecution.parallelExecutionStrategy;
             default:
@@ -254,8 +254,8 @@ const ArbitrageExecution = {
     },
 
     parseActualResults(method, { executedQty, cummulativeQuoteQty, fills }) {
-        const spent = method.toUpperCase() === 'BUY' ? parseFloat(cummulativeQuoteQty) : parseFloat(executedQty);
-        const earned = method.toUpperCase() === 'SELL' ? parseFloat(cummulativeQuoteQty) : parseFloat(executedQty);
+        const spent = method === 'BUY' ? parseFloat(cummulativeQuoteQty) : parseFloat(executedQty);
+        const earned = method === 'SELL' ? parseFloat(cummulativeQuoteQty) : parseFloat(executedQty);
         const fees = fills
             .filter(fill => fill.commissionAsset === 'BNB')
             .map(fill => parseFloat(fill.commission))

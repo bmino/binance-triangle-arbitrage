@@ -113,13 +113,13 @@ Upon each version update you should copy the new syntax from `config.json.exampl
 * Default: `"debug"`
 * Description: Log level to configure how verbose logging messages are. Output can be found in the /log directory
 * Values:
+    * `"silent"`
     * `"fatal"`
     * `"error"`
     * `"warn"`
     * `"info"`
     * `"debug"`
     * `"trace"`
-    * `"silent"`
 
 #### `LOG.PRETTY_PRINT` (Boolean)
 * Default: `true`
