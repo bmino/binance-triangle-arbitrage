@@ -13,8 +13,6 @@ const ArbitrageExecution = {
     executeCalculatedPosition(calculated) {
         const startTime = Date.now();
 
-        if (!ArbitrageExecution.isSafeToExecute(calculated)) return false;
-
         const { symbol } = calculated.trade;
         const age = {
             ab: startTime - calculated.depth.ab.eventTime,
