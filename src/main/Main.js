@@ -63,21 +63,30 @@ checkConfig()
     .catch(handleError);
 
 function calculateArbitrage() {
-    const depthSnapshots = BinanceApi.getDepthSnapshots(MarketCache.tickers.watching);
-    MarketCache.pruneDepthCacheAboveThreshold(depthSnapshots, CONFIG.DEPTH.SIZE);
+    if (isSafeToCalculateArbitrage()) {
+        const depthSnapshots = BinanceApi.getDepthSnapshots(MarketCache.tickers.watching);
+        MarketCache.pruneDepthCacheAboveThreshold(depthSnapshots, CONFIG.DEPTH.SIZE);
 
-    const { calculationTime, successCount, errorCount, results } = CalculationNode.cycle(
-        MarketCache.relationships,
-        depthSnapshots,
-        (e) => logger.performance.warn(e),
-        ArbitrageExecution.executeCalculatedPosition
-    );
+        const {calculationTime, successCount, errorCount, results} = CalculationNode.cycle(
+            MarketCache.relationships,
+            depthSnapshots,
+            (e) => logger.performance.warn(e),
+            ArbitrageExecution.isSafeToExecute,
+            ArbitrageExecution.executeCalculatedPosition
+        );
 
-    recentCalculationTimes.push(calculationTime);
-    if (CONFIG.HUD.ENABLED) refreshHUD(results);
+        recentCalculationTimes.push(calculationTime);
+        if (CONFIG.HUD.ENABLED) refreshHUD(results);
 
-    displayCalculationResults(successCount, errorCount, calculationTime);
+        displayCalculationResults(successCount, errorCount, calculationTime);
+    }
+
     setTimeout(calculateArbitrage, CONFIG.TIMING.CALCULATION_COOLDOWN);
+}
+
+function isSafeToCalculateArbitrage() {
+    if (ArbitrageExecution.inProgressIds.size > 0) return false;
+    return true;
 }
 
 function displayCalculationResults(successCount, errorCount, calculationTime) {

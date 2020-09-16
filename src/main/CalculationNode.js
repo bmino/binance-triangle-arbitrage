@@ -4,14 +4,14 @@ const CalculationNode = {
 
     cycleCount: 0,
 
-    cycle(relationships, depthCacheClone, errorCallback, executionCallback) {
+    cycle(relationships, depthCacheClone, errorCallback, executionCheckCallback, executionCallback) {
         const startTime = Date.now();
 
         let successCount = 0;
         let errorCount = 0;
         let results = {};
 
-        relationships.forEach(relationship => {
+        for (const relationship of relationships) {
             try {
                 const depthSnapshot = {
                     ab: depthCacheClone[relationship.ab.ticker],
@@ -22,13 +22,16 @@ const CalculationNode = {
                 if (calculated) {
                     successCount++;
                     if (CONFIG.HUD.ENABLED) results[calculated.id] = calculated;
-                    executionCallback(calculated);
+                    if (executionCheckCallback(calculated)) {
+                        executionCallback(calculated);
+                        break;
+                    }
                 }
             } catch (error) {
                 errorCount++;
                 errorCallback(error.message);
             }
-        });
+        }
 
         const calculationTime = Date.now() - startTime;
 

@@ -13,8 +13,6 @@ const ArbitrageExecution = {
     executeCalculatedPosition(calculated) {
         const startTime = Date.now();
 
-        if (!ArbitrageExecution.isSafeToExecute(calculated)) return false;
-
         const { symbol } = calculated.trade;
         const age = {
             ab: startTime - calculated.depth.ab.eventTime,
@@ -56,9 +54,9 @@ const ArbitrageExecution = {
                 logger.execution.debug(`Price Error:          ${variation.ab.toFixed(8)}%`);
                 logger.execution.debug();
                 logger.execution.debug(`${calculated.trade.bc.ticker} Stats:`);
-                logger.execution.debug(`BC Expected Conversion:  ${calculated.b.spent.toFixed(8)} ${symbol.b} into ${calculated.c.earned.toFixed(8)} ${symbol.c}`);
-                logger.execution.debug(`BC Observed Conversion:  ${actual.b.spent.toFixed(8)} ${symbol.b} into ${actual.c.earned.toFixed(8)} ${symbol.c}`);
-                logger.execution.debug(`BC Price Error:          ${variation.bc.toFixed(8)}%`);
+                logger.execution.debug(`Expected Conversion:  ${calculated.b.spent.toFixed(8)} ${symbol.b} into ${calculated.c.earned.toFixed(8)} ${symbol.c}`);
+                logger.execution.debug(`Observed Conversion:  ${actual.b.spent.toFixed(8)} ${symbol.b} into ${actual.c.earned.toFixed(8)} ${symbol.c}`);
+                logger.execution.debug(`Price Error:          ${variation.bc.toFixed(8)}%`);
                 logger.execution.debug();
                 logger.execution.debug(`${calculated.trade.ca.ticker} Stats:`);
                 logger.execution.debug(`Expected Conversion:  ${calculated.c.spent.toFixed(8)} ${symbol.c} into ${calculated.a.earned.toFixed(8)} ${symbol.a}`);
