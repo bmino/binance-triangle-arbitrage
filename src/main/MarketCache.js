@@ -4,7 +4,6 @@ const BinanceApi = require('./BinanceApi');
 
 const MarketCache = {
 
-    symbols: new Set(),
     tickers: {
         trading: {},
         watching: []
@@ -13,18 +12,19 @@ const MarketCache = {
 
     initialize(exchangeInfo, whitelistSymbols, baseSymbol) {
         const tradingSymbolObjects = exchangeInfo.symbols.filter(symbolObj => symbolObj.status === 'TRADING');
+        const symbolSet = new Set();
 
         console.log(`Found ${tradingSymbolObjects.length}/${exchangeInfo.symbols.length} currently trading tickers`);
 
         // Extract All Symbols and Tickers
         tradingSymbolObjects.forEach(symbolObj => {
-            MarketCache.symbols.add(symbolObj.baseAsset);
-            MarketCache.symbols.add(symbolObj.quoteAsset);
+            symbolSet.add(symbolObj.baseAsset);
+            symbolSet.add(symbolObj.quoteAsset);
             symbolObj.dustDecimals = Math.max(symbolObj.filters.filter(f => f.filterType === 'LOT_SIZE')[0].minQty.indexOf('1') - 1, 0);
             MarketCache.tickers.trading[symbolObj.symbol] = symbolObj;
         });
 
-        MarketCache.relationships = MarketCache.getTradesFromSymbol(baseSymbol);
+        MarketCache.relationships = MarketCache.getTradesFromSymbol(baseSymbol, symbolSet);
 
         console.log(`Found ${MarketCache.relationships.length} triangular relationships`);
 
@@ -48,10 +48,10 @@ const MarketCache = {
         return MarketCache.tickers.watching.filter(ticker => !BinanceApi.depthCache(ticker).eventTime);
     },
 
-    getTradesFromSymbol(symbol1) {
+    getTradesFromSymbol(symbol1, symbolSet) {
         const trades = [];
-        MarketCache.symbols.forEach(symbol2 => {
-            MarketCache.symbols.forEach(symbol3 => {
+        symbolSet.forEach(symbol2 => {
+            symbolSet.forEach(symbol3 => {
                 const trade = MarketCache.createTrade(symbol1, symbol2, symbol3);
                 if (trade) trades.push(trade);
             });
