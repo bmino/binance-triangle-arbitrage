@@ -37,6 +37,7 @@ checkConfig()
     })
     .then(exchangeInfo => MarketCache.initialize(exchangeInfo, CONFIG.TRADING.WHITELIST, CONFIG.INVESTMENT.BASE))
     .then(checkBalances)
+    .then(checkMarket)
     .then(() => {
         // Listen for depth updates
         const tickers = MarketCache.tickers.watching;
@@ -262,6 +263,18 @@ function checkBalances() {
                 throw new Error(msg);
             }
         });
+}
+
+function checkMarket() {
+    console.log(`Checking market conditions ...`);
+
+    if (MarketCache.relationships.length === 0) {
+        const msg = `No triangular relationships were identified`;
+        logger.execution.error(msg);
+        throw new Error(msg);
+    }
+
+    return Promise.resolve();
 }
 
 function refreshHUD(arbs) {
