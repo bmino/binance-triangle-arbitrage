@@ -106,13 +106,11 @@ function displayStatusUpdate() {
 
     Promise.all([
         si.currentLoad(),
-        si.mem(),
         si.networkStats(),
         SpeedTest.ping()
     ])
-        .then(([load, memory, network, latency]) => {
+        .then(([load, network, latency]) => {
             logger.performance.debug(`CPU Load: ${(load.avgload * 100).toFixed(0)}% [${load.cpus.map(cpu => cpu.load.toFixed(0) + '%')}]`);
-            logger.performance.debug(`Memory Usage: ${Util.toGB(memory.used).toFixed(1)} GB`);
             logger.performance.debug(`Network Usage: ${Util.toKB(network[0].rx_sec).toFixed(1)} KBps (down) and ${Util.toKB(network[0].tx_sec).toFixed(1)} KBps (up)`);
             logger.performance.debug(`API Latency: ${latency} ms`);
         });
