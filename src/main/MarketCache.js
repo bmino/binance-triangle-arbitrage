@@ -45,7 +45,7 @@ const MarketCache = {
     },
 
     getWatchedTickersWithoutDepthCacheUpdate() {
-        return MarketCache.tickers.watching.filter(ticker => !BinanceApi.depthCache(ticker).eventTime);
+        return MarketCache.tickers.watching.filter(ticker => !BinanceApi.getDepthCacheUnsorted(ticker).eventTime);
     },
 
     getTradesFromSymbol(symbol1, symbolSet) {
