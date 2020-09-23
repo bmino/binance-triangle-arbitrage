@@ -141,8 +141,6 @@ const CalculationNode = {
         const bidRates = Object.keys(depthSnapshot.bids || {});
         const askRates = Object.keys(depthSnapshot.asks || {});
 
-        if (parseFloat(bidRates[0]) > parseFloat(askRates[0])) throw new Error(`Spread does not exist for ${ticker}`);
-
         if (ticker === symbolFrom + symbolTo) {
             for (i=0; i<bidRates.length; i++) {
                 rate = parseFloat(bidRates[i]);
@@ -181,8 +179,6 @@ const CalculationNode = {
         let i, rate, quantity, exchangeableAmount;
         const bidRates = Object.keys(depthSnapshot.bids || {});
         const askRates = Object.keys(depthSnapshot.asks || {});
-
-        if (parseFloat(bidRates[0]) > parseFloat(askRates[0])) throw new Error(`Spread does not exist for ${ticker}`);
 
         if (ticker === symbolFrom + symbolTo) {
             for (i=0; i<askRates.length; i++) {
