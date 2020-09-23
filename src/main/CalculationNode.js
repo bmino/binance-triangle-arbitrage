@@ -2,8 +2,6 @@ const CONFIG = require('../../config/config');
 
 const CalculationNode = {
 
-    cycleCount: 0,
-
     cycle(relationships, depthCacheClone, errorCallback, executionCheckCallback, executionCallback) {
         const startTime = Date.now();
 
@@ -34,8 +32,6 @@ const CalculationNode = {
         }
 
         const calculationTime = Date.now() - startTime;
-
-        CalculationNode.cycleCount++;
 
         return { calculationTime, successCount, errorCount, results };
     },
