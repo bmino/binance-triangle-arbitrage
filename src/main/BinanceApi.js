@@ -101,7 +101,7 @@ const BinanceApi = {
         return binance.websockets.depthCacheStaggered(tickers, BinanceApi.sortDepthCache, limit, stagger);
     },
 
-    depthCacheWebsockets(tickers, limit, groupSize, stagger) {
+    depthCacheCombined(tickers, limit, groupSize, stagger) {
         let chain = null;
 
         for (let i=0; i < tickers.length; i += groupSize) {
