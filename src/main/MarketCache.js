@@ -59,6 +59,34 @@ const MarketCache = {
         return trades;
     },
 
+    getRelationshipsInvolvingTicker(ticker) {
+        return MarketCache.relationships.filter(({ab,bc,ca}) => [ab.ticker,bc.ticker,ca.ticker].includes(ticker));
+    },
+
+    getTickersInvolvedInRelationships(relationships) {
+        const tickers = new Set();
+        relationships.forEach(({ab,bc,ca}) => {
+            tickers.add(ab.ticker);
+            tickers.add(bc.ticker);
+            tickers.add(ca.ticker);
+        });
+        return tickers;
+    },
+
+    waitForAllTickersToUpdate(timeout=30000, tickers=MarketCache.tickers.watching) {
+        const start = Date.now();
+        const hasUpdate = (ticker) => {
+            const {bids, asks} = BinanceApi.getDepthCacheUnsorted(ticker);
+            return (Object.keys(bids).length > 0 || Object.keys(asks).length > 0);
+        };
+        const waitForUpdates = (resolve, reject) => {
+            if (tickers.filter(hasUpdate).length === tickers.length) resolve(true);
+            else if (Date.now() - start > timeout) reject(new Error(`Timed out waiting for all watched tickers to receive a depth update`));
+            else setTimeout(waitForUpdates.bind(this, resolve, reject), 1000);
+        };
+        return new Promise(waitForUpdates);
+    },
+
     createTrade(a, b, c) {
         a = a.toUpperCase();
         b = b.toUpperCase();

@@ -71,6 +71,13 @@ Upon each version update you should copy the new syntax from `config.json.exampl
 * Special Values:
     * `0` - No limit on executions
 
+#### `TRADING.SCAN_METHOD` (String)
+* Default: `schedule`
+* Description: Method used to determine when calculation cycles are performed
+* Values:
+    * `"schedule"` - Executes calculation cycles on a scheduled basis relative to the last completion
+    * `"callback"` - Executes calculation cycles as soon as new depth information is received
+
 #### `TRADING.TAKER_FEE` (Number)
 * Default: `0.10`
 * Description: Market taker fee (percent)
@@ -97,11 +104,15 @@ Upon each version update you should copy the new syntax from `config.json.exampl
 
 #### `HUD.ENABLED` (Boolean)
 * Default: `true`
-* Description: Display and refresh the heads up display
+* Description: Display the heads up display
 
 #### `HUD.ARB_COUNT` (Number)
 * Default: `10`
-* Description: Number of triangular arbitrage positions shown on the HUD
+* Description: Number of triangular arbitrage positions shown on the HUD sorted by profit
+
+#### `HUD.REFRESH_RATE` (Number)
+* Default: `250`
+* Description: Delay (ms) between each refresh and re-draw of the HUD
 
 
 ---

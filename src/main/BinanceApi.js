@@ -97,23 +97,32 @@ const BinanceApi = {
         });
     },
 
-    depthCacheStaggered(tickers, limit, stagger) {
-        return binance.websockets.depthCacheStaggered(tickers, null, limit, stagger);
+    depthCacheStaggered(tickers, limit, stagger, cb) {
+        return binance.websockets.depthCacheStaggered(tickers, BinanceApi.depthWSCallback(cb), limit, stagger);
     },
 
-    depthCacheCombined(tickers, limit, groupSize, stagger) {
+    depthCacheCombined(tickers, limit, groupSize, stagger, cb) {
         let chain = null;
 
         for (let i=0; i < tickers.length; i += groupSize) {
             const tickerGroup = tickers.slice(i, i + groupSize);
             let promise = () => new Promise( resolve => {
-                binance.websockets.depthCache( tickerGroup, null, limit );
+                binance.websockets.depthCache( tickerGroup, BinanceApi.depthWSCallback(cb), limit );
                 setTimeout( resolve, stagger );
             } );
             chain = chain ? chain.then( promise ) : promise();
         }
 
         return chain;
+    },
+
+    depthWSCallback(cb) {
+        if (CONFIG.TRADING.SCAN_METHOD === 'callback') {
+            // 'context' exists when processing a websocket update NOT when first populating via snapshot
+            return (ticker, depth, context) => context && cb(ticker);
+        } else {
+            return null;
+        }
     },
 
     getDepthCacheSorted(ticker) {

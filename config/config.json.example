@@ -17,6 +17,7 @@
         "EXECUTION_STRATEGY": "linear",
         "EXECUTION_TEMPLATE": ["BUY", "SELL", "SELL"],
         "EXECUTION_CAP": 1,
+        "SCAN_METHOD": "schedule",
         "TAKER_FEE": 0.10,
         "PROFIT_THRESHOLD": 0.00,
         "AGE_THRESHOLD": 100,
@@ -25,7 +26,8 @@
 
     "HUD": {
         "ENABLED": true,
-        "ARB_COUNT": 10
+        "ARB_COUNT": 10,
+        "REFRESH_RATE": 250
     },
 
     "LOG": {

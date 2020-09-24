@@ -10,6 +10,8 @@ const CalculationNode = require('./CalculationNode');
 const SpeedTest = require('./SpeedTest');
 
 let recentCalculationTimes = [];
+let recentCalculations = {};
+let isInitializing = true;
 
 // Helps identify application startup
 logger.binance.info(logger.LINE);
@@ -43,10 +45,14 @@ checkConfig()
         const tickers = MarketCache.tickers.watching;
         console.log(`Opening ${Math.ceil(tickers.length / CONFIG.WEBSOCKETS.BUNDLE_SIZE)} depth websockets for ${tickers.length} symbols ...`);
         if (CONFIG.WEBSOCKETS.BUNDLE_SIZE === 1) {
-            return BinanceApi.depthCacheStaggered(tickers, CONFIG.DEPTH.SIZE, CONFIG.WEBSOCKETS.INITIALIZATION_INTERVAL);
+            return BinanceApi.depthCacheStaggered(tickers, CONFIG.DEPTH.SIZE, CONFIG.WEBSOCKETS.INITIALIZATION_INTERVAL, calculateArbitrageCallback);
         } else {
-            return BinanceApi.depthCacheCombined(tickers, CONFIG.DEPTH.SIZE, CONFIG.WEBSOCKETS.BUNDLE_SIZE, CONFIG.WEBSOCKETS.INITIALIZATION_INTERVAL);
+            return BinanceApi.depthCacheCombined(tickers, CONFIG.DEPTH.SIZE, CONFIG.WEBSOCKETS.BUNDLE_SIZE, CONFIG.WEBSOCKETS.INITIALIZATION_INTERVAL, calculateArbitrageCallback);
         }
+    })
+    .then(() => {
+        console.log(`Waiting for all tickers to receive initial depth snapshot ...`);
+        return MarketCache.waitForAllTickersToUpdate(10000);
     })
     .then(() => {
         console.log();
@@ -57,13 +63,15 @@ checkConfig()
         console.log(`Log Level:              ${CONFIG.LOG.LEVEL}`);
         console.log();
 
-        // Allow time for depth caches to populate
-        setTimeout(calculateArbitrage, 6000);
+        isInitializing = false;
+
+        if (CONFIG.TRADING.SCAN_METHOD === 'schedule') setTimeout(calculateArbitrageScheduled, 6000);
+        if (CONFIG.HUD.ENABLED) setInterval(refreshHUD, CONFIG.HUD.REFRESH_RATE);
         setInterval(displayStatusUpdate, CONFIG.TIMING.STATUS_UPDATE_INTERVAL);
     })
     .catch(handleError);
 
-function calculateArbitrage() {
+function calculateArbitrageScheduled() {
     if (isSafeToCalculateArbitrage()) {
         const depthSnapshots = BinanceApi.getDepthSnapshots(MarketCache.tickers.watching);
         MarketCache.pruneDepthCacheAboveThreshold(depthSnapshots, CONFIG.DEPTH.SIZE);
@@ -77,16 +85,37 @@ function calculateArbitrage() {
         );
 
         recentCalculationTimes.push(calculationTime);
-        if (CONFIG.HUD.ENABLED) refreshHUD(results);
-
+        if (CONFIG.HUD.ENABLED) Object.assign(recentCalculations, results);
         displayCalculationResults(successCount, errorCount, calculationTime);
     }
 
-    setTimeout(calculateArbitrage, CONFIG.TIMING.CALCULATION_COOLDOWN);
+    setTimeout(calculateArbitrageScheduled, CONFIG.TIMING.CALCULATION_COOLDOWN);
+}
+
+function calculateArbitrageCallback(ticker) {
+    if (!isSafeToCalculateArbitrage()) return;
+
+    const relationships = MarketCache.getRelationshipsInvolvingTicker(ticker);
+    const tickers = MarketCache.getTickersInvolvedInRelationships(relationships);
+    const depthSnapshots = BinanceApi.getDepthSnapshots(tickers);
+    MarketCache.pruneDepthCacheAboveThreshold(depthSnapshots, CONFIG.DEPTH.SIZE);
+
+    const {calculationTime, successCount, errorCount, results} = CalculationNode.cycle(
+        relationships,
+        depthSnapshots,
+        (e) => logger.performance.warn(e),
+        ArbitrageExecution.isSafeToExecute,
+        ArbitrageExecution.executeCalculatedPosition
+    );
+
+    recentCalculationTimes.push(calculationTime);
+    if (CONFIG.HUD.ENABLED) Object.assign(recentCalculations, results);
+    displayCalculationResults(successCount, errorCount, calculationTime);
 }
 
 function isSafeToCalculateArbitrage() {
     if (ArbitrageExecution.inProgressIds.size > 0) return false;
+    if (isInitializing) return false;
     return true;
 }
 
@@ -128,7 +157,8 @@ function checkConfig() {
     const VALID_VALUES = {
         TRADING: {
             EXECUTION_STRATEGY: ['linear', 'parallel'],
-            EXECUTION_TEMPLATE: ['BUY', 'SELL', null]
+            EXECUTION_TEMPLATE: ['BUY', 'SELL', null],
+            SCAN_METHOD: ['schedule', 'callback']
         },
         DEPTH: {
             SIZE: [5, 10, 20, 50, 100, 500]
@@ -184,8 +214,18 @@ function checkConfig() {
         logger.execution.error(msg);
         throw new Error(msg);
     }
+    if (!VALID_VALUES.TRADING.SCAN_METHOD.includes(CONFIG.TRADING.SCAN_METHOD)) {
+        const msg = `Scan method can only contain one of the following values: ${VALID_VALUES.TRADING.SCAN_METHOD}`;
+        logger.execution.error(msg);
+        throw new Error(msg);
+    }
     if (CONFIG.TRADING.TAKER_FEE < 0) {
         const msg = `Taker fee (${CONFIG.TRADING.TAKER_FEE}) must be a positive value`;
+        logger.execution.error(msg);
+        throw new Error(msg);
+    }
+    if (CONFIG.HUD.REFRESH_RATE <= 0) {
+        const msg = `HUD refresh rate (${CONFIG.HUD.REFRESH_RATE}) must be a positive value`;
         logger.execution.error(msg);
         throw new Error(msg);
     }
@@ -275,7 +315,7 @@ function checkMarket() {
     return Promise.resolve();
 }
 
-function refreshHUD(arbs) {
+function refreshHUD(arbs=recentCalculations) {
     const arbsToDisplay = Object.values(arbs)
         .sort((a, b) => a.percent > b.percent ? -1 : 1)
         .slice(0, CONFIG.HUD.ARB_COUNT);
