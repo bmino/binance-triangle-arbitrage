@@ -37,14 +37,15 @@ checkConfig()
     })
     .then(exchangeInfo => MarketCache.initialize(exchangeInfo, CONFIG.TRADING.WHITELIST, CONFIG.INVESTMENT.BASE))
     .then(checkBalances)
+    .then(checkMarket)
     .then(() => {
         // Listen for depth updates
         const tickers = MarketCache.tickers.watching;
-        console.log(`Opening ${Math.ceil(tickers.length / CONFIG.WEBSOCKETS.BUNDLE_SIZE)} depth websockets ...`);
+        console.log(`Opening ${Math.ceil(tickers.length / CONFIG.WEBSOCKETS.BUNDLE_SIZE)} depth websockets for ${tickers.length} symbols ...`);
         if (CONFIG.WEBSOCKETS.BUNDLE_SIZE === 1) {
             return BinanceApi.depthCacheStaggered(tickers, CONFIG.DEPTH.SIZE, CONFIG.WEBSOCKETS.INITIALIZATION_INTERVAL);
         } else {
-            return BinanceApi.depthCacheWebsockets(tickers, CONFIG.DEPTH.SIZE, CONFIG.WEBSOCKETS.BUNDLE_SIZE, CONFIG.WEBSOCKETS.INITIALIZATION_INTERVAL);
+            return BinanceApi.depthCacheCombined(tickers, CONFIG.DEPTH.SIZE, CONFIG.WEBSOCKETS.BUNDLE_SIZE, CONFIG.WEBSOCKETS.INITIALIZATION_INTERVAL);
         }
     })
     .then(() => {
@@ -105,13 +106,11 @@ function displayStatusUpdate() {
 
     Promise.all([
         si.currentLoad(),
-        si.mem(),
         si.networkStats(),
         SpeedTest.ping()
     ])
-        .then(([load, memory, network, latency]) => {
+        .then(([load, network, latency]) => {
             logger.performance.debug(`CPU Load: ${(load.avgload * 100).toFixed(0)}% [${load.cpus.map(cpu => cpu.load.toFixed(0) + '%')}]`);
-            logger.performance.debug(`Memory Usage: ${Util.toGB(memory.used).toFixed(1)} GB`);
             logger.performance.debug(`Network Usage: ${Util.toKB(network[0].rx_sec).toFixed(1)} KBps (down) and ${Util.toKB(network[0].tx_sec).toFixed(1)} KBps (up)`);
             logger.performance.debug(`API Latency: ${latency} ms`);
         });
@@ -262,6 +261,18 @@ function checkBalances() {
                 throw new Error(msg);
             }
         });
+}
+
+function checkMarket() {
+    console.log(`Checking market conditions ...`);
+
+    if (MarketCache.relationships.length === 0) {
+        const msg = `No triangular relationships were identified`;
+        logger.execution.error(msg);
+        throw new Error(msg);
+    }
+
+    return Promise.resolve();
 }
 
 function refreshHUD(arbs) {
