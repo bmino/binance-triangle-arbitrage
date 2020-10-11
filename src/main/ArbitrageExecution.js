@@ -31,10 +31,10 @@ const ArbitrageExecution = {
 
         return ArbitrageExecution.getExecutionStrategy()(calculated)
             .then((actual) => {
-                logger.execution.info(`${CONFIG.TRADING.ENABLED ? 'Executed' : 'Test: Executed'} ${calculated.id} position in ${Util.millisecondsSince(startTime)} ms`);
+                logger.execution.info(`${CONFIG.EXECUTION.ENABLED ? 'Executed' : 'Test: Executed'} ${calculated.id} position in ${Util.millisecondsSince(startTime)} ms`);
 
                 // Results are only collected when a trade is executed
-                if (!CONFIG.TRADING.ENABLED) return;
+                if (!CONFIG.EXECUTION.ENABLED) return;
 
                 const calculateVariation = (calculatedFrom, calculatedTo, actualFrom, actualTo) => {
                     const calculatedPrice = calculatedFrom.spent / calculatedTo.earned;
@@ -92,8 +92,8 @@ const ArbitrageExecution = {
                 ArbitrageExecution.inProgressSymbols.delete(symbol.b);
                 ArbitrageExecution.inProgressSymbols.delete(symbol.c);
 
-                if (CONFIG.TRADING.EXECUTION_CAP && ArbitrageExecution.inProgressIds.size === 0 && ArbitrageExecution.getAttemptedPositionsCount() >= CONFIG.TRADING.EXECUTION_CAP) {
-                    logger.execution.info(`Cannot exceed user defined execution cap of ${CONFIG.TRADING.EXECUTION_CAP} executions`);
+                if (CONFIG.EXECUTION.CAP && ArbitrageExecution.inProgressIds.size === 0 && ArbitrageExecution.getAttemptedPositionsCount() >= CONFIG.EXECUTION.CAP) {
+                    logger.execution.info(`Cannot exceed user defined execution cap of ${CONFIG.EXECUTION.CAP} executions`);
                     process.exit();
                 }
             });
@@ -104,13 +104,13 @@ const ArbitrageExecution = {
         const { symbol } = calculated.trade;
 
         // Profit Threshold is Not Satisfied
-        if (calculated.percent < CONFIG.TRADING.PROFIT_THRESHOLD) return false;
+        if (calculated.percent < CONFIG.EXECUTION.THRESHOLD.PROFIT) return false;
 
         // Age Threshold is Not Satisfied
         const ageInMilliseconds = now - Math.min(calculated.depth.ab.eventTime, calculated.depth.bc.eventTime, calculated.depth.ca.eventTime);
-        if (isNaN(ageInMilliseconds) || ageInMilliseconds > CONFIG.TRADING.AGE_THRESHOLD) return false;
+        if (isNaN(ageInMilliseconds) || ageInMilliseconds > CONFIG.EXECUTION.THRESHOLD.AGE) return false;
 
-        if (CONFIG.TRADING.EXECUTION_CAP && ArbitrageExecution.getAttemptedPositionsCount() >= CONFIG.TRADING.EXECUTION_CAP) {
+        if (CONFIG.EXECUTION.CAP && ArbitrageExecution.getAttemptedPositionsCount() >= CONFIG.EXECUTION.CAP) {
             logger.execution.trace(`Blocking execution because ${ArbitrageExecution.getAttemptedPositionsCount()} executions have been attempted`);
             return false;
         }
@@ -130,7 +130,7 @@ const ArbitrageExecution = {
             logger.execution.trace(`Blocking execution because ${ArbitrageExecution.getAttemptedPositionsCountInLastSecond()} position has already been attempted in the last second`);
             return false;
         }
-        if (Object.entries(ArbitrageExecution.attemptedPositions).find(([executionTime, id]) => id === calculated.id && executionTime > (now - CONFIG.TRADING.AGE_THRESHOLD))) {
+        if (Object.entries(ArbitrageExecution.attemptedPositions).find(([executionTime, id]) => id === calculated.id && executionTime > (now - CONFIG.EXECUTION.THRESHOLD.AGE))) {
             logger.execution.trace(`Blocking execution to avoid double executing the same position`);
             return false;
         }
@@ -148,7 +148,7 @@ const ArbitrageExecution = {
     },
 
     getExecutionStrategy() {
-        switch (CONFIG.TRADING.EXECUTION_STRATEGY) {
+        switch (CONFIG.EXECUTION.STRATEGY) {
             case 'parallel':
                 return ArbitrageExecution.parallelExecutionStrategy;
             default:

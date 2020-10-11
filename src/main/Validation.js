@@ -6,127 +6,136 @@ const Validation = {
         console.log(`Checking configuration ...`);
 
         const VALID_VALUES = {
-            TRADING: {
-                EXECUTION_STRATEGY: ['linear', 'parallel'],
-                EXECUTION_TEMPLATE: ['BUY', 'SELL', null],
-                SCAN_METHOD: ['schedule', 'callback']
+            SCANNING: {
+                DEPTH: [5, 10, 20, 50, 100, 500]
             },
-            DEPTH: {
-                SIZE: [5, 10, 20, 50, 100, 500]
-            },
-            LOG: {
-                LEVEL: ['trace', 'debug', 'info', 'warn', 'error', 'fatal', 'silent']
+            EXECUTION: {
+                STRATEGY: ['linear', 'parallel'],
+                STRATEGY_STRING: `"linear", "parallel"`,
+                TEMPLATE: ['BUY', 'SELL', null],
+                TEMPLATE_STRING: `"BUY", "SELL", null`
             }
         };
 
-        if (CONFIG.INVESTMENT.MIN <= 0) {
-            const msg = `INVESTMENT.MIN must be a positive value`;
+        if (CONFIG.KEYS.API === '' && CONFIG.EXECUTION.ENABLED) {
+            const msg = `Trade executions will fail without an api key (KEY.API)`;
+            logger.execution.warn(msg);
+        }
+        if (CONFIG.KEYS.SECRET === '' && CONFIG.EXECUTION.ENABLED) {
+            const msg = `Trade executions will fail without an api secret (KEY.SECRET)`;
+            logger.execution.warn(msg);
+        }
+
+        if (isNaN(CONFIG.INVESTMENT.MIN) || CONFIG.INVESTMENT.MIN <= 0) {
+            const msg = `Minimum investment quantity (INVESTMENT.MIN) must be a positive integer`;
             logger.execution.error(msg);
             throw new Error(msg);
         }
-        if (CONFIG.INVESTMENT.STEP <= 0) {
-            const msg = `INVESTMENT.STEP must be a positive value`;
+        if (isNaN(CONFIG.INVESTMENT.STEP) || CONFIG.INVESTMENT.STEP <= 0) {
+            const msg = `Investment step size (INVESTMENT.STEP) must be a positive integer`;
             logger.execution.error(msg);
             throw new Error(msg);
         }
         if (CONFIG.INVESTMENT.MIN > CONFIG.INVESTMENT.MAX) {
-            const msg = `INVESTMENT.MIN cannot be greater than INVESTMENT.MAX`;
+            const msg = `Minimum investment quantity (INVESTMENT.MIN) cannot be greater than maximum investment quantity (INVESTMENT.MAX)`;
             logger.execution.error(msg);
             throw new Error(msg);
         }
-        if ((CONFIG.INVESTMENT.MIN !== CONFIG.INVESTMENT.MAX) && (CONFIG.INVESTMENT.MAX - CONFIG.INVESTMENT.MIN) / CONFIG.INVESTMENT.STEP < 1) {
-            const msg = `Not enough steps between INVESTMENT.MIN and INVESTMENT.MAX using step size of ${CONFIG.INVESTMENT.STEP}`;
+        if (CONFIG.INVESTMENT.MIN !== CONFIG.INVESTMENT.MAX && (CONFIG.INVESTMENT.MIN + CONFIG.INVESTMENT.STEP) > CONFIG.INVESTMENT.MAX) {
+            const msg = `Step size (INVESTMENT.STEP) is too large for calculation optimization`;
+            logger.execution.warn(msg);
+        }
+
+        if (isNaN(CONFIG.SCANNING.TIMEOUT) || CONFIG.SCANNING.TIMEOUT < 0) {
+            const msg = `Scanning timeout (SCANNING.TIMEOUT) must be a positive integer`;
             logger.execution.error(msg);
             throw new Error(msg);
         }
-        if (CONFIG.TRADING.WHITELIST.some(sym => sym !== sym.toUpperCase())) {
+        if (!VALID_VALUES.SCANNING.DEPTH.includes(CONFIG.SCANNING.DEPTH)) {
+            const msg = `Depth size (SCANNING.DEPTH) must be one of the following values: ${VALID_VALUES.SCANNING.DEPTH}`;
+            logger.execution.error(msg);
+            throw new Error(msg);
+        }
+        if (CONFIG.SCANNING.DEPTH > 100 && CONFIG.SCANNING.WHITELIST.length === 0) {
+            const msg = `Using a depth size (SCANNING.DEPTH) higher than 100 requires defining a whitelist (SCANNING.WHITELIST)`;
+            logger.execution.error(msg);
+            throw new Error(msg);
+        }
+        if (CONFIG.SCANNING.WHITELIST.some(sym => sym !== sym.toUpperCase())) {
             const msg = `Whitelist symbols must all be uppercase`;
             logger.execution.error(msg);
             throw new Error(msg);
         }
-        if (CONFIG.TRADING.WHITELIST.length > 0 && !CONFIG.TRADING.WHITELIST.includes(CONFIG.INVESTMENT.BASE)) {
-            const msg = `Whitelist must include the base symbol of ${CONFIG.INVESTMENT.BASE}`;
-            logger.execution.debug(`Whitelist: [${CONFIG.TRADING.WHITELIST}]`);
-            logger.execution.error(msg);
-            throw new Error(msg);
-        }
-        if (CONFIG.TRADING.EXECUTION_STRATEGY === 'parallel' && CONFIG.TRADING.WHITELIST.length === 0) {
-            const msg = `Parallel execution requires defining a whitelist`;
-            logger.execution.error(msg);
-            throw new Error(msg);
-        }
-        if (!VALID_VALUES.TRADING.EXECUTION_STRATEGY.includes(CONFIG.TRADING.EXECUTION_STRATEGY)) {
-            const msg = `${CONFIG.TRADING.EXECUTION_STRATEGY} is an invalid execution strategy`;
-            logger.execution.error(msg);
-            throw new Error(msg);
-        }
-        if (!CONFIG.TRADING.EXECUTION_TEMPLATE.every(template => VALID_VALUES.TRADING.EXECUTION_TEMPLATE.includes(template))) {
-            const msg = `${CONFIG.TRADING.EXECUTION_TEMPLATE} is an invalid execution template`;
-            logger.execution.error(msg);
-            throw new Error(msg);
-        }
-        if (!VALID_VALUES.TRADING.SCAN_METHOD.includes(CONFIG.TRADING.SCAN_METHOD)) {
-            const msg = `Scan method can only contain one of the following values: ${VALID_VALUES.TRADING.SCAN_METHOD}`;
-            logger.execution.error(msg);
-            throw new Error(msg);
-        }
-        if (CONFIG.TRADING.TAKER_FEE < 0) {
-            const msg = `Taker fee (${CONFIG.TRADING.TAKER_FEE}) must be a positive value`;
-            logger.execution.error(msg);
-            throw new Error(msg);
-        }
-        if (CONFIG.HUD.REFRESH_RATE <= 0) {
-            const msg = `HUD refresh rate (${CONFIG.HUD.REFRESH_RATE}) must be a positive value`;
-            logger.execution.error(msg);
-            throw new Error(msg);
-        }
-        if (CONFIG.DEPTH.SIZE > 100 && CONFIG.TRADING.WHITELIST.length === 0) {
-            const msg = `Using a depth size higher than 100 requires defining a whitelist`;
-            logger.execution.error(msg);
-            throw new Error(msg);
-        }
-        if (!VALID_VALUES.DEPTH.SIZE.includes(CONFIG.DEPTH.SIZE)) {
-            const msg = `Depth size can only contain one of the following values: ${VALID_VALUES.DEPTH.SIZE}`;
-            logger.execution.error(msg);
-            throw new Error(msg);
-        }
-        if (!VALID_VALUES.LOG.LEVEL.includes(CONFIG.LOG.LEVEL)) {
-            const msg = `Log level can only contain one of the following values: ${VALID_VALUES.LOG.LEVEL}`;
-            logger.execution.error(msg);
-            throw new Error(msg);
-        }
-        if (isNaN(CONFIG.WEBSOCKETS.BUNDLE_SIZE) || CONFIG.WEBSOCKETS.BUNDLE_SIZE <= 0) {
-            const msg = `Websocket bundle size (${CONFIG.WEBSOCKETS.BUNDLE_SIZE}) must be a positive integer`;
-            logger.execution.error(msg);
-            throw new Error(msg);
-        }
-        if (isNaN(CONFIG.WEBSOCKETS.INITIALIZATION_INTERVAL) || CONFIG.WEBSOCKETS.INITIALIZATION_INTERVAL < 0) {
-            const msg = `Websocket initialization interval (${CONFIG.WEBSOCKETS.INITIALIZATION_INTERVAL}) must be a positive integer`;
-            logger.execution.error(msg);
-            throw new Error(msg);
-        }
-        if (CONFIG.TIMING.RECEIVE_WINDOW > 60000) {
-            const msg = `Receive window (${CONFIG.TIMING.RECEIVE_WINDOW}) must be less than 60000`;
-            logger.execution.error(msg);
-            throw new Error(msg);
-        }
-        if (CONFIG.TIMING.RECEIVE_WINDOW <= 0) {
-            const msg = `Receive window (${CONFIG.TIMING.RECEIVE_WINDOW}) must be a positive value`;
-            logger.execution.error(msg);
-            throw new Error(msg);
-        }
-        if (CONFIG.TIMING.CALCULATION_COOLDOWN <= 0) {
-            const msg = `Calculation cooldown (${CONFIG.TIMING.CALCULATION_COOLDOWN}) must be a positive value`;
-            logger.execution.error(msg);
-            throw new Error(msg);
-        }
-        if (CONFIG.TIMING.STATUS_UPDATE_INTERVAL <= 0) {
-            const msg = `Status update interval (${CONFIG.TIMING.STATUS_UPDATE_INTERVAL}) must be a positive value`;
+        if (CONFIG.SCANNING.WHITELIST.length > 0 && !CONFIG.SCANNING.WHITELIST.includes(CONFIG.INVESTMENT.BASE)) {
+            const msg = `Whitelist (SCANNING.WHITELIST) must include the base symbol of ${CONFIG.INVESTMENT.BASE}`;
+            logger.execution.debug(`Whitelist: [${CONFIG.SCANNING.WHITELIST}]`);
             logger.execution.error(msg);
             throw new Error(msg);
         }
 
-        return Promise.resolve();
+        if (isNaN(CONFIG.EXECUTION.CAP) || CONFIG.EXECUTION.CAP < 0) {
+            const msg = `Execution cap (EXECUTION.CAP) must be a positive integer`;
+            logger.execution.error(msg);
+            throw new Error(msg);
+        }
+        if (!VALID_VALUES.EXECUTION.STRATEGY.includes(CONFIG.EXECUTION.STRATEGY)) {
+            const msg = `Execution strategy (EXECUTION.STRATEGY) must be one of the following values: ${VALID_VALUES.EXECUTION.STRATEGY_STRING}`;
+            logger.execution.error(msg);
+            throw new Error(msg);
+        }
+        if (CONFIG.EXECUTION.STRATEGY === 'parallel' && CONFIG.SCANNING.WHITELIST.length === 0) {
+            const msg = `Parallel execution requires defining a whitelist (SCANNING.WHITELIST)`;
+            logger.execution.error(msg);
+            throw new Error(msg);
+        }
+        if (!CONFIG.EXECUTION.TEMPLATE.every(template => VALID_VALUES.EXECUTION.TEMPLATE.includes(template))) {
+            const msg = `Execution template (EXECUTION.TEMPLATE) can only contain the following values: ${VALID_VALUES.EXECUTION.TEMPLATE_STRING}`;
+            logger.execution.error(msg);
+            throw new Error(msg);
+        }
+        if (isNaN(CONFIG.EXECUTION.FEE) || CONFIG.EXECUTION.FEE < 0) {
+            const msg = `Execution fee (EXECUTION.FEE) must be a positive integer`;
+            logger.execution.error(msg);
+            throw new Error(msg);
+        }
+        if (CONFIG.EXECUTION.FEE === 0) {
+            const msg = `Execution fee (EXECUTION.FEE) of zero is likely incorrect`;
+            logger.execution.warn(msg);
+        }
+
+        if (isNaN(CONFIG.HUD.ARB_COUNT) || CONFIG.HUD.ARB_COUNT <= 0) {
+            const msg = `HUD arbitrage count (HUD.ARB_COUNT) must be a positive integer`;
+            logger.execution.error(msg);
+            throw new Error(msg);
+        }
+        if (isNaN(CONFIG.HUD.REFRESH_RATE) || CONFIG.HUD.REFRESH_RATE <= 0) {
+            const msg = `HUD refresh rate (HUD.REFRESH_RATE) must be a positive integer`;
+            logger.execution.error(msg);
+            throw new Error(msg);
+        }
+        if (CONFIG.HUD.REFRESH_RATE < CONFIG.SCANNING.TIMEOUT) {
+            const msg = `Refreshing the HUD (HUD.REFRESH_RATE) more frequently than the scanning timeout (SCANNING.TIMEOUT) is inefficient`;
+            logger.execution.warn(msg);
+        }
+
+        if (isNaN(CONFIG.LOG.STATUS_UPDATE_INTERVAL) || CONFIG.LOG.STATUS_UPDATE_INTERVAL < 0) {
+            const msg = `Status update interval (LOG.STATUS_UPDATE_INTERVAL) must be a positive integer`;
+            logger.execution.error(msg);
+            throw new Error(msg);
+        }
+
+        if (isNaN(CONFIG.WEBSOCKET.BUNDLE_SIZE) || CONFIG.WEBSOCKET.BUNDLE_SIZE <= 0) {
+            const msg = `Websocket bundle size (WEBSOCKET.BUNDLE_SIZE) must be a positive integer`;
+            logger.execution.error(msg);
+            throw new Error(msg);
+        }
+        if (isNaN(CONFIG.WEBSOCKET.INITIALIZATION_INTERVAL) || CONFIG.WEBSOCKET.INITIALIZATION_INTERVAL < 0) {
+            const msg = `Websocket initialization interval (WEBSOCKET.INITIALIZATION_INTERVAL) must be a positive integer`;
+            logger.execution.error(msg);
+            throw new Error(msg);
+        }
+
+        return true;
     }
 
 };

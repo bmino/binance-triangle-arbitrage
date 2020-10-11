@@ -92,23 +92,23 @@ const MarketCache = {
         b = b.toUpperCase();
         c = c.toUpperCase();
 
-        if (CONFIG.TRADING.WHITELIST.length > 0) {
-            if (!CONFIG.TRADING.WHITELIST.includes(a)) return;
-            if (!CONFIG.TRADING.WHITELIST.includes(b)) return;
-            if (!CONFIG.TRADING.WHITELIST.includes(c)) return;
+        if (CONFIG.SCANNING.WHITELIST.length > 0) {
+            if (!CONFIG.SCANNING.WHITELIST.includes(a)) return;
+            if (!CONFIG.SCANNING.WHITELIST.includes(b)) return;
+            if (!CONFIG.SCANNING.WHITELIST.includes(c)) return;
         }
 
         const ab = MarketCache.getRelationship(a, b);
         if (!ab) return;
-        if (CONFIG.TRADING.EXECUTION_TEMPLATE[0] && CONFIG.TRADING.EXECUTION_TEMPLATE[0] !== ab.method) return;
+        if (CONFIG.EXECUTION.TEMPLATE[0] && CONFIG.EXECUTION.TEMPLATE[0] !== ab.method) return;
 
         const bc = MarketCache.getRelationship(b, c);
         if (!bc) return;
-        if (CONFIG.TRADING.EXECUTION_TEMPLATE[1] && CONFIG.TRADING.EXECUTION_TEMPLATE[1] !== bc.method) return;
+        if (CONFIG.EXECUTION.TEMPLATE[1] && CONFIG.EXECUTION.TEMPLATE[1] !== bc.method) return;
 
         const ca = MarketCache.getRelationship(c, a);
         if (!ca) return;
-        if (CONFIG.TRADING.EXECUTION_TEMPLATE[2] && CONFIG.TRADING.EXECUTION_TEMPLATE[2] !== ca.method) return;
+        if (CONFIG.EXECUTION.TEMPLATE[2] && CONFIG.EXECUTION.TEMPLATE[2] !== ca.method) return;
 
         return {
             ab,

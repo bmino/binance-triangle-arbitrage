@@ -19,12 +19,13 @@ logger.binance.info(logger.LINE);
 logger.execution.info(logger.LINE);
 logger.performance.info(logger.LINE);
 
-if (CONFIG.TRADING.ENABLED) console.log(`WARNING! Order execution is enabled!\n`);
+Validation.configuration(CONFIG);
+
+if (CONFIG.EXECUTION.ENABLED) console.log(`WARNING! Order execution is enabled!\n`);
 
 process.on('uncaughtException', handleError);
 
-Validation.configuration(CONFIG)
-    .then(si.networkStats)
+si.networkStats()
     .then(() => {
         console.log(`Checking latency ...`);
         return SpeedTest.multiPing(5);
@@ -38,17 +39,17 @@ Validation.configuration(CONFIG)
         console.log(`Fetching exchange info ...`);
         return BinanceApi.exchangeInfo();
     })
-    .then(exchangeInfo => MarketCache.initialize(exchangeInfo, CONFIG.TRADING.WHITELIST, CONFIG.INVESTMENT.BASE))
+    .then(exchangeInfo => MarketCache.initialize(exchangeInfo, CONFIG.SCANNING.WHITELIST, CONFIG.INVESTMENT.BASE))
     .then(checkBalances)
     .then(checkMarket)
     .then(() => {
         // Listen for depth updates
         const tickers = MarketCache.tickers.watching;
-        console.log(`Opening ${Math.ceil(tickers.length / CONFIG.WEBSOCKETS.BUNDLE_SIZE)} depth websockets for ${tickers.length} tickers ...`);
-        if (CONFIG.WEBSOCKETS.BUNDLE_SIZE === 1) {
-            return BinanceApi.depthCacheStaggered(tickers, CONFIG.DEPTH.SIZE, CONFIG.WEBSOCKETS.INITIALIZATION_INTERVAL, calculateArbitrageCallback);
+        console.log(`Opening ${Math.ceil(tickers.length / CONFIG.WEBSOCKET.BUNDLE_SIZE)} depth websockets for ${tickers.length} tickers ...`);
+        if (CONFIG.WEBSOCKET.BUNDLE_SIZE === 1) {
+            return BinanceApi.depthCacheStaggered(tickers, CONFIG.SCANNING.DEPTH, CONFIG.WEBSOCKET.INITIALIZATION_INTERVAL, calculateArbitrageCallback);
         } else {
-            return BinanceApi.depthCacheCombined(tickers, CONFIG.DEPTH.SIZE, CONFIG.WEBSOCKETS.BUNDLE_SIZE, CONFIG.WEBSOCKETS.INITIALIZATION_INTERVAL, calculateArbitrageCallback);
+            return BinanceApi.depthCacheCombined(tickers, CONFIG.SCANNING.DEPTH, CONFIG.WEBSOCKET.BUNDLE_SIZE, CONFIG.WEBSOCKET.INITIALIZATION_INTERVAL, calculateArbitrageCallback);
         }
     })
     .then(() => {
@@ -60,24 +61,21 @@ Validation.configuration(CONFIG)
         initialized = Date.now();
 
         console.log();
-        console.log(`Execution Strategy:     ${CONFIG.TRADING.EXECUTION_STRATEGY}`);
-        console.log(`Execution Limit:        ${CONFIG.TRADING.EXECUTION_CAP} execution(s)`);
-        console.log(`Profit Threshold:       ${CONFIG.TRADING.PROFIT_THRESHOLD.toFixed(2)}%`);
-        console.log(`Age Threshold:          ${CONFIG.TRADING.AGE_THRESHOLD} ms`);
-        console.log(`Log Level:              ${CONFIG.LOG.LEVEL}`);
+        console.log(`Execution Limit:        ${CONFIG.EXECUTION.CAP} execution(s)`);
+        console.log(`Profit Threshold:       ${CONFIG.EXECUTION.THRESHOLD.PROFIT.toFixed(2)}%`);
+        console.log(`Age Threshold:          ${CONFIG.EXECUTION.THRESHOLD.AGE} ms`);
         console.log();
 
-        isInitializing = false;
+        if (CONFIG.SCANNING.TIMEOUT > 0) calculateArbitrageScheduled();
         if (CONFIG.HUD.ENABLED) setInterval(() => HUD.displayArbs(recentCalculations, CONFIG.HUD.ARB_COUNT), CONFIG.HUD.REFRESH_RATE);
-        if (CONFIG.TRADING.SCAN_METHOD === 'schedule') setTimeout(calculateArbitrageScheduled, 6000);
-        setInterval(displayStatusUpdate, CONFIG.TIMING.STATUS_UPDATE_INTERVAL);
+        if (CONFIG.LOG.STATUS_UPDATE_INTERVAL > 0) setInterval(displayStatusUpdate, CONFIG.LOG.STATUS_UPDATE_INTERVAL);
     })
     .catch(handleError);
 
 function calculateArbitrageScheduled() {
     if (isSafeToCalculateArbitrage()) {
         const depthSnapshots = BinanceApi.getDepthSnapshots(MarketCache.tickers.watching);
-        MarketCache.pruneDepthCacheAboveThreshold(depthSnapshots, CONFIG.DEPTH.SIZE);
+        MarketCache.pruneDepthCacheAboveThreshold(depthSnapshots, CONFIG.SCANNING.DEPTH);
 
         const {calculationTime, successCount, errorCount, results} = CalculationNode.cycle(
             MarketCache.relationships,
@@ -92,7 +90,7 @@ function calculateArbitrageScheduled() {
         displayCalculationResults(successCount, errorCount, calculationTime);
     }
 
-    setTimeout(calculateArbitrageScheduled, CONFIG.TIMING.CALCULATION_COOLDOWN);
+    setTimeout(calculateArbitrageScheduled, CONFIG.SCANNING.TIMEOUT);
 }
 
 function calculateArbitrageCallback(ticker) {
@@ -101,7 +99,7 @@ function calculateArbitrageCallback(ticker) {
     const relationships = MarketCache.getRelationshipsInvolvingTicker(ticker);
     const tickers = MarketCache.getTickersInvolvedInRelationships(relationships);
     const depthSnapshots = BinanceApi.getDepthSnapshots(tickers);
-    MarketCache.pruneDepthCacheAboveThreshold(depthSnapshots, CONFIG.DEPTH.SIZE);
+    MarketCache.pruneDepthCacheAboveThreshold(depthSnapshots, CONFIG.SCANNING.DEPTH);
 
     const {calculationTime, successCount, errorCount, results} = CalculationNode.cycle(
         relationships,
@@ -157,7 +155,7 @@ function handleError(err) {
 }
 
 function checkBalances() {
-    if (!CONFIG.TRADING.ENABLED) return;
+    if (!CONFIG.EXECUTION.ENABLED) return;
 
     console.log(`Checking balances ...`);
 

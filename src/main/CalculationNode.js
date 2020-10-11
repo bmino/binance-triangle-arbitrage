@@ -114,7 +114,7 @@ const CalculationNode = {
         calculated.b.delta = calculated.b.earned - calculated.b.spent;
         calculated.c.delta = calculated.c.earned - calculated.c.spent;
 
-        calculated.percent = (calculated.a.delta / calculated.a.spent * 100) - (CONFIG.TRADING.TAKER_FEE * 3);
+        calculated.percent = (calculated.a.delta / calculated.a.spent * 100) - (CONFIG.EXECUTION.FEE * 3);
         if (!calculated.percent) calculated.percent = -100;
 
         CalculationNode.calculations++;

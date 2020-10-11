@@ -2,15 +2,13 @@ const CONFIG = require('../../config/config');
 const logger = require('./Loggers');
 const Util = require('./Util');
 const Binance = require('node-binance-api');
-const binance = new Binance().options({
+const binance = new Binance().options(Object.assign({
     APIKEY: CONFIG.KEYS.API,
     APISECRET: CONFIG.KEYS.SECRET,
-    test: !CONFIG.TRADING.ENABLED,
+    test: !CONFIG.EXECUTION.ENABLED,
     log: (...args) => logger.binance.info(args.length > 1 ? args : args[0]),
-    verbose: true,
-    recvWindow: CONFIG.TIMING.RECEIVE_WINDOW,
-    useServerTime: CONFIG.TIMING.USE_SERVER_TIME,
-});
+    verbose: true
+}, CONFIG.BINANCE_OPTIONS));
 
 const BinanceApi = {
 
@@ -118,7 +116,7 @@ const BinanceApi = {
     },
 
     depthWSCallback(cb) {
-        if (CONFIG.TRADING.SCAN_METHOD === 'callback') {
+        if (CONFIG.SCANNING.TIMEOUT === 0) {
             // 'context' exists when processing a websocket update NOT when first populating via snapshot
             return (ticker, depth, context) => context && cb(ticker);
         } else {
