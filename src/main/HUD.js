@@ -17,7 +17,7 @@ const HUD = {
         });
     },
 
-    displayArbs(arbs) {
+    displayArbs(arbs, arbCount=10) {
         HUD.initScreen();
         if (!HUD.objects.arbTable) {
             HUD.objects.arbTable = blessed.table({
@@ -42,16 +42,20 @@ const HUD = {
         const now = Date.now();
 
         let tableData = [HUD.headers.arb];
-        arbs.forEach(arb => {
-            tableData.push([
-                `${arb.trade.symbol.a}-${arb.trade.symbol.b}-${arb.trade.symbol.c}`,
-                `${arb.percent.toFixed(4)}%`,
-                `${((now - arb.depth.ab.eventTime)/1000).toFixed(2)}`,
-                `${((now - arb.depth.bc.eventTime)/1000).toFixed(2)}`,
-                `${((now - arb.depth.ca.eventTime)/1000).toFixed(2)}`,
-                `${((now - Math.min(arb.depth.ab.eventTime, arb.depth.bc.eventTime, arb.depth.ca.eventTime))/1000).toFixed(2)}`
-            ]);
-        });
+
+        Object.values(arbs)
+            .sort((a, b) => a.percent > b.percent ? -1 : 1)
+            .slice(0, arbCount)
+            .forEach(arb => {
+                tableData.push([
+                    `${arb.trade.symbol.a}-${arb.trade.symbol.b}-${arb.trade.symbol.c}`,
+                    `${arb.percent.toFixed(4)}%`,
+                    `${((now - arb.depth.ab.eventTime)/1000).toFixed(2)}`,
+                    `${((now - arb.depth.bc.eventTime)/1000).toFixed(2)}`,
+                    `${((now - arb.depth.ca.eventTime)/1000).toFixed(2)}`,
+                    `${((now - Math.min(arb.depth.ab.eventTime, arb.depth.bc.eventTime, arb.depth.ca.eventTime))/1000).toFixed(2)}`
+                ]);
+            });
 
         HUD.objects.arbTable.setData(tableData);
         HUD.screen.render();

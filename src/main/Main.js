@@ -65,9 +65,8 @@ Validation.configuration(CONFIG)
         console.log();
 
         isInitializing = false;
-
+        if (CONFIG.HUD.ENABLED) setInterval(() => HUD.displayArbs(recentCalculations, CONFIG.HUD.ARB_COUNT), CONFIG.HUD.REFRESH_RATE);
         if (CONFIG.TRADING.SCAN_METHOD === 'schedule') setTimeout(calculateArbitrageScheduled, 6000);
-        if (CONFIG.HUD.ENABLED) setInterval(refreshHUD, CONFIG.HUD.REFRESH_RATE);
         setInterval(displayStatusUpdate, CONFIG.TIMING.STATUS_UPDATE_INTERVAL);
     })
     .catch(handleError);
@@ -187,11 +186,4 @@ function checkMarket() {
     }
 
     return Promise.resolve();
-}
-
-function refreshHUD(arbs=recentCalculations) {
-    const arbsToDisplay = Object.values(arbs)
-        .sort((a, b) => a.percent > b.percent ? -1 : 1)
-        .slice(0, CONFIG.HUD.ARB_COUNT);
-    HUD.displayArbs(arbsToDisplay);
 }
