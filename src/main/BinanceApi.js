@@ -1,5 +1,6 @@
 const CONFIG = require('../../config/config');
 const logger = require('./Loggers');
+const Util = require('./Util');
 const Binance = require('node-binance-api');
 const binance = new Binance().options({
     APIKEY: CONFIG.KEYS.API,
@@ -52,7 +53,7 @@ const BinanceApi = {
                 if (binance.getOption('test')) {
                     logger.execution.info(`Test: Successfully bought ${ticker} @ market price`);
                 } else {
-                    logger.execution.info(`Successfully bought ${response.executedQty} ${ticker} @ a quote of ${response.cummulativeQuoteQty} in ${Date.now() - before} ms`);
+                    logger.execution.info(`Successfully bought ${response.executedQty} ${ticker} @ a quote of ${response.cummulativeQuoteQty} in ${Util.millisecondsSince(before)} ms`);
                 }
                 return resolve(response);
             });
@@ -68,7 +69,7 @@ const BinanceApi = {
                 if (binance.getOption('test')) {
                     logger.execution.info(`Test: Successfully sold ${ticker} @ market price`);
                 } else {
-                    logger.execution.info(`Successfully sold ${response.executedQty} ${ticker} @ a quote of ${response.cummulativeQuoteQty} in ${Date.now() - before} ms`);
+                    logger.execution.info(`Successfully sold ${response.executedQty} ${ticker} @ a quote of ${response.cummulativeQuoteQty} in ${Util.millisecondsSince(before)} ms`);
                 }
                 return resolve(response);
             });

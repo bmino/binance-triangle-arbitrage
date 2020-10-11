@@ -34,6 +34,14 @@ const Util = {
             bids: Util.prune(snapshot.bids, threshold),
             asks: Util.prune(snapshot.asks, threshold)
         };
+    },
+
+    secondsSince(ms) {
+        return Util.millisecondsSince(ms) / 1000;
+    },
+
+    millisecondsSince(ms) {
+        return Date.now() - ms;
     }
 
 };

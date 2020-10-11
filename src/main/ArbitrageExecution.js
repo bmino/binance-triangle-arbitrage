@@ -31,7 +31,7 @@ const ArbitrageExecution = {
 
         return ArbitrageExecution.getExecutionStrategy()(calculated)
             .then((actual) => {
-                logger.execution.info(`${CONFIG.TRADING.ENABLED ? 'Executed' : 'Test: Executed'} ${calculated.id} position in ${Date.now() - startTime} ms`);
+                logger.execution.info(`${CONFIG.TRADING.ENABLED ? 'Executed' : 'Test: Executed'} ${calculated.id} position in ${Util.millisecondsSince(startTime)} ms`);
 
                 // Results are only collected when a trade is executed
                 if (!CONFIG.TRADING.ENABLED) return;

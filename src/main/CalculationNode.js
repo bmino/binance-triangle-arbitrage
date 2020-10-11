@@ -1,4 +1,5 @@
 const CONFIG = require('../../config/config');
+const Util = require('./Util');
 
 const CalculationNode = {
 
@@ -31,9 +32,7 @@ const CalculationNode = {
             }
         }
 
-        const calculationTime = Date.now() - startTime;
-
-        return { calculationTime, successCount, errorCount, results };
+        return { calculationTime: Util.millisecondsSince(startTime), successCount, errorCount, results };
     },
 
     optimize(trade, depthSnapshot) {

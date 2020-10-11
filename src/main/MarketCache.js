@@ -81,7 +81,7 @@ const MarketCache = {
         };
         const waitForUpdates = (resolve, reject) => {
             if (tickers.filter(hasUpdate).length === tickers.length) resolve(true);
-            else if (Date.now() - start > timeout) reject(new Error(`Timed out waiting for all watched tickers to receive a depth update`));
+            else if (Util.millisecondsSince(start) > timeout) reject(new Error(`Timed out waiting for all watched tickers to receive a depth update`));
             else setTimeout(waitForUpdates.bind(this, resolve, reject), 1000);
         };
         return new Promise(waitForUpdates);
