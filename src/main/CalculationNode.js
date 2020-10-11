@@ -3,6 +3,8 @@ const Util = require('./Util');
 
 const CalculationNode = {
 
+    calculations: 0,
+
     cycle(relationships, depthCacheClone, errorCallback, executionCheckCallback, executionCallback) {
         const startTime = Date.now();
 
@@ -114,6 +116,8 @@ const CalculationNode = {
 
         calculated.percent = (calculated.a.delta / calculated.a.spent * 100) - (CONFIG.TRADING.TAKER_FEE * 3);
         if (!calculated.percent) calculated.percent = -100;
+
+        CalculationNode.calculations++;
 
         return calculated;
     },

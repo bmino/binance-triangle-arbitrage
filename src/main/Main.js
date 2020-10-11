@@ -12,7 +12,7 @@ const Validation = require('./Validation');
 
 let recentCalculationTimes = [];
 let recentCalculations = {};
-let isInitializing = true;
+let initialized = null;
 
 // Helps identify application startup
 logger.binance.info(logger.LINE);
@@ -56,6 +56,9 @@ Validation.configuration(CONFIG)
         return MarketCache.waitForAllTickersToUpdate(10000);
     })
     .then(() => {
+        console.log(`Initialized`);
+        initialized = Date.now();
+
         console.log();
         console.log(`Execution Strategy:     ${CONFIG.TRADING.EXECUTION_STRATEGY}`);
         console.log(`Execution Limit:        ${CONFIG.TRADING.EXECUTION_CAP} execution(s)`);
@@ -115,7 +118,7 @@ function calculateArbitrageCallback(ticker) {
 
 function isSafeToCalculateArbitrage() {
     if (ArbitrageExecution.inProgressIds.size > 0) return false;
-    if (isInitializing) return false;
+    if (!initialized) return false;
     return true;
 }
 
@@ -130,6 +133,8 @@ function displayStatusUpdate() {
     if (tickersWithoutDepthUpdate.length > 0) {
         logger.performance.debug(`Tickers without a depth cache update: [${tickersWithoutDepthUpdate}]`);
     }
+
+    logger.performance.debug(`Calculations per second: ${(CalculationNode.calculations / Util.secondsSince(initialized)).toFixed(0)}`);
     logger.performance.debug(`Calculation cycle average speed: ${Util.average(recentCalculationTimes).toFixed(2)} ms`);
     recentCalculationTimes = [];
 
