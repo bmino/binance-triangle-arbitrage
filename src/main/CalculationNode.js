@@ -1,13 +1,10 @@
 const CONFIG = require('../../config/config');
-const Util = require('./Util');
 
 const CalculationNode = {
 
-    calculations: 0,
+    STEPS: Math.floor((CONFIG.INVESTMENT.MAX - CONFIG.INVESTMENT.MIN) / CONFIG.INVESTMENT.STEP) + 1,
 
-    cycle(relationships, depthCacheClone, errorCallback, executionCheckCallback, executionCallback) {
-        const startTime = Date.now();
-
+    analyze(relationships, depthCacheClone, errorCallback, executionCheckCallback, executionCallback) {
         let successCount = 0;
         let errorCount = 0;
         let results = {};
@@ -34,7 +31,7 @@ const CalculationNode = {
             }
         }
 
-        return { calculationTime: Util.millisecondsSince(startTime), successCount, errorCount, results };
+        return { successCount, errorCount, results };
     },
 
     optimize(trade, depthSnapshot) {
@@ -116,8 +113,6 @@ const CalculationNode = {
 
         calculated.percent = (calculated.a.delta / calculated.a.spent * 100) - (CONFIG.EXECUTION.FEE * 3);
         if (!calculated.percent) calculated.percent = -100;
-
-        CalculationNode.calculations++;
 
         return calculated;
     },

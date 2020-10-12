@@ -10,9 +10,13 @@ const CalculationNode = require('./CalculationNode');
 const SpeedTest = require('./SpeedTest');
 const Validation = require('./Validation');
 
-let recentCalculationTimes = [];
 let recentCalculations = {};
 let initialized = null;
+
+let statusUpdate = {
+    calculationCount: 0,
+    cycleTimes: []
+};
 
 // Helps identify application startup
 logger.binance.info(logger.LINE);
@@ -25,11 +29,8 @@ if (CONFIG.EXECUTION.ENABLED) console.log(`WARNING! Order execution is enabled!\
 
 process.on('uncaughtException', handleError);
 
-si.networkStats()
-    .then(() => {
-        console.log(`Checking latency ...`);
-        return SpeedTest.multiPing(5);
-    })
+console.log(`Checking latency ...`);
+SpeedTest.multiPing(5)
     .then((pings) => {
         const msg = `Experiencing ${Util.average(pings).toFixed(0)} ms of latency`;
         console.log(msg);
@@ -47,9 +48,9 @@ si.networkStats()
         const tickers = MarketCache.tickers.watching;
         console.log(`Opening ${Math.ceil(tickers.length / CONFIG.WEBSOCKET.BUNDLE_SIZE)} depth websockets for ${tickers.length} tickers ...`);
         if (CONFIG.WEBSOCKET.BUNDLE_SIZE === 1) {
-            return BinanceApi.depthCacheStaggered(tickers, CONFIG.SCANNING.DEPTH, CONFIG.WEBSOCKET.INITIALIZATION_INTERVAL, calculateArbitrageCallback);
+            return BinanceApi.depthCacheStaggered(tickers, CONFIG.SCANNING.DEPTH, CONFIG.WEBSOCKET.INITIALIZATION_INTERVAL, arbitrageCycleCallback);
         } else {
-            return BinanceApi.depthCacheCombined(tickers, CONFIG.SCANNING.DEPTH, CONFIG.WEBSOCKET.BUNDLE_SIZE, CONFIG.WEBSOCKET.INITIALIZATION_INTERVAL, calculateArbitrageCallback);
+            return BinanceApi.depthCacheCombined(tickers, CONFIG.SCANNING.DEPTH, CONFIG.WEBSOCKET.BUNDLE_SIZE, CONFIG.WEBSOCKET.INITIALIZATION_INTERVAL, arbitrageCycleCallback);
         }
     })
     .then(() => {
@@ -57,7 +58,9 @@ si.networkStats()
         return MarketCache.waitForAllTickersToUpdate(10000);
     })
     .then(() => {
-        console.log(`Initialized`);
+        const msg = `Initialized`;
+        console.log(msg);
+        logger.execution.info(msg);
         initialized = Date.now();
 
         console.log();
@@ -66,18 +69,19 @@ si.networkStats()
         console.log(`Age Threshold:          ${CONFIG.EXECUTION.THRESHOLD.AGE} ms`);
         console.log();
 
-        if (CONFIG.SCANNING.TIMEOUT > 0) calculateArbitrageScheduled();
+        if (CONFIG.SCANNING.TIMEOUT > 0) arbitrageCycleScheduled();
         if (CONFIG.HUD.ENABLED) setInterval(() => HUD.displayArbs(recentCalculations, CONFIG.HUD.ARB_COUNT), CONFIG.HUD.REFRESH_RATE);
         if (CONFIG.LOG.STATUS_UPDATE_INTERVAL > 0) setInterval(displayStatusUpdate, CONFIG.LOG.STATUS_UPDATE_INTERVAL);
     })
     .catch(handleError);
 
-function calculateArbitrageScheduled() {
+function arbitrageCycleScheduled() {
     if (isSafeToCalculateArbitrage()) {
+        const startTime = Date.now();
         const depthSnapshots = BinanceApi.getDepthSnapshots(MarketCache.tickers.watching);
         MarketCache.pruneDepthCacheAboveThreshold(depthSnapshots, CONFIG.SCANNING.DEPTH);
 
-        const {calculationTime, successCount, errorCount, results} = CalculationNode.cycle(
+        const { successCount, errorCount, results } = CalculationNode.analyze(
             MarketCache.relationships,
             depthSnapshots,
             (e) => logger.performance.warn(e),
@@ -85,23 +89,25 @@ function calculateArbitrageScheduled() {
             ArbitrageExecution.executeCalculatedPosition
         );
 
-        recentCalculationTimes.push(calculationTime);
+        displayAnalysisResults(successCount, errorCount);
         if (CONFIG.HUD.ENABLED) Object.assign(recentCalculations, results);
-        displayCalculationResults(successCount, errorCount, calculationTime);
+        statusUpdate.calculationCount += (successCount * CalculationNode.STEPS) + errorCount;
+        statusUpdate.cycleTimes.push(Util.millisecondsSince(startTime));
     }
 
-    setTimeout(calculateArbitrageScheduled, CONFIG.SCANNING.TIMEOUT);
+    setTimeout(arbitrageCycleScheduled, CONFIG.SCANNING.TIMEOUT);
 }
 
-function calculateArbitrageCallback(ticker) {
+function arbitrageCycleCallback(ticker) {
     if (!isSafeToCalculateArbitrage()) return;
+    const startTime = Date.now();
 
     const relationships = MarketCache.getRelationshipsInvolvingTicker(ticker);
     const tickers = MarketCache.getTickersInvolvedInRelationships(relationships);
     const depthSnapshots = BinanceApi.getDepthSnapshots(tickers);
     MarketCache.pruneDepthCacheAboveThreshold(depthSnapshots, CONFIG.SCANNING.DEPTH);
 
-    const {calculationTime, successCount, errorCount, results} = CalculationNode.cycle(
+    const { successCount, errorCount, results } = CalculationNode.analyze(
         relationships,
         depthSnapshots,
         (e) => logger.performance.warn(e),
@@ -109,9 +115,10 @@ function calculateArbitrageCallback(ticker) {
         ArbitrageExecution.executeCalculatedPosition
     );
 
-    recentCalculationTimes.push(calculationTime);
+    displayAnalysisResults(successCount, errorCount);
     if (CONFIG.HUD.ENABLED) Object.assign(recentCalculations, results);
-    displayCalculationResults(successCount, errorCount, calculationTime);
+    statusUpdate.calculationCount += (successCount * CalculationNode.STEPS) + errorCount;
+    statusUpdate.cycleTimes.push(Util.millisecondsSince(startTime));
 }
 
 function isSafeToCalculateArbitrage() {
@@ -120,10 +127,10 @@ function isSafeToCalculateArbitrage() {
     return true;
 }
 
-function displayCalculationResults(successCount, errorCount, calculationTime) {
+function displayAnalysisResults(successCount, errorCount) {
     if (errorCount === 0) return;
     const totalCalculations = successCount + errorCount;
-    logger.performance.warn(`Completed ${successCount}/${totalCalculations} (${((successCount/totalCalculations) * 100).toFixed(1)}%) calculations in ${calculationTime} ms`);
+    logger.performance.warn(`Analyzed ${successCount}/${totalCalculations} (${((successCount/totalCalculations) * 100).toFixed(1)}%) relationships`);
 }
 
 function displayStatusUpdate() {
@@ -132,18 +139,19 @@ function displayStatusUpdate() {
         logger.performance.debug(`Tickers without a depth cache update: [${tickersWithoutDepthUpdate}]`);
     }
 
-    logger.performance.debug(`Calculations per second: ${(CalculationNode.calculations / Util.secondsSince(initialized)).toFixed(0)}`);
-    logger.performance.debug(`Calculation cycle average speed: ${Util.average(recentCalculationTimes).toFixed(2)} ms`);
-    recentCalculationTimes = [];
+    logger.performance.debug(`Calculations per second: ${(statusUpdate.calculationCount / (CONFIG.LOG.STATUS_UPDATE_INTERVAL / 1000)).toFixed(0)}`);
+    logger.performance.debug(`Cycles done per second:  ${(statusUpdate.cycleTimes.length / (CONFIG.LOG.STATUS_UPDATE_INTERVAL / 1000)).toFixed(2)}`);
+    logger.performance.debug(`Clock usage for cycles:  ${(Util.sum(statusUpdate.cycleTimes) / CONFIG.LOG.STATUS_UPDATE_INTERVAL * 100).toFixed(2)}%`);
+
+    statusUpdate.calculationCount = 0;
+    statusUpdate.cycleTimes = [];
 
     Promise.all([
         si.currentLoad(),
-        si.networkStats(),
         SpeedTest.ping()
     ])
-        .then(([load, network, latency]) => {
+        .then(([load, latency]) => {
             logger.performance.debug(`CPU Load: ${(load.avgload * 100).toFixed(0)}% [${load.cpus.map(cpu => cpu.load.toFixed(0) + '%')}]`);
-            logger.performance.debug(`Network Usage: ${Util.toKB(network[0].rx_sec).toFixed(1)} KBps (down) and ${Util.toKB(network[0].tx_sec).toFixed(1)} KBps (up)`);
             logger.performance.debug(`API Latency: ${latency} ms`);
         });
 }
