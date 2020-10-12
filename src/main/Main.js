@@ -15,7 +15,8 @@ let initialized = null;
 
 let statusUpdate = {
     calculationCount: 0,
-    cycleTimes: []
+    cycleTimes: [],
+    setupTimes: []
 };
 
 // Helps identify application startup
@@ -81,7 +82,9 @@ function arbitrageCycleScheduled() {
         const depthSnapshots = BinanceApi.getDepthSnapshots(MarketCache.tickers.watching);
         MarketCache.pruneDepthCacheAboveThreshold(depthSnapshots, CONFIG.SCANNING.DEPTH);
 
-        const { successCount, errorCount, results } = CalculationNode.analyze(
+        statusUpdate.setupTimes.push(Util.millisecondsSince(startTime));
+
+        const { results, successCount, errorCount } = CalculationNode.analyze(
             MarketCache.relationships,
             depthSnapshots,
             (e) => logger.performance.warn(e),
@@ -89,9 +92,8 @@ function arbitrageCycleScheduled() {
             ArbitrageExecution.executeCalculatedPosition
         );
 
-        displayAnalysisResults(successCount, errorCount);
         if (CONFIG.HUD.ENABLED) Object.assign(recentCalculations, results);
-        statusUpdate.calculationCount += (successCount * CalculationNode.STEPS) + errorCount;
+        statusUpdate.calculationCount += successCount * CalculationNode.STEPS + errorCount;
         statusUpdate.cycleTimes.push(Util.millisecondsSince(startTime));
     }
 
@@ -107,7 +109,9 @@ function arbitrageCycleCallback(ticker) {
     const depthSnapshots = BinanceApi.getDepthSnapshots(tickers);
     MarketCache.pruneDepthCacheAboveThreshold(depthSnapshots, CONFIG.SCANNING.DEPTH);
 
-    const { successCount, errorCount, results } = CalculationNode.analyze(
+    statusUpdate.setupTimes.push(Util.millisecondsSince(startTime));
+
+    const { results, successCount, errorCount } = CalculationNode.analyze(
         relationships,
         depthSnapshots,
         (e) => logger.performance.warn(e),
@@ -115,9 +119,8 @@ function arbitrageCycleCallback(ticker) {
         ArbitrageExecution.executeCalculatedPosition
     );
 
-    displayAnalysisResults(successCount, errorCount);
     if (CONFIG.HUD.ENABLED) Object.assign(recentCalculations, results);
-    statusUpdate.calculationCount += (successCount * CalculationNode.STEPS) + errorCount;
+    statusUpdate.calculationCount += successCount * CalculationNode.STEPS + errorCount;
     statusUpdate.cycleTimes.push(Util.millisecondsSince(startTime));
 }
 
@@ -125,12 +128,6 @@ function isSafeToCalculateArbitrage() {
     if (ArbitrageExecution.inProgressIds.size > 0) return false;
     if (!initialized) return false;
     return true;
-}
-
-function displayAnalysisResults(successCount, errorCount) {
-    if (errorCount === 0) return;
-    const totalCalculations = successCount + errorCount;
-    logger.performance.warn(`Analyzed ${successCount}/${totalCalculations} (${((successCount/totalCalculations) * 100).toFixed(1)}%) relationships`);
 }
 
 function displayStatusUpdate() {
@@ -141,10 +138,12 @@ function displayStatusUpdate() {
 
     logger.performance.debug(`Calculations per second: ${(statusUpdate.calculationCount / (CONFIG.LOG.STATUS_UPDATE_INTERVAL / 1000)).toFixed(0)}`);
     logger.performance.debug(`Cycles done per second:  ${(statusUpdate.cycleTimes.length / (CONFIG.LOG.STATUS_UPDATE_INTERVAL / 1000)).toFixed(2)}`);
+    logger.performance.debug(`Clock usage for setup:   ${(Util.sum(statusUpdate.setupTimes) / CONFIG.LOG.STATUS_UPDATE_INTERVAL * 100).toFixed(2)}%`);
     logger.performance.debug(`Clock usage for cycles:  ${(Util.sum(statusUpdate.cycleTimes) / CONFIG.LOG.STATUS_UPDATE_INTERVAL * 100).toFixed(2)}%`);
 
     statusUpdate.calculationCount = 0;
     statusUpdate.cycleTimes = [];
+    statusUpdate.setupTimes = [];
 
     Promise.all([
         si.currentLoad(),

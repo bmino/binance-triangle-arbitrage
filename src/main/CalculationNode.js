@@ -17,13 +17,11 @@ const CalculationNode = {
                     ca: depthCacheClone[relationship.ca.ticker]
                 };
                 const calculated = CalculationNode.optimize(relationship, depthSnapshot);
-                if (calculated) {
-                    successCount++;
-                    if (CONFIG.HUD.ENABLED) results[calculated.id] = calculated;
-                    if (executionCheckCallback(calculated)) {
-                        executionCallback(calculated);
-                        break;
-                    }
+                successCount++;
+                if (CONFIG.HUD.ENABLED) results[calculated.id] = calculated;
+                if (executionCheckCallback(calculated)) {
+                    executionCallback(calculated);
+                    break;
                 }
             } catch (error) {
                 errorCount++;
@@ -31,7 +29,7 @@ const CalculationNode = {
             }
         }
 
-        return { successCount, errorCount, results };
+        return { results, successCount, errorCount };
     },
 
     optimize(trade, depthSnapshot) {
