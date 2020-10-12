@@ -2,20 +2,16 @@ const logger = require('./Loggers');
 
 const Validation = {
 
+    SCANNING: {
+        DEPTH: [5, 10, 20, 50, 100, 500]
+    },
+    EXECUTION: {
+        STRATEGY: ['linear', 'parallel'],
+        TEMPLATE: ['BUY', 'SELL', null]
+    },
+
     configuration(CONFIG) {
         console.log(`Checking configuration ...`);
-
-        const VALID_VALUES = {
-            SCANNING: {
-                DEPTH: [5, 10, 20, 50, 100, 500]
-            },
-            EXECUTION: {
-                STRATEGY: ['linear', 'parallel'],
-                STRATEGY_STRING: `"linear", "parallel"`,
-                TEMPLATE: ['BUY', 'SELL', null],
-                TEMPLATE_STRING: `"BUY", "SELL", null`
-            }
-        };
 
         if (CONFIG.KEYS.API === '' && CONFIG.EXECUTION.ENABLED) {
             const msg = `Trade executions will fail without an api key (KEY.API)`;
@@ -51,8 +47,8 @@ const Validation = {
             logger.execution.error(msg);
             throw new Error(msg);
         }
-        if (!VALID_VALUES.SCANNING.DEPTH.includes(CONFIG.SCANNING.DEPTH)) {
-            const msg = `Depth size (SCANNING.DEPTH) must be one of the following values: ${VALID_VALUES.SCANNING.DEPTH}`;
+        if (!Validation.SCANNING.DEPTH.includes(CONFIG.SCANNING.DEPTH)) {
+            const msg = `Depth size (SCANNING.DEPTH) must be one of the following values: ${Validation.SCANNING.DEPTH}`;
             logger.execution.error(msg);
             throw new Error(msg);
         }
@@ -78,8 +74,8 @@ const Validation = {
             logger.execution.error(msg);
             throw new Error(msg);
         }
-        if (!VALID_VALUES.EXECUTION.STRATEGY.includes(CONFIG.EXECUTION.STRATEGY)) {
-            const msg = `Execution strategy (EXECUTION.STRATEGY) must be one of the following values: ${VALID_VALUES.EXECUTION.STRATEGY_STRING}`;
+        if (!Validation.EXECUTION.STRATEGY.includes(CONFIG.EXECUTION.STRATEGY)) {
+            const msg = `Execution strategy (EXECUTION.STRATEGY) must be one of the following values: ${Validation.EXECUTION.STRATEGY}`;
             logger.execution.error(msg);
             throw new Error(msg);
         }
@@ -88,8 +84,8 @@ const Validation = {
             logger.execution.error(msg);
             throw new Error(msg);
         }
-        if (!CONFIG.EXECUTION.TEMPLATE.every(template => VALID_VALUES.EXECUTION.TEMPLATE.includes(template))) {
-            const msg = `Execution template (EXECUTION.TEMPLATE) can only contain the following values: ${VALID_VALUES.EXECUTION.TEMPLATE_STRING}`;
+        if (!CONFIG.EXECUTION.TEMPLATE.every(template => Validation.EXECUTION.TEMPLATE.includes(template))) {
+            const msg = `Execution template (EXECUTION.TEMPLATE) can only contain the following values: BUY,SELL,null`;
             logger.execution.error(msg);
             throw new Error(msg);
         }
