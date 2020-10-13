@@ -99,8 +99,8 @@ const Validation = {
             logger.execution.warn(msg);
         }
 
-        if (isNaN(CONFIG.HUD.ARB_COUNT) || CONFIG.HUD.ARB_COUNT <= 0) {
-            const msg = `HUD arbitrage count (HUD.ARB_COUNT) must be a positive integer`;
+        if (isNaN(CONFIG.HUD.ROWS) || CONFIG.HUD.ROWS <= 0) {
+            const msg = `HUD row count (HUD.ROWS) must be a positive integer`;
             logger.execution.error(msg);
             throw new Error(msg);
         }

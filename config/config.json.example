@@ -32,7 +32,7 @@
 
     "HUD": {
         "ENABLED": true,
-        "ARB_COUNT": 10,
+        "ROWS": 10,
         "REFRESH_RATE": 500
     },
 

@@ -4,10 +4,7 @@ const HUD = {
 
     screen: null,
     objects: {
-        arbTable: null
-    },
-    headers: {
-        arb: ['Trade', 'Profit', 'AB Age', 'BC Age', 'CA Age', 'Age']
+        calculationTable: null
     },
 
     initScreen() {
@@ -17,10 +14,10 @@ const HUD = {
         });
     },
 
-    displayTopCalculations(calculations, displayCount=10) {
+    displayTopCalculations(calculations, rowCount=10) {
         HUD.initScreen();
-        if (!HUD.objects.arbTable) {
-            HUD.objects.arbTable = blessed.table({
+        if (!HUD.objects.calculationTable) {
+            HUD.objects.calculationTable = blessed.table({
                 top: '0',
                 left: 'center',
                 width: '50%',
@@ -36,16 +33,16 @@ const HUD = {
                 }
             });
 
-            HUD.screen.append(HUD.objects.arbTable);
+            HUD.screen.append(HUD.objects.calculationTable);
         }
 
         const now = Date.now();
 
-        let tableData = [HUD.headers.arb];
+        let tableData = [['Trade', 'Profit', 'AB Age', 'BC Age', 'CA Age', 'Age']];
 
         Object.values(calculations)
             .sort((a, b) => a.percent > b.percent ? -1 : 1)
-            .slice(0, displayCount)
+            .slice(0, rowCount)
             .forEach(calculation => {
                 tableData.push([
                     `${calculation.trade.symbol.a}-${calculation.trade.symbol.b}-${calculation.trade.symbol.c}`,
@@ -57,7 +54,7 @@ const HUD = {
                 ]);
             });
 
-        HUD.objects.arbTable.setData(tableData);
+        HUD.objects.calculationTable.setData(tableData);
         HUD.screen.render();
     }
 

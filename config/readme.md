@@ -125,7 +125,7 @@ Upon each version update you should copy the new syntax from `config.json.exampl
 * Default: `true`
 * Description: Display the heads up display
 
-#### `HUD.ARB_COUNT` (Number)
+#### `HUD.ROWS` (Number)
 * Default: `10`
 * Description: Number of triangular arbitrage positions shown on the HUD sorted by profit
 

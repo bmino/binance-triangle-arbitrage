@@ -71,7 +71,7 @@ SpeedTest.multiPing(5)
         console.log();
 
         if (CONFIG.SCANNING.TIMEOUT > 0) arbitrageCycleScheduled();
-        if (CONFIG.HUD.ENABLED) setInterval(() => HUD.displayTopCalculations(recentCalculations, CONFIG.HUD.ARB_COUNT), CONFIG.HUD.REFRESH_RATE);
+        if (CONFIG.HUD.ENABLED) setInterval(() => HUD.displayTopCalculations(recentCalculations, CONFIG.HUD.ROWS), CONFIG.HUD.REFRESH_RATE);
         if (CONFIG.LOG.STATUS_UPDATE_INTERVAL > 0) setInterval(displayStatusUpdate, CONFIG.LOG.STATUS_UPDATE_INTERVAL);
     })
     .catch(handleError);
