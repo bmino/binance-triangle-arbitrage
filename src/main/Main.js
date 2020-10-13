@@ -71,7 +71,7 @@ SpeedTest.multiPing(5)
         console.log();
 
         if (CONFIG.SCANNING.TIMEOUT > 0) arbitrageCycleScheduled();
-        if (CONFIG.HUD.ENABLED) setInterval(() => HUD.displayArbs(recentCalculations, CONFIG.HUD.ARB_COUNT), CONFIG.HUD.REFRESH_RATE);
+        if (CONFIG.HUD.ENABLED) setInterval(() => HUD.displayTopCalculations(recentCalculations, CONFIG.HUD.ARB_COUNT), CONFIG.HUD.REFRESH_RATE);
         if (CONFIG.LOG.STATUS_UPDATE_INTERVAL > 0) setInterval(displayStatusUpdate, CONFIG.LOG.STATUS_UPDATE_INTERVAL);
     })
     .catch(handleError);
@@ -85,7 +85,7 @@ function arbitrageCycleScheduled() {
         statusUpdate.setupTimes.push(Util.millisecondsSince(startTime));
 
         const { results, successCount, errorCount } = CalculationNode.analyze(
-            MarketCache.relationships,
+            MarketCache.trades,
             depthSnapshots,
             (e) => logger.performance.warn(e),
             ArbitrageExecution.isSafeToExecute,
@@ -103,16 +103,13 @@ function arbitrageCycleScheduled() {
 function arbitrageCycleCallback(ticker) {
     if (!isSafeToCalculateArbitrage()) return;
     const startTime = Date.now();
-
-    const relationships = MarketCache.getRelationshipsInvolvingTicker(ticker);
-    const tickers = MarketCache.getTickersInvolvedInRelationships(relationships);
-    const depthSnapshots = BinanceApi.getDepthSnapshots(tickers);
+    const depthSnapshots = BinanceApi.getDepthSnapshots(MarketCache.related.tickers[ticker]);
     MarketCache.pruneDepthCacheAboveThreshold(depthSnapshots, CONFIG.SCANNING.DEPTH);
 
     statusUpdate.setupTimes.push(Util.millisecondsSince(startTime));
 
     const { results, successCount, errorCount } = CalculationNode.analyze(
-        relationships,
+        MarketCache.related.trades[ticker],
         depthSnapshots,
         (e) => logger.performance.warn(e),
         ArbitrageExecution.isSafeToExecute,
@@ -189,8 +186,8 @@ function checkBalances() {
 function checkMarket() {
     console.log(`Checking market conditions ...`);
 
-    if (MarketCache.relationships.length === 0) {
-        const msg = `No triangular relationships were identified`;
+    if (MarketCache.trades.length === 0) {
+        const msg = `No triangular trades were identified`;
         logger.execution.error(msg);
         throw new Error(msg);
     }

@@ -17,7 +17,7 @@ const HUD = {
         });
     },
 
-    displayArbs(arbs, arbCount=10) {
+    displayTopCalculations(calculations, displayCount=10) {
         HUD.initScreen();
         if (!HUD.objects.arbTable) {
             HUD.objects.arbTable = blessed.table({
@@ -43,17 +43,17 @@ const HUD = {
 
         let tableData = [HUD.headers.arb];
 
-        Object.values(arbs)
+        Object.values(calculations)
             .sort((a, b) => a.percent > b.percent ? -1 : 1)
-            .slice(0, arbCount)
-            .forEach(arb => {
+            .slice(0, displayCount)
+            .forEach(calculation => {
                 tableData.push([
-                    `${arb.trade.symbol.a}-${arb.trade.symbol.b}-${arb.trade.symbol.c}`,
-                    `${arb.percent.toFixed(4)}%`,
-                    `${((now - arb.depth.ab.eventTime)/1000).toFixed(2)}`,
-                    `${((now - arb.depth.bc.eventTime)/1000).toFixed(2)}`,
-                    `${((now - arb.depth.ca.eventTime)/1000).toFixed(2)}`,
-                    `${((now - Math.min(arb.depth.ab.eventTime, arb.depth.bc.eventTime, arb.depth.ca.eventTime))/1000).toFixed(2)}`
+                    `${calculation.trade.symbol.a}-${calculation.trade.symbol.b}-${calculation.trade.symbol.c}`,
+                    `${calculation.percent.toFixed(4)}%`,
+                    `${((now - calculation.depth.ab.eventTime)/1000).toFixed(2)}`,
+                    `${((now - calculation.depth.bc.eventTime)/1000).toFixed(2)}`,
+                    `${((now - calculation.depth.ca.eventTime)/1000).toFixed(2)}`,
+                    `${((now - Math.min(calculation.depth.ab.eventTime, calculation.depth.bc.eventTime, calculation.depth.ca.eventTime))/1000).toFixed(2)}`
                 ]);
             });
 

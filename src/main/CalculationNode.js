@@ -4,19 +4,19 @@ const CalculationNode = {
 
     STEPS: Math.floor((CONFIG.INVESTMENT.MAX - CONFIG.INVESTMENT.MIN) / CONFIG.INVESTMENT.STEP) + 1,
 
-    analyze(relationships, depthCacheClone, errorCallback, executionCheckCallback, executionCallback) {
+    analyze(trades, depthCacheClone, errorCallback, executionCheckCallback, executionCallback) {
         let successCount = 0;
         let errorCount = 0;
         let results = {};
 
-        for (const relationship of relationships) {
+        for (const trade of trades) {
             try {
                 const depthSnapshot = {
-                    ab: depthCacheClone[relationship.ab.ticker],
-                    bc: depthCacheClone[relationship.bc.ticker],
-                    ca: depthCacheClone[relationship.ca.ticker]
+                    ab: depthCacheClone[trade.ab.ticker],
+                    bc: depthCacheClone[trade.bc.ticker],
+                    ca: depthCacheClone[trade.ca.ticker]
                 };
-                const calculated = CalculationNode.optimize(relationship, depthSnapshot);
+                const calculated = CalculationNode.optimize(trade, depthSnapshot);
                 successCount++;
                 if (CONFIG.HUD.ENABLED) results[calculated.id] = calculated;
                 if (executionCheckCallback(calculated)) {

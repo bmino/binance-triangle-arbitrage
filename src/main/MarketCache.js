@@ -8,33 +8,55 @@ const MarketCache = {
         trading: {},
         watching: []
     },
-    relationships: [],
+    trades: [],
+    related: {
+        trades: {},
+        tickers: {}
+    },
 
     initialize(exchangeInfo, whitelistSymbols, baseSymbol) {
-        const tradingSymbolObjects = exchangeInfo.symbols.filter(symbolObj => symbolObj.status === 'TRADING');
-        const symbolSet = new Set();
+        // Mapping and Filters
+        const isTRADING = (symbolObj) => symbolObj.status === 'TRADING';
+        const getLOT_SIZE = (symbolObj) => symbolObj.filterType === 'LOT_SIZE';
+
+        const tradingSymbolObjects = exchangeInfo.symbols.filter(isTRADING)
 
         console.log(`Found ${tradingSymbolObjects.length}/${exchangeInfo.symbols.length} currently trading tickers`);
 
         // Extract All Symbols and Tickers
+        const uniqueSymbols = new Set();
         tradingSymbolObjects.forEach(symbolObj => {
-            symbolSet.add(symbolObj.baseAsset);
-            symbolSet.add(symbolObj.quoteAsset);
-            symbolObj.dustDecimals = Math.max(symbolObj.filters.filter(f => f.filterType === 'LOT_SIZE')[0].minQty.indexOf('1') - 1, 0);
+            uniqueSymbols.add(symbolObj.baseAsset);
+            uniqueSymbols.add(symbolObj.quoteAsset);
+            symbolObj.dustDecimals = Math.max(symbolObj.filters.filter(getLOT_SIZE)[0].minQty.indexOf('1') - 1, 0);
             MarketCache.tickers.trading[symbolObj.symbol] = symbolObj;
         });
 
-        MarketCache.relationships = MarketCache.getTradesFromSymbol(baseSymbol, symbolSet);
-
-        console.log(`Found ${MarketCache.relationships.length} triangular relationships`);
-
-        const uniqueTickers = new Set();
-        MarketCache.relationships.forEach(relationship => {
-            uniqueTickers.add(relationship.ab.ticker);
-            uniqueTickers.add(relationship.bc.ticker);
-            uniqueTickers.add(relationship.ca.ticker);
+        // Get trades from symbols
+        uniqueSymbols.forEach(symbol2 => {
+            uniqueSymbols.forEach(symbol3 => {
+                const trade = MarketCache.createTrade(baseSymbol, symbol2, symbol3);
+                if (trade) MarketCache.trades.push(trade);
+            });
         });
-        MarketCache.tickers.watching = Array.from(uniqueTickers);
+
+        console.log(`Found ${MarketCache.trades.length} triangular trades`);
+
+        MarketCache.trades.forEach(({ab, bc, ca}) => {
+            if (!MarketCache.tickers.watching.includes(ab.ticker)) MarketCache.tickers.watching.push(ab.ticker);
+            if (!MarketCache.tickers.watching.includes(bc.ticker)) MarketCache.tickers.watching.push(bc.ticker);
+            if (!MarketCache.tickers.watching.includes(ca.ticker)) MarketCache.tickers.watching.push(ca.ticker);
+        });
+
+        MarketCache.tickers.watching.forEach(ticker => {
+            MarketCache.related.tickers[ticker] = new Set();
+            MarketCache.related.trades[ticker] = MarketCache.trades.filter(({ab,bc,ca}) => [ab.ticker,bc.ticker,ca.ticker].includes(ticker));
+            MarketCache.related.trades[ticker].forEach(({ab,bc,ca}) => {
+                MarketCache.related.tickers[ticker].add(ab.ticker);
+                MarketCache.related.tickers[ticker].add(bc.ticker);
+                MarketCache.related.tickers[ticker].add(ca.ticker);
+            });
+        });
     },
 
     pruneDepthCacheAboveThreshold(depthCache, threshold) {
@@ -46,31 +68,6 @@ const MarketCache = {
 
     getWatchedTickersWithoutDepthCacheUpdate() {
         return MarketCache.tickers.watching.filter(ticker => !BinanceApi.getDepthCacheUnsorted(ticker).eventTime);
-    },
-
-    getTradesFromSymbol(symbol1, symbolSet) {
-        const trades = [];
-        symbolSet.forEach(symbol2 => {
-            symbolSet.forEach(symbol3 => {
-                const trade = MarketCache.createTrade(symbol1, symbol2, symbol3);
-                if (trade) trades.push(trade);
-            });
-        });
-        return trades;
-    },
-
-    getRelationshipsInvolvingTicker(ticker) {
-        return MarketCache.relationships.filter(({ab,bc,ca}) => [ab.ticker,bc.ticker,ca.ticker].includes(ticker));
-    },
-
-    getTickersInvolvedInRelationships(relationships) {
-        const tickers = new Set();
-        relationships.forEach(({ab,bc,ca}) => {
-            tickers.add(ab.ticker);
-            tickers.add(bc.ticker);
-            tickers.add(ca.ticker);
-        });
-        return tickers;
     },
 
     waitForAllTickersToUpdate(timeout=30000, tickers=MarketCache.tickers.watching) {
