@@ -81,7 +81,8 @@ function arbitrageCycleScheduled() {
         const startTime = Date.now();
         const depthSnapshots = BinanceApi.getDepthSnapshots(MarketCache.tickers.watching);
 
-        statusUpdate.setupTimes.push(Util.millisecondsSince(startTime));
+        const midTime = Util.millisecondsSince(startTime);
+        statusUpdate.setupTimes.push(midTime);
 
         const { results, successCount, errorCount } = CalculationNode.analyze(
             MarketCache.trades,
@@ -93,7 +94,7 @@ function arbitrageCycleScheduled() {
 
         if (CONFIG.HUD.ENABLED) Object.assign(recentCalculations, results);
         statusUpdate.calculationCount += successCount * CalculationNode.STEPS + errorCount;
-        statusUpdate.cycleTimes.push(Util.millisecondsSince(startTime));
+        statusUpdate.cycleTimes.push(Util.millisecondsSince(startTime) - midTime);
     }
 
     setTimeout(arbitrageCycleScheduled, CONFIG.SCANNING.TIMEOUT);
@@ -104,7 +105,8 @@ function arbitrageCycleCallback(ticker) {
     const startTime = Date.now();
     const depthSnapshots = BinanceApi.getDepthSnapshots(MarketCache.related.tickers[ticker]);
 
-    statusUpdate.setupTimes.push(Util.millisecondsSince(startTime));
+    const midTime = Util.millisecondsSince(startTime);
+    statusUpdate.setupTimes.push(midTime);
 
     const { results, successCount, errorCount } = CalculationNode.analyze(
         MarketCache.related.trades[ticker],
@@ -116,7 +118,7 @@ function arbitrageCycleCallback(ticker) {
 
     if (CONFIG.HUD.ENABLED) Object.assign(recentCalculations, results);
     statusUpdate.calculationCount += successCount * CalculationNode.STEPS + errorCount;
-    statusUpdate.cycleTimes.push(Util.millisecondsSince(startTime));
+    statusUpdate.cycleTimes.push(Util.millisecondsSince(startTime) - midTime);
 }
 
 function isSafeToCalculateArbitrage() {
