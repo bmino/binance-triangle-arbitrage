@@ -80,7 +80,6 @@ function arbitrageCycleScheduled() {
     if (isSafeToCalculateArbitrage()) {
         const startTime = Date.now();
         const depthSnapshots = BinanceApi.getDepthSnapshots(MarketCache.tickers.watching);
-        MarketCache.pruneDepthCacheAboveThreshold(depthSnapshots, CONFIG.SCANNING.DEPTH);
 
         statusUpdate.setupTimes.push(Util.millisecondsSince(startTime));
 
@@ -104,7 +103,6 @@ function arbitrageCycleCallback(ticker) {
     if (!isSafeToCalculateArbitrage()) return;
     const startTime = Date.now();
     const depthSnapshots = BinanceApi.getDepthSnapshots(MarketCache.related.tickers[ticker]);
-    MarketCache.pruneDepthCacheAboveThreshold(depthSnapshots, CONFIG.SCANNING.DEPTH);
 
     statusUpdate.setupTimes.push(Util.millisecondsSince(startTime));
 

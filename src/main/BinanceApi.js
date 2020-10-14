@@ -34,10 +34,10 @@ const BinanceApi = {
         });
     },
 
-    getDepthSnapshots(tickers) {
+    getDepthSnapshots(tickers, maxDepth=CONFIG.SCANNING.DEPTH) {
         const depthSnapshot = {};
         tickers.forEach((ticker) => {
-            depthSnapshot[ticker] = { ...BinanceApi.getDepthCacheSorted(ticker) };
+            depthSnapshot[ticker] = { ...BinanceApi.getDepthCacheSorted(ticker, maxDepth) };
         });
         return depthSnapshot;
     },
@@ -124,10 +124,10 @@ const BinanceApi = {
         }
     },
 
-    getDepthCacheSorted(ticker) {
+    getDepthCacheSorted(ticker, max=CONFIG.SCANNING.DEPTH) {
         let depthCache = binance.depthCache(ticker);
-        depthCache.bids = binance.sortBids(depthCache.bids);
-        depthCache.asks = binance.sortAsks(depthCache.asks);
+        depthCache.bids = binance.sortBids(depthCache.bids, max);
+        depthCache.asks = binance.sortAsks(depthCache.asks, max);
         return depthCache;
     },
 
