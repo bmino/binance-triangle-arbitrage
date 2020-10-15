@@ -13,25 +13,18 @@ const binance = new Binance().options(Object.assign({
 const BinanceApi = {
 
     exchangeInfo() {
-        return new Promise((resolve, reject) => {
-            binance.exchangeInfo((error, data) => {
-                if (error) return reject(error);
-                return resolve(data);
-            });
-        });
+        return binance.exchangeInfo(null);
     },
 
     getBalances() {
-        return new Promise((resolve, reject) => {
-            binance.balance((error, balances) => {
-                if (error) return reject(error);
+        return binance.balance(null)
+            .then(balances => {
                 Object.values(balances).forEach(balance => {
                     balance.available = parseFloat(balance.available);
                     balance.onOrder = parseFloat(balance.onOrder);
                 });
-                return resolve(balances);
+                return balances;
             });
-        });
     },
 
     getDepthSnapshots(tickers, maxDepth=CONFIG.SCANNING.DEPTH) {
@@ -45,55 +38,48 @@ const BinanceApi = {
     marketBuy(ticker, quantity) {
         logger.execution.info(`${binance.getOption('test') ? 'Test: Buying' : 'Buying'} ${quantity} ${ticker} @ market price`);
         const before = Date.now();
-        return new Promise((resolve, reject) => {
-            binance.marketBuy(ticker, quantity, (error, response) => {
-                if (error) return BinanceApi.handleBuyOrSellError(error, reject);
+        return binance.marketBuy(ticker, quantity)
+            .then(response => {
                 if (binance.getOption('test')) {
                     logger.execution.info(`Test: Successfully bought ${ticker} @ market price`);
                 } else {
                     logger.execution.info(`Successfully bought ${response.executedQty} ${ticker} @ a quote of ${response.cummulativeQuoteQty} in ${Util.millisecondsSince(before)} ms`);
                 }
-                return resolve(response);
-            });
-        });
+                return response;
+            })
+            .catch(BinanceApi.handleBuyOrSellError);
     },
 
     marketSell(ticker, quantity) {
         logger.execution.info(`${binance.getOption('test') ? 'Test: Selling' : 'Selling'} ${quantity} ${ticker} @ market price`);
         const before = Date.now();
-        return new Promise((resolve, reject) => {
-            binance.marketSell(ticker, quantity, (error, response) => {
-                if (error) return BinanceApi.handleBuyOrSellError(error, reject);
+        return binance.marketSell(ticker, quantity)
+            .then(response => {
                 if (binance.getOption('test')) {
                     logger.execution.info(`Test: Successfully sold ${ticker} @ market price`);
                 } else {
                     logger.execution.info(`Successfully sold ${response.executedQty} ${ticker} @ a quote of ${response.cummulativeQuoteQty} in ${Util.millisecondsSince(before)} ms`);
                 }
-                return resolve(response);
-            });
-        });
+                return response;
+            })
+            .catch(BinanceApi.handleBuyOrSellError);
     },
 
     marketBuyOrSell(method) {
         return method === 'BUY' ? BinanceApi.marketBuy : BinanceApi.marketSell;
     },
 
-    handleBuyOrSellError(error, reject) {
+    handleBuyOrSellError(error) {
         try {
-            return reject(new Error(JSON.parse(error.body).msg));
+            return Promise.reject(new Error(JSON.parse(error.body).msg));
         } catch (e) {
             logger.execution.error(error);
-            return reject(new Error(error.body));
+            return Promise.reject(new Error(error.body));
         }
     },
 
     time() {
-        return new Promise((resolve, reject) => {
-            binance.time((error, response) => {
-                if (error) return reject(error);
-                return resolve(response);
-            });
-        });
+        return binance.time(null);
     },
 
     depthCacheStaggered(tickers, limit, stagger, cb) {
