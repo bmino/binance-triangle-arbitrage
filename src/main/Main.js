@@ -24,9 +24,9 @@ logger.binance.info(logger.LINE);
 logger.execution.info(logger.LINE);
 logger.performance.info(logger.LINE);
 
-Validation.configuration(CONFIG);
-
 if (CONFIG.EXECUTION.ENABLED) console.log(`WARNING! Order execution is enabled!\n`);
+
+Validation.configuration(CONFIG);
 
 process.on('uncaughtException', handleError);
 

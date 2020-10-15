@@ -97,7 +97,7 @@ const BinanceApi = {
     },
 
     depthCacheStaggered(tickers, limit, stagger, cb) {
-        return binance.websockets.depthCacheStaggered(tickers, BinanceApi.depthWSCallback(cb), limit, stagger);
+        return binance.websockets.depthCacheStaggered(tickers, BinanceApi.createDepthWSCallback(cb), limit, stagger);
     },
 
     depthCacheCombined(tickers, limit, groupSize, stagger, cb) {
@@ -106,7 +106,7 @@ const BinanceApi = {
         for (let i=0; i < tickers.length; i += groupSize) {
             const tickerGroup = tickers.slice(i, i + groupSize);
             let promise = () => new Promise( resolve => {
-                binance.websockets.depthCache( tickerGroup, BinanceApi.depthWSCallback(cb), limit );
+                binance.websockets.depthCache( tickerGroup, BinanceApi.createDepthWSCallback(cb), limit );
                 setTimeout( resolve, stagger );
             } );
             chain = chain ? chain.then( promise ) : promise();
@@ -115,7 +115,7 @@ const BinanceApi = {
         return chain;
     },
 
-    depthWSCallback(cb) {
+    createDepthWSCallback(cb) {
         if (CONFIG.SCANNING.TIMEOUT === 0) {
             // 'context' exists when processing a websocket update NOT when first populating via snapshot
             return (ticker, depth, context) => context && cb(ticker);
