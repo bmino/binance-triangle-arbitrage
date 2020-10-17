@@ -45,11 +45,12 @@ SpeedTest.multiPing(5)
     .then(() => {
         // Listen for depth updates
         const tickers = MarketCache.tickers.watching;
+        const validDepth = [5, 10, 20, 50, 100, 500, 1000, 5000].find(d => d >= CONFIG.SCANNING.DEPTH);
         console.log(`Opening ${Math.ceil(tickers.length / CONFIG.WEBSOCKET.BUNDLE_SIZE)} depth websockets for ${tickers.length} tickers ...`);
         if (CONFIG.WEBSOCKET.BUNDLE_SIZE === 1) {
-            return BinanceApi.depthCacheStaggered(tickers, CONFIG.SCANNING.DEPTH, CONFIG.WEBSOCKET.INITIALIZATION_INTERVAL, arbitrageCycleCallback);
+            return BinanceApi.depthCacheStaggered(tickers, validDepth, CONFIG.WEBSOCKET.INITIALIZATION_INTERVAL, arbitrageCycleCallback);
         } else {
-            return BinanceApi.depthCacheCombined(tickers, CONFIG.SCANNING.DEPTH, CONFIG.WEBSOCKET.BUNDLE_SIZE, CONFIG.WEBSOCKET.INITIALIZATION_INTERVAL, arbitrageCycleCallback);
+            return BinanceApi.depthCacheCombined(tickers, validDepth, CONFIG.WEBSOCKET.BUNDLE_SIZE, CONFIG.WEBSOCKET.INITIALIZATION_INTERVAL, arbitrageCycleCallback);
         }
     })
     .then(() => {

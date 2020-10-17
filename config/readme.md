@@ -57,13 +57,6 @@ Upon each version update you should copy the new syntax from `config.json.exampl
 * Default: `50`
 * Description: Order book depth to maintain locally on each ticker
 * [Extended Documentation](../src/resources/docs/depths.md)
-* Values:
-    * `5`
-    * `10`
-    * `20`
-    * `50`
-    * `100`
-    * `500`
 
 #### `SCANNING.WHITELIST` (Array | String)
 * Default: `[]`

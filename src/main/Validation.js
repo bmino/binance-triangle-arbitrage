@@ -2,9 +2,6 @@ const logger = require('./Loggers');
 
 const Validation = {
 
-    SCANNING: {
-        DEPTH: [5, 10, 20, 50, 100, 500]
-    },
     EXECUTION: {
         STRATEGY: ['linear', 'parallel'],
         TEMPLATE: ['BUY', 'SELL', null]
@@ -24,6 +21,11 @@ const Validation = {
 
         if (isNaN(CONFIG.INVESTMENT.MIN) || CONFIG.INVESTMENT.MIN <= 0) {
             const msg = `Minimum investment quantity (INVESTMENT.MIN) must be a positive integer`;
+            logger.execution.error(msg);
+            throw new Error(msg);
+        }
+        if (isNaN(CONFIG.INVESTMENT.MAX) || CONFIG.INVESTMENT.MAX <= 0) {
+            const msg = `Maximum investment quantity (INVESTMENT.MAX) must be a positive integer`;
             logger.execution.error(msg);
             throw new Error(msg);
         }
@@ -47,8 +49,13 @@ const Validation = {
             logger.execution.error(msg);
             throw new Error(msg);
         }
-        if (!Validation.SCANNING.DEPTH.includes(CONFIG.SCANNING.DEPTH)) {
-            const msg = `Depth size (SCANNING.DEPTH) must be one of the following values: ${Validation.SCANNING.DEPTH}`;
+        if (isNaN(CONFIG.SCANNING.DEPTH) || CONFIG.SCANNING.DEPTH <= 0) {
+            const msg = `Depth size (SCANNING.DEPTH) must be a positive integer`;
+            logger.execution.error(msg);
+            throw new Error(msg);
+        }
+        if (CONFIG.SCANNING.DEPTH > 5000) {
+            const msg = `Depth size (SCANNING.DEPTH) cannot be higher than 5000`;
             logger.execution.error(msg);
             throw new Error(msg);
         }
