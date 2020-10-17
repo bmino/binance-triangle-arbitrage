@@ -82,7 +82,7 @@ const ArbitrageExecution = {
                 logger.execution.info(`${symbol.a} delta:\t  ${actual.a.delta < 0 ? '' : ' '}${actual.a.delta.toFixed(8)} (${percent.a < 0 ? '' : ' '}${percent.a.toFixed(4)}%)`);
                 logger.execution.info(`${symbol.b} delta:\t  ${actual.b.delta < 0 ? '' : ' '}${actual.b.delta.toFixed(8)} (${percent.b < 0 ? '' : ' '}${percent.b.toFixed(4)}%)`);
                 logger.execution.info(`${symbol.c} delta:\t  ${actual.c.delta < 0 ? '' : ' '}${actual.c.delta.toFixed(8)} (${percent.c < 0 ? '' : ' '}${percent.c.toFixed(4)}%)`);
-                logger.execution.info(`BNB commission:  ${(-1 * actual.fees).toFixed(8)}`);
+                logger.execution.info(`BNB fees: \t  ${(-1 * actual.fees).toFixed(8)}`);
                 logger.execution.info();
             })
             .catch((err) => logger.execution.error(err.message))
@@ -100,20 +100,14 @@ const ArbitrageExecution = {
     },
 
     isSafeToExecute(calculated) {
-        const now = Date.now();
-        const { symbol } = calculated.trade;
-
         // Profit Threshold is Not Satisfied
         if (calculated.percent < CONFIG.EXECUTION.THRESHOLD.PROFIT) return false;
 
         // Age Threshold is Not Satisfied
-        const ageInMilliseconds = now - Math.min(calculated.depth.ab.eventTime, calculated.depth.bc.eventTime, calculated.depth.ca.eventTime);
+        const ageInMilliseconds = Date.now() - Math.min(calculated.depth.ab.eventTime, calculated.depth.bc.eventTime, calculated.depth.ca.eventTime);
         if (isNaN(ageInMilliseconds) || ageInMilliseconds > CONFIG.EXECUTION.THRESHOLD.AGE) return false;
 
-        if (CONFIG.EXECUTION.CAP && ArbitrageExecution.getAttemptedPositionsCount() >= CONFIG.EXECUTION.CAP) {
-            logger.execution.trace(`Blocking execution because ${ArbitrageExecution.getAttemptedPositionsCount()} executions have been attempted`);
-            return false;
-        }
+        const { symbol } = calculated.trade;
         if (ArbitrageExecution.inProgressSymbols.has(symbol.a)) {
             logger.execution.trace(`Blocking execution because ${symbol.a} is currently involved in an execution`);
             return false;
@@ -126,12 +120,17 @@ const ArbitrageExecution = {
             logger.execution.trace(`Blocking execution because ${symbol.c} is currently involved in an execution`);
             return false;
         }
-        if (ArbitrageExecution.getAttemptedPositionsCountInLastSecond() > 1) {
-            logger.execution.trace(`Blocking execution because ${ArbitrageExecution.getAttemptedPositionsCountInLastSecond()} position has already been attempted in the last second`);
+
+        if (Object.entries(ArbitrageExecution.attemptedPositions).find(([executionTime, id]) => id === calculated.id && executionTime > Util.millisecondsSince(CONFIG.EXECUTION.THRESHOLD.AGE))) {
+            logger.execution.trace(`Blocking execution to avoid double executing the same position`);
             return false;
         }
-        if (Object.entries(ArbitrageExecution.attemptedPositions).find(([executionTime, id]) => id === calculated.id && executionTime > (now - CONFIG.EXECUTION.THRESHOLD.AGE))) {
-            logger.execution.trace(`Blocking execution to avoid double executing the same position`);
+        if (ArbitrageExecution.getAttemptedPositionsCountInLastSecond() > 1) {
+            logger.execution.trace(`Blocking execution because ${ArbitrageExecution.getAttemptedPositionsCountInLastSecond()} positions have already been attempted in the last second`);
+            return false;
+        }
+        if (CONFIG.EXECUTION.CAP && ArbitrageExecution.getAttemptedPositionsCount() >= CONFIG.EXECUTION.CAP) {
+            logger.execution.trace(`Blocking execution because ${ArbitrageExecution.getAttemptedPositionsCount()} executions have been attempted`);
             return false;
         }
 
@@ -256,8 +255,7 @@ const ArbitrageExecution = {
         const earned = method === 'SELL' ? parseFloat(cummulativeQuoteQty) : parseFloat(executedQty);
         const fees = fills
             .filter(fill => fill.commissionAsset === 'BNB')
-            .map(fill => parseFloat(fill.commission))
-            .reduce((total, fee) => total + fee, 0);
+            .reduce((total, fill) => total + parseFloat(fill.commission), 0);
         return [spent, earned, fees];
     }
 
