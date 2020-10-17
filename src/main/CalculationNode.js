@@ -2,11 +2,7 @@ const CONFIG = require('../../config/config');
 
 const CalculationNode = {
 
-    STEPS: Math.floor((CONFIG.INVESTMENT.MAX - CONFIG.INVESTMENT.MIN) / CONFIG.INVESTMENT.STEP) + 1,
-
     analyze(trades, depthCacheClone, errorCallback, executionCheckCallback, executionCallback) {
-        let successCount = 0;
-        let errorCount = 0;
         let results = {};
 
         for (const trade of trades) {
@@ -17,19 +13,17 @@ const CalculationNode = {
                     ca: depthCacheClone[trade.ca.ticker]
                 };
                 const calculated = CalculationNode.optimize(trade, depthSnapshot);
-                successCount++;
                 if (CONFIG.HUD.ENABLED) results[calculated.id] = calculated;
                 if (executionCheckCallback(calculated)) {
                     executionCallback(calculated);
                     break;
                 }
             } catch (error) {
-                errorCount++;
                 errorCallback(error.message);
             }
         }
 
-        return { results, successCount, errorCount };
+        return results;
     },
 
     optimize(trade, depthSnapshot) {
