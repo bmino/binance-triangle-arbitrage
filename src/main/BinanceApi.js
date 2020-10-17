@@ -112,14 +112,32 @@ const BinanceApi = {
 
     getDepthCacheSorted(ticker, max=CONFIG.SCANNING.DEPTH) {
         let depthCache = binance.depthCache(ticker);
-        depthCache.bids = binance.sortBids(depthCache.bids, max);
-        depthCache.asks = binance.sortAsks(depthCache.asks, max);
+        depthCache.bids = BinanceApi.sortBids(depthCache.bids, max);
+        depthCache.asks = BinanceApi.sortAsks(depthCache.asks, max);
         return depthCache;
     },
 
     getDepthCacheUnsorted(ticker) {
         return binance.depthCache(ticker);
-    }
+    },
+
+    sortBids(cache, max = Infinity) {
+        let depth = {};
+        Object.keys(cache)
+            .sort((a, b) => parseFloat(b) - parseFloat(a))
+            .slice(0, max)
+            .forEach(price => depth[price] = cache[price]);
+        return depth;
+    },
+
+    sortAsks(cache, max = Infinity) {
+        let depth = {};
+        Object.keys(cache)
+            .sort((a, b) => parseFloat(a) - parseFloat(b))
+            .slice(0, max)
+            .forEach(price => depth[price] = cache[price]);
+        return depth;
+    },
 
 };
 
