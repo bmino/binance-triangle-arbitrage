@@ -94,7 +94,7 @@ const ArbitrageExecution = {
 
                 if (CONFIG.EXECUTION.CAP && ArbitrageExecution.inProgressIds.size === 0 && ArbitrageExecution.getAttemptedPositionsCount() >= CONFIG.EXECUTION.CAP) {
                     logger.execution.info(`Cannot exceed user defined execution cap of ${CONFIG.EXECUTION.CAP} executions`);
-                    process.exit();
+                    process.exit(0);
                 }
             });
     },
