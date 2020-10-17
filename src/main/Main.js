@@ -119,9 +119,9 @@ function isSafeToCalculateArbitrage() {
 }
 
 function displayStatusUpdate() {
-    const tickersWithoutDepthUpdate = MarketCache.getWatchedTickersWithoutDepthCacheUpdate();
-    if (tickersWithoutDepthUpdate.length > 0) {
-        logger.performance.debug(`Tickers without a depth cache update: [${tickersWithoutDepthUpdate}]`);
+    const tickersWithoutRecentDepthUpdate = MarketCache.getTickersWithoutDepthCacheUpdate(CONFIG.LOG.STATUS_UPDATE_INTERVAL);
+    if (tickersWithoutRecentDepthUpdate.length > 0) {
+        logger.performance.debug(`Tickers without recent depth cache update: [${tickersWithoutRecentDepthUpdate.sort()}]`);
     }
 
     logger.performance.debug(`Cycles done per second:  ${(statusUpdate.cycleTimes.length / (CONFIG.LOG.STATUS_UPDATE_INTERVAL / 1000)).toFixed(2)}`);

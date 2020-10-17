@@ -66,8 +66,13 @@ const MarketCache = {
         });
     },
 
-    getWatchedTickersWithoutDepthCacheUpdate() {
-        return MarketCache.tickers.watching.filter(ticker => !BinanceApi.getDepthCacheUnsorted(ticker).eventTime);
+    getTickersWithoutDepthCacheUpdate(ms=Infinity) {
+        return MarketCache.tickers.watching.filter(ticker => {
+            const { eventTime } = BinanceApi.getDepthCacheUnsorted(ticker);
+            if (!eventTime) return true;
+            if (Util.millisecondsSince(eventTime) > ms) return true;
+            return false;
+        });
     },
 
     waitForAllTickersToUpdate(timeout=30000, tickers=MarketCache.tickers.watching) {
