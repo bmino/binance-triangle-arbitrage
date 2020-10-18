@@ -2,14 +2,10 @@ const logger = require('./Loggers');
 
 const Validation = {
 
-    EXECUTION: {
-        STRATEGY: ['linear', 'parallel'],
-        TEMPLATE: ['BUY', 'SELL', null]
-    },
-
     configuration(CONFIG) {
         console.log(`Checking configuration ...`);
 
+        // KEYS
         if (CONFIG.KEYS.API === '' && CONFIG.EXECUTION.ENABLED) {
             const msg = `Trade executions will fail without an api key (KEY.API)`;
             logger.execution.warn(msg);
@@ -19,18 +15,19 @@ const Validation = {
             logger.execution.warn(msg);
         }
 
+        // INVESTMENT
         if (isNaN(CONFIG.INVESTMENT.MIN) || CONFIG.INVESTMENT.MIN <= 0) {
-            const msg = `Minimum investment quantity (INVESTMENT.MIN) must be a positive integer`;
+            const msg = `Minimum investment quantity (INVESTMENT.MIN) must be a positive number`;
             logger.execution.error(msg);
             throw new Error(msg);
         }
         if (isNaN(CONFIG.INVESTMENT.MAX) || CONFIG.INVESTMENT.MAX <= 0) {
-            const msg = `Maximum investment quantity (INVESTMENT.MAX) must be a positive integer`;
+            const msg = `Maximum investment quantity (INVESTMENT.MAX) must be a positive number`;
             logger.execution.error(msg);
             throw new Error(msg);
         }
         if (isNaN(CONFIG.INVESTMENT.STEP) || CONFIG.INVESTMENT.STEP <= 0) {
-            const msg = `Investment step size (INVESTMENT.STEP) must be a positive integer`;
+            const msg = `Investment step size (INVESTMENT.STEP) must be a positive number`;
             logger.execution.error(msg);
             throw new Error(msg);
         }
@@ -44,23 +41,34 @@ const Validation = {
             logger.execution.warn(msg);
         }
 
-        if (isNaN(CONFIG.SCANNING.TIMEOUT) || CONFIG.SCANNING.TIMEOUT < 0) {
+        // SCANNING
+        if (!Number.isInteger(CONFIG.SCANNING.TIMEOUT) || CONFIG.SCANNING.TIMEOUT < 0) {
             const msg = `Scanning timeout (SCANNING.TIMEOUT) must be a positive integer`;
             logger.execution.error(msg);
             throw new Error(msg);
         }
-        if (isNaN(CONFIG.SCANNING.DEPTH) || CONFIG.SCANNING.DEPTH <= 0) {
+        if (!Number.isInteger(CONFIG.SCANNING.DEPTH) || CONFIG.SCANNING.DEPTH <= 0) {
             const msg = `Depth size (SCANNING.DEPTH) must be a positive integer`;
             logger.execution.error(msg);
             throw new Error(msg);
         }
         if (CONFIG.SCANNING.DEPTH > 5000) {
-            const msg = `Depth size (SCANNING.DEPTH) cannot be higher than 5000`;
+            const msg = `Depth size (SCANNING.DEPTH) cannot be greater than 5000`;
             logger.execution.error(msg);
             throw new Error(msg);
         }
         if (CONFIG.SCANNING.DEPTH > 100 && CONFIG.SCANNING.WHITELIST.length === 0) {
             const msg = `Using a depth size (SCANNING.DEPTH) higher than 100 requires defining a whitelist (SCANNING.WHITELIST)`;
+            logger.execution.error(msg);
+            throw new Error(msg);
+        }
+        if (!Array.isArray(CONFIG.SCANNING.WHITELIST)) {
+            const msg = `Whitelist (SCANNING.WHITELIST) must be an array`;
+            logger.execution.error(msg);
+            throw new Error(msg);
+        }
+        if (CONFIG.SCANNING.WHITELIST.some(sym => typeof sym !== 'string')) {
+            const msg = `Whitelist symbols must all be strings`;
             logger.execution.error(msg);
             throw new Error(msg);
         }
@@ -76,13 +84,19 @@ const Validation = {
             throw new Error(msg);
         }
 
-        if (isNaN(CONFIG.EXECUTION.CAP) || CONFIG.EXECUTION.CAP < 0) {
+        // EXECUTION
+        if (typeof CONFIG.EXECUTION.ENABLED !== 'boolean') {
+            const msg = `Execution toggle (EXECUTION.ENABLED) must be a boolean`;
+            logger.execution.error(msg);
+            throw new Error(msg);
+        }
+        if (!Number.isInteger(CONFIG.EXECUTION.CAP) || CONFIG.EXECUTION.CAP < 0) {
             const msg = `Execution cap (EXECUTION.CAP) must be a positive integer`;
             logger.execution.error(msg);
             throw new Error(msg);
         }
-        if (!Validation.EXECUTION.STRATEGY.includes(CONFIG.EXECUTION.STRATEGY)) {
-            const msg = `Execution strategy (EXECUTION.STRATEGY) must be one of the following values: ${Validation.EXECUTION.STRATEGY}`;
+        if (!['linear', 'parallel'].includes(CONFIG.EXECUTION.STRATEGY)) {
+            const msg = `Execution strategy (EXECUTION.STRATEGY) must be one of the following values: linear, parallel]`;
             logger.execution.error(msg);
             throw new Error(msg);
         }
@@ -91,13 +105,13 @@ const Validation = {
             logger.execution.error(msg);
             throw new Error(msg);
         }
-        if (!CONFIG.EXECUTION.TEMPLATE.every(template => Validation.EXECUTION.TEMPLATE.includes(template))) {
-            const msg = `Execution template (EXECUTION.TEMPLATE) can only contain the following values: BUY,SELL,null`;
+        if (!CONFIG.EXECUTION.TEMPLATE.every(template => ['BUY', 'SELL', null].includes(template))) {
+            const msg = `Execution template (EXECUTION.TEMPLATE) can only contain the following values: BUY, SELL, null`;
             logger.execution.error(msg);
             throw new Error(msg);
         }
         if (isNaN(CONFIG.EXECUTION.FEE) || CONFIG.EXECUTION.FEE < 0) {
-            const msg = `Execution fee (EXECUTION.FEE) must be a positive integer`;
+            const msg = `Execution fee (EXECUTION.FEE) must be a positive number`;
             logger.execution.error(msg);
             throw new Error(msg);
         }
@@ -105,13 +119,29 @@ const Validation = {
             const msg = `Execution fee (EXECUTION.FEE) of zero is likely incorrect`;
             logger.execution.warn(msg);
         }
+        if (isNaN(CONFIG.EXECUTION.THRESHOLD.PROFIT)) {
+            const msg = `Profit threshold (EXECUTION.THRESHOLD.PROFIT) must be a number`;
+            logger.execution.error(msg);
+            throw new Error(msg);
+        }
+        if (!Number.isInteger(CONFIG.EXECUTION.THRESHOLD.AGE) || CONFIG.EXECUTION.THRESHOLD.AGE <= 0) {
+            const msg = `Age threshold (EXECUTION.THRESHOLD.AGE) must be a positive number`;
+            logger.execution.error(msg);
+            throw new Error(msg);
+        }
 
-        if (isNaN(CONFIG.HUD.ROWS) || CONFIG.HUD.ROWS <= 0) {
+        // HUD
+        if (typeof CONFIG.HUD.ENABLED !== 'boolean') {
+            const msg = `HUD toggle (HUD.ENABLED) must be a boolean`;
+            logger.execution.error(msg);
+            throw new Error(msg);
+        }
+        if (!Number.isInteger(CONFIG.HUD.ROWS) || CONFIG.HUD.ROWS <= 0) {
             const msg = `HUD row count (HUD.ROWS) must be a positive integer`;
             logger.execution.error(msg);
             throw new Error(msg);
         }
-        if (isNaN(CONFIG.HUD.REFRESH_RATE) || CONFIG.HUD.REFRESH_RATE <= 0) {
+        if (!Number.isInteger(CONFIG.HUD.REFRESH_RATE) || CONFIG.HUD.REFRESH_RATE <= 0) {
             const msg = `HUD refresh rate (HUD.REFRESH_RATE) must be a positive integer`;
             logger.execution.error(msg);
             throw new Error(msg);
@@ -121,18 +151,30 @@ const Validation = {
             logger.execution.warn(msg);
         }
 
+        // LOG
+        if (typeof CONFIG.LOG.PRETTY_PRINT !== 'boolean') {
+            const msg = `Logging pretty print toggle (LOG.PRETTY_PRINT) must be a boolean`;
+            logger.execution.error(msg);
+            throw new Error(msg);
+        }
         if (isNaN(CONFIG.LOG.STATUS_UPDATE_INTERVAL) || CONFIG.LOG.STATUS_UPDATE_INTERVAL < 0) {
-            const msg = `Status update interval (LOG.STATUS_UPDATE_INTERVAL) must be a positive integer`;
+            const msg = `Status update interval (LOG.STATUS_UPDATE_INTERVAL) must be a positive number`;
             logger.execution.error(msg);
             throw new Error(msg);
         }
 
-        if (isNaN(CONFIG.WEBSOCKET.BUNDLE_SIZE) || CONFIG.WEBSOCKET.BUNDLE_SIZE <= 0) {
+        // WEBSOCKET
+        if (!Number.isInteger(CONFIG.WEBSOCKET.BUNDLE_SIZE) || CONFIG.WEBSOCKET.BUNDLE_SIZE <= 0) {
             const msg = `Websocket bundle size (WEBSOCKET.BUNDLE_SIZE) must be a positive integer`;
             logger.execution.error(msg);
             throw new Error(msg);
         }
-        if (isNaN(CONFIG.WEBSOCKET.INITIALIZATION_INTERVAL) || CONFIG.WEBSOCKET.INITIALIZATION_INTERVAL < 0) {
+        if (CONFIG.WEBSOCKET.BUNDLE_SIZE > 1024) {
+            const msg = `Websocket bundle size (WEBSOCKET.BUNDLE_SIZE) cannot be greater than 1024`;
+            logger.execution.error(msg);
+            throw new Error(msg);
+        }
+        if (!Number.isInteger(CONFIG.WEBSOCKET.INITIALIZATION_INTERVAL) || CONFIG.WEBSOCKET.INITIALIZATION_INTERVAL < 0) {
             const msg = `Websocket initialization interval (WEBSOCKET.INITIALIZATION_INTERVAL) must be a positive integer`;
             logger.execution.error(msg);
             throw new Error(msg);

@@ -71,7 +71,7 @@ SpeedTest.multiPing(5)
 
         if (CONFIG.SCANNING.TIMEOUT > 0) arbitrageCycleScheduled();
         if (CONFIG.HUD.ENABLED) setInterval(() => HUD.displayTopCalculations(recentCalculations, CONFIG.HUD.ROWS), CONFIG.HUD.REFRESH_RATE);
-        if (CONFIG.LOG.STATUS_UPDATE_INTERVAL > 0) setInterval(displayStatusUpdate, CONFIG.LOG.STATUS_UPDATE_INTERVAL);
+        if (CONFIG.LOG.STATUS_UPDATE_INTERVAL > 0) setInterval(displayStatusUpdate, CONFIG.LOG.STATUS_UPDATE_INTERVAL * 1000 * 60);
     })
     .catch(handleError);
 
@@ -119,13 +119,15 @@ function isSafeToCalculateArbitrage() {
 }
 
 function displayStatusUpdate() {
-    const tickersWithoutRecentDepthUpdate = MarketCache.getTickersWithoutDepthCacheUpdate(CONFIG.LOG.STATUS_UPDATE_INTERVAL);
+    const statusUpdateIntervalMS = CONFIG.LOG.STATUS_UPDATE_INTERVAL * 1000 * 60;
+
+    const tickersWithoutRecentDepthUpdate = MarketCache.getTickersWithoutDepthCacheUpdate(statusUpdateIntervalMS);
     if (tickersWithoutRecentDepthUpdate.length > 0) {
         logger.performance.debug(`Tickers without recent depth cache update: [${tickersWithoutRecentDepthUpdate.sort()}]`);
     }
 
-    logger.performance.debug(`Cycles done per second:  ${(statusUpdate.cycleTimes.length / (CONFIG.LOG.STATUS_UPDATE_INTERVAL / 1000)).toFixed(2)}`);
-    logger.performance.debug(`Clock usage for cycles:  ${(Util.sum(statusUpdate.cycleTimes) / CONFIG.LOG.STATUS_UPDATE_INTERVAL * 100).toFixed(2)}%`);
+    logger.performance.debug(`Cycles done per second:  ${(statusUpdate.cycleTimes.length / (statusUpdateIntervalMS / 1000)).toFixed(2)}`);
+    logger.performance.debug(`Clock usage for cycles:  ${(Util.sum(statusUpdate.cycleTimes) / statusUpdateIntervalMS * 100).toFixed(2)}%`);
 
     statusUpdate.cycleTimes = [];
 

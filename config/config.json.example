@@ -7,14 +7,14 @@
 
     "INVESTMENT": {
         "BASE": "BTC",
-        "MIN": 0.015,
-        "MAX": 0.020,
+        "MIN": 0.010,
+        "MAX": 0.015,
         "STEP": 0.005
     },
 
     "SCANNING": {
         "TIMEOUT": 250,
-        "DEPTH": 50,
+        "DEPTH": 20,
         "WHITELIST": []
     },
 
@@ -39,7 +39,7 @@
     "LOG": {
         "LEVEL": "debug",
         "PRETTY_PRINT": true,
-        "STATUS_UPDATE_INTERVAL": 120000
+        "STATUS_UPDATE_INTERVAL": 2
     },
 
     "WEBSOCKET": {

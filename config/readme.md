@@ -30,11 +30,11 @@ Upon each version update you should copy the new syntax from `config.json.exampl
 * Description: Symbol which all triangle trades must start and end with
     
 #### `INVESTMENT.MIN` (Number)
-* Default: `0.015`
+* Default: `0.010`
 * Description: Minimum investment amount of the base currency to consider
     
 #### `INVESTMENT.MAX` (Number)
-* Default: `0.020`
+* Default: `0.015`
 * Description: Maximum investment amount of the base currency to consider
 
 #### `INVESTMENT.STEP` (Number)
@@ -54,7 +54,7 @@ Upon each version update you should copy the new syntax from `config.json.exampl
     * `0` - Executes calculation cycles as soon as new depth information is received
 
 #### `SCANNING.DEPTH` (Number)
-* Default: `50`
+* Default: `20`
 * Description: Order book depth to maintain locally on each ticker
 * [Extended Documentation](../src/resources/docs/depths.md)
 
@@ -149,8 +149,8 @@ Upon each version update you should copy the new syntax from `config.json.exampl
 * Description: Format the logs with pino-pretty. Read the logs via a terminal for best results
 
 #### `LOG.STATUS_UPDATE_INTERVAL` (Number)
-* Default: `120000`
-* Description: Interval (ms) between each status update
+* Default: `2`
+* Description: Interval (minute) between each status update
 * Special Values:
     * `0` - Status updates will NOT be logged
 
