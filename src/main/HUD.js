@@ -41,6 +41,7 @@ const HUD = {
         let tableData = [['Trade', 'Profit', 'AB Age', 'BC Age', 'CA Age', 'Age']];
 
         Object.values(calculations)
+            .filter(({depth: {ab, bc, ca}}) => ab.eventTime && bc.eventTime && ca.eventTime)
             .sort((a, b) => a.percent > b.percent ? -1 : 1)
             .slice(0, rowCount)
             .forEach(calculation => {
