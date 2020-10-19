@@ -12,6 +12,8 @@ const binance = new Binance().options(Object.assign({
 
 const BinanceApi = {
 
+    sortedDepthCache: {},
+
     exchangeInfo() {
         return binance.exchangeInfo(null);
     },
@@ -29,8 +31,12 @@ const BinanceApi = {
 
     getDepthSnapshots(tickers, maxDepth=CONFIG.SCANNING.DEPTH) {
         const depthSnapshot = {};
-        tickers.forEach((ticker) => {
-            depthSnapshot[ticker] = { ...BinanceApi.getDepthCacheSorted(ticker, maxDepth) };
+        tickers.forEach(ticker => {
+            if (BinanceApi.sortedDepthCache[ticker].eventTime === binance.depthCache(ticker).eventTime) {
+                depthSnapshot[ticker] = {...BinanceApi.sortedDepthCache[ticker]};
+            } else {
+                depthSnapshot[ticker] = {...BinanceApi.sortedDepthCache[ticker]} = {...BinanceApi.getDepthCacheSorted(ticker, maxDepth)};
+            }
         });
         return depthSnapshot;
     },
@@ -83,21 +89,21 @@ const BinanceApi = {
     },
 
     depthCacheStaggered(tickers, limit, stagger, cb) {
+        tickers.forEach(ticker => BinanceApi.sortedDepthCache[ticker] = {eventTime: 0});
         return binance.websockets.depthCacheStaggered(tickers, BinanceApi.createDepthWSCallback(cb), limit, stagger);
     },
 
     depthCacheCombined(tickers, limit, groupSize, stagger, cb) {
+        tickers.forEach(ticker => BinanceApi.sortedDepthCache[ticker] = {eventTime: 0});
         let chain = null;
-
-        for (let i=0; i < tickers.length; i += groupSize) {
+        for (let i = 0; i < tickers.length; i += groupSize) {
             const tickerGroup = tickers.slice(i, i + groupSize);
-            let promise = () => new Promise( resolve => {
-                binance.websockets.depthCache( tickerGroup, BinanceApi.createDepthWSCallback(cb), limit );
-                setTimeout( resolve, stagger );
+            const promise = () => new Promise(resolve => {
+                binance.websockets.depthCache(tickerGroup, BinanceApi.createDepthWSCallback(cb), limit);
+                setTimeout(resolve, stagger);
             } );
-            chain = chain ? chain.then( promise ) : promise();
+            chain = chain ? chain.then(promise) : promise();
         }
-
         return chain;
     },
 
