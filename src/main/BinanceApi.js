@@ -38,7 +38,7 @@ const BinanceApi = {
     marketBuy(ticker, quantity) {
         logger.execution.info(`${binance.getOption('test') ? 'Test: Buying' : 'Buying'} ${quantity} ${ticker} @ market price`);
         const before = Date.now();
-        return binance.marketBuy(ticker, quantity)
+        return binance.marketBuy(ticker, quantity, { type: 'MARKET' })
             .then(response => {
                 if (binance.getOption('test')) {
                     logger.execution.info(`Test: Successfully bought ${ticker} @ market price`);
@@ -53,7 +53,7 @@ const BinanceApi = {
     marketSell(ticker, quantity) {
         logger.execution.info(`${binance.getOption('test') ? 'Test: Selling' : 'Selling'} ${quantity} ${ticker} @ market price`);
         const before = Date.now();
-        return binance.marketSell(ticker, quantity)
+        return binance.marketSell(ticker, quantity, { type: 'MARKET' })
             .then(response => {
                 if (binance.getOption('test')) {
                     logger.execution.info(`Test: Successfully sold ${ticker} @ market price`);
