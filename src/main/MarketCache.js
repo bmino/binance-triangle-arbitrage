@@ -102,15 +102,15 @@ const MarketCache = {
 
         const ab = MarketCache.getRelationship(a, b);
         if (!ab) return;
-        if (CONFIG.EXECUTION.TEMPLATE[0] && CONFIG.EXECUTION.TEMPLATE[0] !== ab.method) return;
+        if (CONFIG.EXECUTION.TEMPLATE[0] !== '*' && CONFIG.EXECUTION.TEMPLATE[0] !== ab.method) return;
 
         const bc = MarketCache.getRelationship(b, c);
         if (!bc) return;
-        if (CONFIG.EXECUTION.TEMPLATE[1] && CONFIG.EXECUTION.TEMPLATE[1] !== bc.method) return;
+        if (CONFIG.EXECUTION.TEMPLATE[1] !== '*' && CONFIG.EXECUTION.TEMPLATE[1] !== bc.method) return;
 
         const ca = MarketCache.getRelationship(c, a);
         if (!ca) return;
-        if (CONFIG.EXECUTION.TEMPLATE[2] && CONFIG.EXECUTION.TEMPLATE[2] !== ca.method) return;
+        if (CONFIG.EXECUTION.TEMPLATE[2] !== '*' && CONFIG.EXECUTION.TEMPLATE[2] !== ca.method) return;
 
         return {
             ab,

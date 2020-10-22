@@ -92,7 +92,7 @@ Upon each version update you should copy the new syntax from `config.json.exampl
 * Values:
     * `"BUY"` - Only allow BUY order type
     * `"SELL"` - Only allow SELL order type
-    * `null` - No restriction on order type
+    * `"*"` - No restriction on order type
 
 #### `EXECUTION.FEE` (Number)
 * Default: `0.10`

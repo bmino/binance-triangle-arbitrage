@@ -105,8 +105,8 @@ const Validation = {
             logger.execution.error(msg);
             throw new Error(msg);
         }
-        if (!CONFIG.EXECUTION.TEMPLATE.every(template => ['BUY', 'SELL', null].includes(template))) {
-            const msg = `Execution template (EXECUTION.TEMPLATE) can only contain the following values: BUY, SELL, null`;
+        if (!CONFIG.EXECUTION.TEMPLATE.every(template => ['BUY', 'SELL', '*'].includes(template))) {
+            const msg = `Execution template (EXECUTION.TEMPLATE) can only contain the following values: BUY, SELL, *`;
             logger.execution.error(msg);
             throw new Error(msg);
         }
