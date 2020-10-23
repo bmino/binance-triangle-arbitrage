@@ -23,9 +23,9 @@ if (!fs.existsSync(LOG_DIR)){
 
 const Loggers = {
     LINE: '-'.repeat(50),
-    'performance': pino(PINO_OPTS, pino.destination(`${LOG_DIR}/performance.log`)),
-    'execution': pino(PINO_OPTS, pino.destination(`${LOG_DIR}/execution.log`)),
-    'binance': pino(PINO_OPTS, pino.destination(`${LOG_DIR}/binance.log`)),
+    performance: pino(PINO_OPTS, pino.destination(`${LOG_DIR}/performance.log`)),
+    execution: pino(PINO_OPTS, pino.destination(`${LOG_DIR}/execution.log`)),
+    binance: pino(PINO_OPTS, pino.destination(`${LOG_DIR}/binance.log`)),
 };
 
 module.exports = Loggers;

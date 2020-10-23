@@ -2,46 +2,35 @@ const CONFIG = require('../../config/config');
 
 const CalculationNode = {
 
-    cycle(relationships, depthCacheClone, errorCallback, executionCheckCallback, executionCallback) {
-        const startTime = Date.now();
-
-        let successCount = 0;
-        let errorCount = 0;
+    analyze(trades, depthCacheClone, errorCallback, executionCheckCallback, executionCallback) {
         let results = {};
 
-        for (const relationship of relationships) {
+        for (const trade of trades) {
             try {
                 const depthSnapshot = {
-                    ab: depthCacheClone[relationship.ab.ticker],
-                    bc: depthCacheClone[relationship.bc.ticker],
-                    ca: depthCacheClone[relationship.ca.ticker]
+                    ab: depthCacheClone[trade.ab.ticker],
+                    bc: depthCacheClone[trade.bc.ticker],
+                    ca: depthCacheClone[trade.ca.ticker]
                 };
-                const calculated = CalculationNode.optimize(relationship, depthSnapshot);
-                if (calculated) {
-                    successCount++;
-                    if (CONFIG.HUD.ENABLED) results[calculated.id] = calculated;
-                    if (executionCheckCallback(calculated)) {
-                        executionCallback(calculated);
-                        break;
-                    }
+                const calculated = CalculationNode.optimize(trade, depthSnapshot);
+                if (CONFIG.HUD.ENABLED) results[calculated.id] = calculated;
+                if (executionCheckCallback(calculated)) {
+                    executionCallback(calculated);
+                    break;
                 }
             } catch (error) {
-                errorCount++;
                 errorCallback(error.message);
             }
         }
 
-        const calculationTime = Date.now() - startTime;
-
-        return { calculationTime, successCount, errorCount, results };
+        return results;
     },
 
     optimize(trade, depthSnapshot) {
-        let quantity, calculation;
         let bestCalculation = null;
 
-        for (quantity = CONFIG.INVESTMENT.MIN; quantity <= CONFIG.INVESTMENT.MAX; quantity += CONFIG.INVESTMENT.STEP) {
-            calculation = CalculationNode.calculate(quantity, trade, depthSnapshot);
+        for (let quantity = CONFIG.INVESTMENT.MIN; quantity <= CONFIG.INVESTMENT.MAX; quantity += CONFIG.INVESTMENT.STEP) {
+            const calculation = CalculationNode.calculate(quantity, trade, depthSnapshot);
             if (!bestCalculation || calculation.percent > bestCalculation.percent) {
                 bestCalculation = calculation;
             }
@@ -78,33 +67,33 @@ const CalculationNode = {
         if (trade.ab.method === 'BUY') {
             // Buying BA
             const dustedB = CalculationNode.orderBookConversion(investmentA, trade.symbol.a, trade.symbol.b, trade.ab.ticker, depthSnapshot.ab);
-            calculated.b.earned = calculated.ab = CalculationNode.calculateDustless(trade.ab, dustedB);
+            calculated.b.earned = calculated.ab = CalculationNode.calculateDustless(dustedB, trade.ab.dustDecimals);
             calculated.a.spent = CalculationNode.orderBookReverseConversion(calculated.b.earned, trade.symbol.b, trade.symbol.a, trade.ab.ticker, depthSnapshot.ab);
         } else {
             // Selling AB
-            calculated.a.spent = calculated.ab = CalculationNode.calculateDustless(trade.ab, investmentA);
+            calculated.a.spent = calculated.ab = CalculationNode.calculateDustless(investmentA, trade.ab.dustDecimals);
             calculated.b.earned = CalculationNode.orderBookConversion(calculated.a.spent, trade.symbol.a, trade.symbol.b, trade.ab.ticker, depthSnapshot.ab);
         }
 
         if (trade.bc.method === 'BUY') {
             // Buying CB
             const dustedC = CalculationNode.orderBookConversion(calculated.b.earned, trade.symbol.b, trade.symbol.c, trade.bc.ticker, depthSnapshot.bc);
-            calculated.c.earned = calculated.bc = CalculationNode.calculateDustless(trade.bc, dustedC);
+            calculated.c.earned = calculated.bc = CalculationNode.calculateDustless(dustedC, trade.bc.dustDecimals);
             calculated.b.spent = CalculationNode.orderBookReverseConversion(calculated.c.earned, trade.symbol.c, trade.symbol.b, trade.bc.ticker, depthSnapshot.bc);
         } else {
             // Selling BC
-            calculated.b.spent = calculated.bc = CalculationNode.calculateDustless(trade.bc, calculated.b.earned);
+            calculated.b.spent = calculated.bc = CalculationNode.calculateDustless(calculated.b.earned, trade.bc.dustDecimals);
             calculated.c.earned = CalculationNode.orderBookConversion(calculated.b.spent, trade.symbol.b, trade.symbol.c, trade.bc.ticker, depthSnapshot.bc);
         }
 
         if (trade.ca.method === 'BUY') {
             // Buying AC
             const dustedA = CalculationNode.orderBookConversion(calculated.c.earned, trade.symbol.c, trade.symbol.a, trade.ca.ticker, depthSnapshot.ca);
-            calculated.a.earned = calculated.ca = CalculationNode.calculateDustless(trade.ca, dustedA);
+            calculated.a.earned = calculated.ca = CalculationNode.calculateDustless(dustedA, trade.ca.dustDecimals);
             calculated.c.spent = CalculationNode.orderBookReverseConversion(calculated.a.earned, trade.symbol.a, trade.symbol.c, trade.ca.ticker, depthSnapshot.ca);
         } else {
             // Selling CA
-            calculated.c.spent = calculated.ca = CalculationNode.calculateDustless(trade.ca, calculated.c.earned);
+            calculated.c.spent = calculated.ca = CalculationNode.calculateDustless(calculated.c.earned, trade.ca.dustDecimals);
             calculated.a.earned = CalculationNode.orderBookConversion(calculated.c.spent, trade.symbol.c, trade.symbol.a, trade.ca.ticker, depthSnapshot.ca);
         }
 
@@ -113,19 +102,18 @@ const CalculationNode = {
         calculated.b.delta = calculated.b.earned - calculated.b.spent;
         calculated.c.delta = calculated.c.earned - calculated.c.spent;
 
-        calculated.percent = (calculated.a.delta / calculated.a.spent * 100) - (CONFIG.TRADING.TAKER_FEE * 3);
+        calculated.percent = (calculated.a.delta / calculated.a.spent * 100) - (CONFIG.EXECUTION.FEE * 3);
         if (!calculated.percent) calculated.percent = -100;
 
         return calculated;
     },
 
-    recalculateTradeLeg(trade, quantityEarned, depthSnapshot) {
-        const { base, quote, method, ticker } = trade;
+    recalculateTradeLeg({ base, quote, method, ticker, dustDecimals }, quantityEarned, depthSnapshot) {
         if (method === 'BUY') {
             const dustedQuantity = CalculationNode.orderBookConversion(quantityEarned, quote, base, ticker, depthSnapshot);
-            return CalculationNode.calculateDustless(trade, dustedQuantity);
+            return CalculationNode.calculateDustless(dustedQuantity, dustDecimals);
         } else {
-            return CalculationNode.calculateDustless(trade, quantityEarned);
+            return CalculationNode.calculateDustless(quantityEarned, dustDecimals);
         }
     },
 
@@ -133,15 +121,13 @@ const CalculationNode = {
         if (amountFrom === 0) return 0;
 
         let amountTo = 0;
-        let i, rate, quantity, exchangeableAmount;
-        const bidRates = Object.keys(depthSnapshot.bids || {});
-        const askRates = Object.keys(depthSnapshot.asks || {});
 
         if (ticker === symbolFrom + symbolTo) {
-            for (i=0; i<bidRates.length; i++) {
-                rate = parseFloat(bidRates[i]);
-                quantity = depthSnapshot.bids[bidRates[i]];
-                exchangeableAmount = quantity * rate;
+            const bidRates = Object.keys(depthSnapshot.bids || {});
+            for (let i=0; i<bidRates.length; i++) {
+                const rate = parseFloat(bidRates[i]);
+                const quantity = depthSnapshot.bids[bidRates[i]];
+                const exchangeableAmount = quantity * rate;
                 if (quantity < amountFrom) {
                     amountFrom -= quantity;
                     amountTo += exchangeableAmount;
@@ -152,10 +138,11 @@ const CalculationNode = {
             }
             throw new Error(`Bid depth (${bidRates.length}) too shallow to convert ${amountFrom} ${symbolFrom} to ${symbolTo} using ${ticker}`);
         } else {
-            for (i=0; i<askRates.length; i++) {
-                rate = parseFloat(askRates[i]);
-                quantity = depthSnapshot.asks[askRates[i]];
-                exchangeableAmount = quantity * rate;
+            const askRates = Object.keys(depthSnapshot.asks || {});
+            for (let i=0; i<askRates.length; i++) {
+                const rate = parseFloat(askRates[i]);
+                const quantity = depthSnapshot.asks[askRates[i]];
+                const exchangeableAmount = quantity * rate;
                 if (exchangeableAmount < amountFrom) {
                     amountFrom -= exchangeableAmount;
                     amountTo += quantity;
@@ -172,15 +159,13 @@ const CalculationNode = {
         if (amountFrom === 0) return 0;
 
         let amountTo = 0;
-        let i, rate, quantity, exchangeableAmount;
-        const bidRates = Object.keys(depthSnapshot.bids || {});
-        const askRates = Object.keys(depthSnapshot.asks || {});
 
         if (ticker === symbolFrom + symbolTo) {
-            for (i=0; i<askRates.length; i++) {
-                rate = parseFloat(askRates[i]);
-                quantity = depthSnapshot.asks[askRates[i]];
-                exchangeableAmount = quantity * rate;
+            const askRates = Object.keys(depthSnapshot.asks || {});
+            for (let i=0; i<askRates.length; i++) {
+                const rate = parseFloat(askRates[i]);
+                const quantity = depthSnapshot.asks[askRates[i]];
+                const exchangeableAmount = quantity * rate;
                 if (quantity < amountFrom) {
                     amountFrom -= quantity;
                     amountTo += exchangeableAmount;
@@ -191,10 +176,11 @@ const CalculationNode = {
             }
             throw new Error(`Ask depth (${askRates.length}) too shallow to reverse convert ${amountFrom} ${symbolFrom} to ${symbolTo} using ${ticker}`);
         } else {
-            for (i=0; i<bidRates.length; i++) {
-                rate = parseFloat(bidRates[i]);
-                quantity = depthSnapshot.bids[bidRates[i]];
-                exchangeableAmount = quantity * rate;
+            const bidRates = Object.keys(depthSnapshot.bids || {});
+            for (let i=0; i<bidRates.length; i++) {
+                const rate = parseFloat(bidRates[i]);
+                const quantity = depthSnapshot.bids[bidRates[i]];
+                const exchangeableAmount = quantity * rate;
                 if (exchangeableAmount < amountFrom) {
                     amountFrom -= exchangeableAmount;
                     amountTo += quantity;
@@ -208,12 +194,11 @@ const CalculationNode = {
     },
 
     getOrderBookDepthRequirement(method, quantity, depthSnapshot) {
-        let exchanged = 0;
         let i;
-        const bidRates = Object.keys(depthSnapshot.bids || {});
-        const askRates = Object.keys(depthSnapshot.asks || {});
+        let exchanged = 0;
 
         if (method === 'SELL') {
+            const bidRates = Object.keys(depthSnapshot.bids || {});
             for (i=0; i<bidRates.length; i++) {
                 exchanged += depthSnapshot.bids[bidRates[i]];
                 if (exchanged >= quantity) {
@@ -221,6 +206,7 @@ const CalculationNode = {
                 }
             }
         } else if (method === 'BUY') {
+            const askRates = Object.keys(depthSnapshot.asks || {});
             for (i=0; i<askRates.length; i++) {
                 exchanged += depthSnapshot.asks[askRates[i]];
                 if (exchanged >= quantity) {
@@ -233,11 +219,11 @@ const CalculationNode = {
         return i;
     },
 
-    calculateDustless(trade, amount) {
+    calculateDustless(amount, dustDecimals) {
         if (Number.isInteger(amount)) return amount;
         const amountString = amount.toFixed(12);
         const decimalIndex = amountString.indexOf('.');
-        return parseFloat(amountString.slice(0, decimalIndex + trade.dustDecimals + 1));
+        return parseFloat(amountString.slice(0, decimalIndex + dustDecimals + 1));
     }
 
 };

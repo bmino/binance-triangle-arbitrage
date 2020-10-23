@@ -8,24 +8,28 @@ const HUD = require('./HUD');
 const ArbitrageExecution = require('./ArbitrageExecution');
 const CalculationNode = require('./CalculationNode');
 const SpeedTest = require('./SpeedTest');
+const Validation = require('./Validation');
 
-let recentCalculationTimes = [];
+let recentCalculations = {};
+let initialized = null;
+
+let statusUpdate = {
+    cycleTimes: [],
+};
 
 // Helps identify application startup
 logger.binance.info(logger.LINE);
 logger.execution.info(logger.LINE);
 logger.performance.info(logger.LINE);
 
-if (CONFIG.TRADING.ENABLED) console.log(`WARNING! Order execution is enabled!\n`);
+if (CONFIG.EXECUTION.ENABLED) console.log(`WARNING! Order execution is enabled!\n`);
+
+Validation.configuration(CONFIG);
 
 process.on('uncaughtException', handleError);
 
-checkConfig()
-    .then(si.networkStats)
-    .then(() => {
-        console.log(`Checking latency ...`);
-        return SpeedTest.multiPing(5);
-    })
+console.log(`Checking latency ...`);
+SpeedTest.multiPing(5)
     .then((pings) => {
         const msg = `Experiencing ${Util.average(pings).toFixed(0)} ms of latency`;
         console.log(msg);
@@ -35,85 +39,107 @@ checkConfig()
         console.log(`Fetching exchange info ...`);
         return BinanceApi.exchangeInfo();
     })
-    .then(exchangeInfo => MarketCache.initialize(exchangeInfo, CONFIG.TRADING.WHITELIST, CONFIG.INVESTMENT.BASE))
+    .then(exchangeInfo => MarketCache.initialize(exchangeInfo, CONFIG.SCANNING.WHITELIST, CONFIG.INVESTMENT.BASE))
     .then(checkBalances)
     .then(checkMarket)
     .then(() => {
         // Listen for depth updates
         const tickers = MarketCache.tickers.watching;
-        console.log(`Opening ${Math.ceil(tickers.length / CONFIG.WEBSOCKETS.BUNDLE_SIZE)} depth websockets for ${tickers.length} symbols ...`);
-        if (CONFIG.WEBSOCKETS.BUNDLE_SIZE === 1) {
-            return BinanceApi.depthCacheStaggered(tickers, CONFIG.DEPTH.SIZE, CONFIG.WEBSOCKETS.INITIALIZATION_INTERVAL);
+        const validDepth = [5, 10, 20, 50, 100, 500, 1000, 5000].find(d => d >= CONFIG.SCANNING.DEPTH);
+        console.log(`Opening ${Math.ceil(tickers.length / CONFIG.WEBSOCKET.BUNDLE_SIZE)} depth websockets for ${tickers.length} tickers ...`);
+        if (CONFIG.WEBSOCKET.BUNDLE_SIZE === 1) {
+            return BinanceApi.depthCacheStaggered(tickers, validDepth, CONFIG.WEBSOCKET.INITIALIZATION_INTERVAL, arbitrageCycleCallback);
         } else {
-            return BinanceApi.depthCacheCombined(tickers, CONFIG.DEPTH.SIZE, CONFIG.WEBSOCKETS.BUNDLE_SIZE, CONFIG.WEBSOCKETS.INITIALIZATION_INTERVAL);
+            return BinanceApi.depthCacheCombined(tickers, validDepth, CONFIG.WEBSOCKET.BUNDLE_SIZE, CONFIG.WEBSOCKET.INITIALIZATION_INTERVAL, arbitrageCycleCallback);
         }
     })
     .then(() => {
+        console.log(`Waiting for all tickers to receive initial depth snapshot ...`);
+        return MarketCache.waitForAllTickersToUpdate(10000);
+    })
+    .then(() => {
+        const msg = `Initialized`;
+        console.log(msg);
+        logger.execution.info(msg);
+        initialized = Date.now();
+
         console.log();
-        console.log(`Execution Strategy:     ${CONFIG.TRADING.EXECUTION_STRATEGY}`);
-        console.log(`Execution Limit:        ${CONFIG.TRADING.EXECUTION_CAP} execution(s)`);
-        console.log(`Profit Threshold:       ${CONFIG.TRADING.PROFIT_THRESHOLD.toFixed(2)}%`);
-        console.log(`Age Threshold:          ${CONFIG.TRADING.AGE_THRESHOLD} ms`);
-        console.log(`Log Level:              ${CONFIG.LOG.LEVEL}`);
+        console.log(`Execution Limit:        ${CONFIG.EXECUTION.CAP} execution(s)`);
+        console.log(`Profit Threshold:       ${CONFIG.EXECUTION.THRESHOLD.PROFIT.toFixed(2)}%`);
+        console.log(`Age Threshold:          ${CONFIG.EXECUTION.THRESHOLD.AGE} ms`);
         console.log();
 
-        // Allow time for depth caches to populate
-        setTimeout(calculateArbitrage, 6000);
-        setInterval(displayStatusUpdate, CONFIG.TIMING.STATUS_UPDATE_INTERVAL);
+        if (CONFIG.SCANNING.TIMEOUT > 0) arbitrageCycleScheduled();
+        if (CONFIG.HUD.ENABLED) setInterval(() => HUD.displayTopCalculations(recentCalculations, CONFIG.HUD.ROWS), CONFIG.HUD.REFRESH_RATE);
+        if (CONFIG.LOG.STATUS_UPDATE_INTERVAL > 0) setInterval(displayStatusUpdate, CONFIG.LOG.STATUS_UPDATE_INTERVAL * 1000 * 60);
     })
     .catch(handleError);
 
-function calculateArbitrage() {
+function arbitrageCycleScheduled() {
     if (isSafeToCalculateArbitrage()) {
+        const startTime = Date.now();
         const depthSnapshots = BinanceApi.getDepthSnapshots(MarketCache.tickers.watching);
-        MarketCache.pruneDepthCacheAboveThreshold(depthSnapshots, CONFIG.DEPTH.SIZE);
 
-        const {calculationTime, successCount, errorCount, results} = CalculationNode.cycle(
-            MarketCache.relationships,
+        const results = CalculationNode.analyze(
+            MarketCache.trades,
             depthSnapshots,
             (e) => logger.performance.warn(e),
             ArbitrageExecution.isSafeToExecute,
             ArbitrageExecution.executeCalculatedPosition
         );
 
-        recentCalculationTimes.push(calculationTime);
-        if (CONFIG.HUD.ENABLED) refreshHUD(results);
-
-        displayCalculationResults(successCount, errorCount, calculationTime);
+        if (CONFIG.HUD.ENABLED) Object.assign(recentCalculations, results);
+        statusUpdate.cycleTimes.push(Util.millisecondsSince(startTime));
     }
 
-    setTimeout(calculateArbitrage, CONFIG.TIMING.CALCULATION_COOLDOWN);
+    setTimeout(arbitrageCycleScheduled, CONFIG.SCANNING.TIMEOUT);
+}
+
+function arbitrageCycleCallback(ticker) {
+    if (!isSafeToCalculateArbitrage()) return;
+    const startTime = Date.now();
+    const depthSnapshots = BinanceApi.getDepthSnapshots(MarketCache.related.tickers[ticker]);
+
+    const results = CalculationNode.analyze(
+        MarketCache.related.trades[ticker],
+        depthSnapshots,
+        (e) => logger.performance.warn(e),
+        ArbitrageExecution.isSafeToExecute,
+        ArbitrageExecution.executeCalculatedPosition
+    );
+
+    if (CONFIG.HUD.ENABLED) Object.assign(recentCalculations, results);
+    statusUpdate.cycleTimes.push(Util.millisecondsSince(startTime));
 }
 
 function isSafeToCalculateArbitrage() {
     if (ArbitrageExecution.inProgressIds.size > 0) return false;
+    if (!initialized) return false;
     return true;
 }
 
-function displayCalculationResults(successCount, errorCount, calculationTime) {
-    if (errorCount === 0) return;
-    const totalCalculations = successCount + errorCount;
-    logger.performance.warn(`Completed ${successCount}/${totalCalculations} (${((successCount/totalCalculations) * 100).toFixed(1)}%) calculations in ${calculationTime} ms`);
-}
-
 function displayStatusUpdate() {
-    const tickersWithoutDepthUpdate = MarketCache.getWatchedTickersWithoutDepthCacheUpdate();
-    if (tickersWithoutDepthUpdate.length > 0) {
-        logger.performance.debug(`Tickers without a depth cache update: [${tickersWithoutDepthUpdate}]`);
+    const statusUpdateIntervalMS = CONFIG.LOG.STATUS_UPDATE_INTERVAL * 1000 * 60;
+
+    const tickersWithoutRecentDepthUpdate = MarketCache.getTickersWithoutDepthCacheUpdate(statusUpdateIntervalMS);
+    if (tickersWithoutRecentDepthUpdate.length > 0) {
+        logger.performance.debug(`Tickers without recent depth cache update: [${tickersWithoutRecentDepthUpdate.sort()}]`);
     }
-    logger.performance.debug(`Calculation cycle average speed: ${Util.average(recentCalculationTimes).toFixed(2)} ms`);
-    recentCalculationTimes = [];
+
+    logger.performance.debug(`Cycles done per second:  ${(statusUpdate.cycleTimes.length / (statusUpdateIntervalMS / 1000)).toFixed(2)}`);
+    logger.performance.debug(`Clock usage for cycles:  ${(Util.sum(statusUpdate.cycleTimes) / statusUpdateIntervalMS * 100).toFixed(2)}%`);
+
+    statusUpdate.cycleTimes = [];
 
     Promise.all([
         si.currentLoad(),
-        si.networkStats(),
         SpeedTest.ping()
     ])
-        .then(([load, network, latency]) => {
+        .then(([load, latency]) => {
             logger.performance.debug(`CPU Load: ${(load.avgload * 100).toFixed(0)}% [${load.cpus.map(cpu => cpu.load.toFixed(0) + '%')}]`);
-            logger.performance.debug(`Network Usage: ${Util.toKB(network[0].rx_sec).toFixed(1)} KBps (down) and ${Util.toKB(network[0].tx_sec).toFixed(1)} KBps (up)`);
             logger.performance.debug(`API Latency: ${latency} ms`);
-        });
+        })
+        .catch(err => logger.performance.warn(err.message));
 }
 
 function handleError(err) {
@@ -122,124 +148,8 @@ function handleError(err) {
     process.exit(1);
 }
 
-function checkConfig() {
-    console.log(`Checking configuration ...`);
-
-    const VALID_VALUES = {
-        TRADING: {
-            EXECUTION_STRATEGY: ['linear', 'parallel'],
-            EXECUTION_TEMPLATE: ['BUY', 'SELL', null]
-        },
-        DEPTH: {
-            SIZE: [5, 10, 20, 50, 100, 500]
-        },
-        LOG: {
-            LEVEL: ['trace', 'debug', 'info', 'warn', 'error', 'fatal', 'silent']
-        }
-    };
-
-    if (CONFIG.INVESTMENT.MIN <= 0) {
-        const msg = `INVESTMENT.MIN must be a positive value`;
-        logger.execution.error(msg);
-        throw new Error(msg);
-    }
-    if (CONFIG.INVESTMENT.STEP <= 0) {
-        const msg = `INVESTMENT.STEP must be a positive value`;
-        logger.execution.error(msg);
-        throw new Error(msg);
-    }
-    if (CONFIG.INVESTMENT.MIN > CONFIG.INVESTMENT.MAX) {
-        const msg = `INVESTMENT.MIN cannot be greater than INVESTMENT.MAX`;
-        logger.execution.error(msg);
-        throw new Error(msg);
-    }
-    if ((CONFIG.INVESTMENT.MIN !== CONFIG.INVESTMENT.MAX) && (CONFIG.INVESTMENT.MAX - CONFIG.INVESTMENT.MIN) / CONFIG.INVESTMENT.STEP < 1) {
-        const msg = `Not enough steps between INVESTMENT.MIN and INVESTMENT.MAX using step size of ${CONFIG.INVESTMENT.STEP}`;
-        logger.execution.error(msg);
-        throw new Error(msg);
-    }
-    if (CONFIG.TRADING.WHITELIST.some(sym => sym !== sym.toUpperCase())) {
-        const msg = `Whitelist symbols must all be uppercase`;
-        logger.execution.error(msg);
-        throw new Error(msg);
-    }
-    if (CONFIG.TRADING.WHITELIST.length > 0 && !CONFIG.TRADING.WHITELIST.includes(CONFIG.INVESTMENT.BASE)) {
-        const msg = `Whitelist must include the base symbol of ${CONFIG.INVESTMENT.BASE}`;
-        logger.execution.debug(`Whitelist: [${CONFIG.TRADING.WHITELIST}]`);
-        logger.execution.error(msg);
-        throw new Error(msg);
-    }
-    if (CONFIG.TRADING.EXECUTION_STRATEGY === 'parallel' && CONFIG.TRADING.WHITELIST.length === 0) {
-        const msg = `Parallel execution requires defining a whitelist`;
-        logger.execution.error(msg);
-        throw new Error(msg);
-    }
-    if (!VALID_VALUES.TRADING.EXECUTION_STRATEGY.includes(CONFIG.TRADING.EXECUTION_STRATEGY)) {
-        const msg = `${CONFIG.TRADING.EXECUTION_STRATEGY} is an invalid execution strategy`;
-        logger.execution.error(msg);
-        throw new Error(msg);
-    }
-    if (!CONFIG.TRADING.EXECUTION_TEMPLATE.every(template => VALID_VALUES.TRADING.EXECUTION_TEMPLATE.includes(template))) {
-        const msg = `${CONFIG.TRADING.EXECUTION_TEMPLATE} is an invalid execution template`;
-        logger.execution.error(msg);
-        throw new Error(msg);
-    }
-    if (CONFIG.TRADING.TAKER_FEE < 0) {
-        const msg = `Taker fee (${CONFIG.TRADING.TAKER_FEE}) must be a positive value`;
-        logger.execution.error(msg);
-        throw new Error(msg);
-    }
-    if (CONFIG.DEPTH.SIZE > 100 && CONFIG.TRADING.WHITELIST.length === 0) {
-        const msg = `Using a depth size higher than 100 requires defining a whitelist`;
-        logger.execution.error(msg);
-        throw new Error(msg);
-    }
-    if (!VALID_VALUES.DEPTH.SIZE.includes(CONFIG.DEPTH.SIZE)) {
-        const msg = `Depth size can only contain one of the following values: ${VALID_VALUES.DEPTH.SIZE}`;
-        logger.execution.error(msg);
-        throw new Error(msg);
-    }
-    if (!VALID_VALUES.LOG.LEVEL.includes(CONFIG.LOG.LEVEL)) {
-        const msg = `Log level can only contain one of the following values: ${VALID_VALUES.LOG.LEVEL}`;
-        logger.execution.error(msg);
-        throw new Error(msg);
-    }
-    if (isNaN(CONFIG.WEBSOCKETS.BUNDLE_SIZE) || CONFIG.WEBSOCKETS.BUNDLE_SIZE <= 0) {
-        const msg = `Websocket bundle size (${CONFIG.WEBSOCKETS.BUNDLE_SIZE}) must be a positive integer`;
-        logger.execution.error(msg);
-        throw new Error(msg);
-    }
-    if (isNaN(CONFIG.WEBSOCKETS.INITIALIZATION_INTERVAL) || CONFIG.WEBSOCKETS.INITIALIZATION_INTERVAL < 0) {
-        const msg = `Websocket initialization interval (${CONFIG.WEBSOCKETS.INITIALIZATION_INTERVAL}) must be a positive integer`;
-        logger.execution.error(msg);
-        throw new Error(msg);
-    }
-    if (CONFIG.TIMING.RECEIVE_WINDOW > 60000) {
-        const msg = `Receive window (${CONFIG.TIMING.RECEIVE_WINDOW}) must be less than 60000`;
-        logger.execution.error(msg);
-        throw new Error(msg);
-    }
-    if (CONFIG.TIMING.RECEIVE_WINDOW <= 0) {
-        const msg = `Receive window (${CONFIG.TIMING.RECEIVE_WINDOW}) must be a positive value`;
-        logger.execution.error(msg);
-        throw new Error(msg);
-    }
-    if (CONFIG.TIMING.CALCULATION_COOLDOWN <= 0) {
-        const msg = `Calculation cooldown (${CONFIG.TIMING.CALCULATION_COOLDOWN}) must be a positive value`;
-        logger.execution.error(msg);
-        throw new Error(msg);
-    }
-    if (CONFIG.TIMING.STATUS_UPDATE_INTERVAL <= 0) {
-        const msg = `Status update interval (${CONFIG.TIMING.STATUS_UPDATE_INTERVAL}) must be a positive value`;
-        logger.execution.error(msg);
-        throw new Error(msg);
-    }
-
-    return Promise.resolve();
-}
-
 function checkBalances() {
-    if (!CONFIG.TRADING.ENABLED) return;
+    if (!CONFIG.EXECUTION.ENABLED) return;
 
     console.log(`Checking balances ...`);
 
@@ -266,18 +176,11 @@ function checkBalances() {
 function checkMarket() {
     console.log(`Checking market conditions ...`);
 
-    if (MarketCache.relationships.length === 0) {
-        const msg = `No triangular relationships were identified`;
+    if (MarketCache.trades.length === 0) {
+        const msg = `No triangular trades were identified`;
         logger.execution.error(msg);
         throw new Error(msg);
     }
 
     return Promise.resolve();
-}
-
-function refreshHUD(arbs) {
-    const arbsToDisplay = Object.values(arbs)
-        .sort((a, b) => a.percent > b.percent ? -1 : 1)
-        .slice(0, CONFIG.HUD.ARB_COUNT);
-    HUD.displayArbs(arbsToDisplay);
 }

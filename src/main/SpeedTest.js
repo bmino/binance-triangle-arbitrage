@@ -1,11 +1,12 @@
 const BinanceApi = require('./BinanceApi');
+const Util = require('./Util');
 
 const SpeedTest = {
 
     ping() {
         const before = Date.now();
         return BinanceApi.time()
-            .then(() => Date.now() - before);
+            .then(() => Util.millisecondsSince(before));
     },
 
     multiPing(pingCount=5) {
