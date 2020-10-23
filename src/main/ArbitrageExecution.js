@@ -36,7 +36,7 @@ const ArbitrageExecution = {
                 // Results are only collected when a trade is executed
                 if (!CONFIG.EXECUTION.ENABLED) return;
 
-                const rate = {
+                const price = {
                     ab: {
                         expected: calculated.trade.ab.method === 'BUY' ? calculated.a.spent / calculated.b.earned : calculated.b.earned / calculated.a.spent,
                         actual: calculated.trade.ab.method === 'BUY' ? actual.a.spent / actual.b.earned : actual.b.earned / actual.a.spent
@@ -52,19 +52,19 @@ const ArbitrageExecution = {
                 };
 
                 logger.execution.debug(`${calculated.trade.ab.ticker} Stats:`);
-                logger.execution.debug(`Expected Conversion:  ${calculated.a.spent.toFixed(8)} ${symbol.a} into ${calculated.b.earned.toFixed(8)} ${symbol.b} @ ${rate.ab.expected.toFixed(8)}`);
-                logger.execution.debug(`Observed Conversion:  ${actual.a.spent.toFixed(8)} ${symbol.a} into ${actual.b.earned.toFixed(8)} ${symbol.b} @ ${rate.ab.actual.toFixed(8)}`);
-                logger.execution.debug(`Slippage Error:       ${((rate.ab.actual - rate.ab.expected) / rate.ab.expected * 100).toFixed(8)}%`);
+                logger.execution.debug(`Expected Conversion:  ${calculated.a.spent.toFixed(8)} ${symbol.a} into ${calculated.b.earned.toFixed(8)} ${symbol.b} @ ${price.ab.expected.toFixed(8)}`);
+                logger.execution.debug(`Observed Conversion:  ${actual.a.spent.toFixed(8)} ${symbol.a} into ${actual.b.earned.toFixed(8)} ${symbol.b} @ ${price.ab.actual.toFixed(8)}`);
+                logger.execution.debug(`Price Change:         ${((price.ab.actual - price.ab.expected) / price.ab.expected * 100).toFixed(8)}%`);
                 logger.execution.debug();
                 logger.execution.debug(`${calculated.trade.bc.ticker} Stats:`);
-                logger.execution.debug(`Expected Conversion:  ${calculated.b.spent.toFixed(8)} ${symbol.b} into ${calculated.c.earned.toFixed(8)} ${symbol.c} @ ${rate.bc.expected.toFixed(8)}`);
-                logger.execution.debug(`Observed Conversion:  ${actual.b.spent.toFixed(8)} ${symbol.b} into ${actual.c.earned.toFixed(8)} ${symbol.c} @ ${rate.bc.actual.toFixed(8)}`);
-                logger.execution.debug(`Slippage Error:       ${((rate.bc.actual - rate.bc.expected) / rate.bc.expected * 100).toFixed(8)}%`);
+                logger.execution.debug(`Expected Conversion:  ${calculated.b.spent.toFixed(8)} ${symbol.b} into ${calculated.c.earned.toFixed(8)} ${symbol.c} @ ${price.bc.expected.toFixed(8)}`);
+                logger.execution.debug(`Observed Conversion:  ${actual.b.spent.toFixed(8)} ${symbol.b} into ${actual.c.earned.toFixed(8)} ${symbol.c} @ ${price.bc.actual.toFixed(8)}`);
+                logger.execution.debug(`Price Change:         ${((price.bc.actual - price.bc.expected) / price.bc.expected * 100).toFixed(8)}%`);
                 logger.execution.debug();
                 logger.execution.debug(`${calculated.trade.ca.ticker} Stats:`);
-                logger.execution.debug(`Expected Conversion:  ${calculated.c.spent.toFixed(8)} ${symbol.c} into ${calculated.a.earned.toFixed(8)} ${symbol.a} @ ${rate.ca.expected.toFixed(8)}`);
-                logger.execution.debug(`Observed Conversion:  ${actual.c.spent.toFixed(8)} ${symbol.c} into ${actual.a.earned.toFixed(8)} ${symbol.a} @ ${rate.ca.actual.toFixed(8)}`);
-                logger.execution.debug(`Slippage Error:       ${((rate.ca.actual - rate.ca.expected) / rate.ca.expected * 100).toFixed(8)}%`);
+                logger.execution.debug(`Expected Conversion:  ${calculated.c.spent.toFixed(8)} ${symbol.c} into ${calculated.a.earned.toFixed(8)} ${symbol.a} @ ${price.ca.expected.toFixed(8)}`);
+                logger.execution.debug(`Observed Conversion:  ${actual.c.spent.toFixed(8)} ${symbol.c} into ${actual.a.earned.toFixed(8)} ${symbol.a} @ ${price.ca.actual.toFixed(8)}`);
+                logger.execution.debug(`Price Change:         ${((price.ca.actual - price.ca.expected) / price.ca.expected * 100).toFixed(8)}%`);
 
                 const prunedDepthSnapshot = {
                     ab: Util.pruneSnapshot(calculated.depth.ab, CalculationNode.getOrderBookDepthRequirement(calculated.trade.ab.method, calculated.ab, calculated.depth.ab) + 2),
