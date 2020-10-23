@@ -138,7 +138,8 @@ function displayStatusUpdate() {
         .then(([load, latency]) => {
             logger.performance.debug(`CPU Load: ${(load.avgload * 100).toFixed(0)}% [${load.cpus.map(cpu => cpu.load.toFixed(0) + '%')}]`);
             logger.performance.debug(`API Latency: ${latency} ms`);
-        });
+        })
+        .catch(err => logger.performance.warn(err.message));
 }
 
 function handleError(err) {
