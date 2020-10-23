@@ -42,12 +42,12 @@ const ArbitrageExecution = {
                         actual: calculated.trade.ab.method === 'BUY' ? actual.a.spent / actual.b.earned : actual.b.earned / actual.a.spent
                     },
                     bc: {
-                        expected: calculated.trade.ab.method === 'BUY' ? calculated.b.spent / calculated.c.earned : calculated.c.earned / calculated.b.spent,
-                        actual: calculated.trade.ab.method === 'BUY' ? actual.b.spent / actual.c.earned : actual.c.earned / actual.b.spent
+                        expected: calculated.trade.bc.method === 'BUY' ? calculated.b.spent / calculated.c.earned : calculated.c.earned / calculated.b.spent,
+                        actual: calculated.trade.bc.method === 'BUY' ? actual.b.spent / actual.c.earned : actual.c.earned / actual.b.spent
                     },
                     ca: {
-                        expected: calculated.trade.ab.method === 'BUY' ? calculated.c.spent / calculated.a.earned : calculated.a.earned / calculated.c.spent,
-                        actual: calculated.trade.ab.method === 'BUY' ? actual.c.spent / actual.a.earned : actual.a.earned / actual.c.spent
+                        expected: calculated.trade.ca.method === 'BUY' ? calculated.c.spent / calculated.a.earned : calculated.a.earned / calculated.c.spent,
+                        actual: calculated.trade.ca.method === 'BUY' ? actual.c.spent / actual.a.earned : actual.a.earned / actual.c.spent
                     }
                 };
 
