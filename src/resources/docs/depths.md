@@ -1,9 +1,9 @@
 # Depth Sizes
 
-Internally the app maintains a copy of the order book. This order book's bid and ask depth is configured via `SCANNING.DEPTH`.
+Internally the app maintains a synced copy of the order book. This order book's bid and ask depth is configured via `SCANNING.DEPTH`.
 
 
-### How Local Order Book is Maintained
+### How Local Order Book is Initialized
 
 Websocket connections keep the local order book up to date, but when the app starts up, the order book for each tracked symbol must be initialized.
 This is accomplished by requesting a snapshot of the order book from Binance via a REST call.
@@ -20,7 +20,7 @@ This is because higher depth values have a higher weight assigned by Binance.
 
 **Q**. What happens if I use a `SCANNING.DEPTH` value other than those listed above?
 
-**A**. An order book REST request will be made with the lowest depth value that will satisfy your provided `SCANNING.DEPTH` value
+**A**. The local order book will be initialized with the lowest value above that will satisfy your provided `SCANNING.DEPTH` value
 
 ---
 
