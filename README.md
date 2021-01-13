@@ -27,8 +27,8 @@ These instructions will get a copy of the project up and running on your local m
 ### Install Prerequisites
 The following dependencies are recommended to run an instance:
 
-1. **NodeJS** - 12.19.0
-2. **Npm** - 6.14.8
+1. **NodeJS** - 14.15.4
+2. **Npm** - 6.14.10
 
 
 ### Obtain the Codebase
@@ -43,7 +43,7 @@ The following dependencies are recommended to run an instance:
 All configuration is managed inside the `/config` directory.
 To setup your configuration for the first time, duplicate the `config.json.example` file and remove the ".example" extension.
 This process must be done before deploying the app for the first time and redone after each major version update where the configuration has changed.
-Explanations of each value can be found [here](config/readme.md).
+Explanations of each value can be found [here](config/README.md).
 
 ### Assumptions
 1. All fees are [paid via BNB balance](https://binance.zendesk.com/hc/en-us/articles/115000583311)
@@ -93,12 +93,10 @@ See also the list of [contributors](https://github.com/bmino/binance-triangle-ar
 
 
 ## Donations
-The developers listed above created and currently maintain this project for free.
-I don't expect any compensation nor donations, but if you appreciate my work feel free to donate to the following addresses:
+The developers listed above created and maintain this project for free.
+I don't expect any compensation, but if you appreciate my work feel free to donate to the following addresses:
 
-* Bitcoin (BTC): 1KLBb9qzFN19RxaQwD35CQmnYZvW1819XZ
-* Binance Coin (BEP20): 0xb046b6991eb1bdc838cae567cff838b542e9f19d
-* USDT (ERC20): 0xb046b6991eb1bdc838cae567cff838b542e9f19d
+* Ethereum (ERC20): 0xFd7b8597cF8eE5317439B0B5C55a111F6Eec449D
 
 ## License
 This project is licensed under mit
