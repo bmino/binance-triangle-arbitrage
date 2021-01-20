@@ -13,7 +13,6 @@
     },
 
     "SCANNING": {
-        "TIMEOUT": 250,
         "DEPTH": 20,
         "WHITELIST": []
     },

@@ -108,12 +108,8 @@ const BinanceApi = {
     },
 
     createDepthWSCallback(cb) {
-        if (CONFIG.SCANNING.TIMEOUT === 0) {
-            // 'context' exists when processing a websocket update NOT when first populating via snapshot
-            return (ticker, depth, context) => context && cb(ticker);
-        } else {
-            return null;
-        }
+        // 'context' exists when processing a websocket update NOT when first populating via snapshot
+        return (ticker, depth, context) => context && cb(ticker);
     },
 
     getDepthCacheSorted(ticker, max=CONFIG.SCANNING.DEPTH) {

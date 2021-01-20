@@ -62,14 +62,6 @@ Explanations of each value can be found [here](config/README.md).
     ```
 
 
-## Scanning Strategies
-There are two methods of analyzing order book data to identify potential arbitrage opportunities.
-More details [here](src/resources/docs/scanning.md)
-
-* **Callback** - Perform analysis on tickers immediately upon receiving a depth cache update
-* **Scheduled** - Perform analysis of all tickers iteratively with a predetermined delay between each cycle
-
-
 ## Execution Strategies
 There are two supported methods of executing an identified triangle arbitrage opportunity.
 More details [here](src/resources/docs/strategies.md)

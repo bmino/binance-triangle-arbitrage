@@ -47,13 +47,6 @@ Upon each version update you should copy the new syntax from `config.json.exampl
 
 ### `SCANNING`
 
-#### `SCANNING.TIMEOUT` (Number)
-* Default: `250`
-* Description: Delay (ms) between completing calculations and starting another cycle
-* Special Values:
-    * `0` - Executes calculation cycles as soon as new depth information is received
-* [Extended Documentation](../src/resources/docs/scanning.md)
-
 #### `SCANNING.DEPTH` (Number)
 * Default: `20`
 * Description: Order book depth to maintain locally on each ticker
