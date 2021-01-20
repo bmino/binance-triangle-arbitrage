@@ -48,7 +48,7 @@ Upon each version update you should copy the new syntax from `config.json.exampl
 ### `SCANNING`
 
 #### `SCANNING.DEPTH` (Number)
-* Default: `20`
+* Default: `50`
 * Description: Order book depth to maintain locally on each ticker
 * [Extended Documentation](../src/resources/docs/depths.md)
 

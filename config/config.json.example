@@ -13,7 +13,7 @@
     },
 
     "SCANNING": {
-        "DEPTH": 20,
+        "DEPTH": 50,
         "WHITELIST": []
     },
 
