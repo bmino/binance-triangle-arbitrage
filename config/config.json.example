@@ -22,7 +22,7 @@
         "CAP": 1,
         "STRATEGY": "linear",
         "TEMPLATE": ["BUY", "SELL", "SELL"],
-        "FEE": 0.10,
+        "FEE": 0.075,
         "THRESHOLD": {
             "PROFIT": 0.00,
             "AGE": 150

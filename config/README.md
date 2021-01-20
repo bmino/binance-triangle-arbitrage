@@ -30,7 +30,7 @@ Upon each version update you should copy the new syntax from `config.json.exampl
 * Description: Symbol which all triangle trades must start and end with
     
 #### `INVESTMENT.MIN` (Number)
-* Default: `0.010`
+* Default: `0.075`
 * Description: Minimum investment amount of the base currency to consider
     
 #### `INVESTMENT.MAX` (Number)
