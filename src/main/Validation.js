@@ -42,11 +42,6 @@ const Validation = {
         }
 
         // SCANNING
-        if (!Number.isInteger(CONFIG.SCANNING.TIMEOUT) || CONFIG.SCANNING.TIMEOUT < 0) {
-            const msg = `Scanning timeout (SCANNING.TIMEOUT) must be a positive integer`;
-            logger.execution.error(msg);
-            throw new Error(msg);
-        }
         if (!Number.isInteger(CONFIG.SCANNING.DEPTH) || CONFIG.SCANNING.DEPTH <= 0) {
             const msg = `Depth size (SCANNING.DEPTH) must be a positive integer`;
             logger.execution.error(msg);
@@ -145,10 +140,6 @@ const Validation = {
             const msg = `HUD refresh rate (HUD.REFRESH_RATE) must be a positive integer`;
             logger.execution.error(msg);
             throw new Error(msg);
-        }
-        if (CONFIG.HUD.REFRESH_RATE < CONFIG.SCANNING.TIMEOUT) {
-            const msg = `Refreshing the HUD (HUD.REFRESH_RATE) more frequently than the scanning timeout (SCANNING.TIMEOUT) is inefficient`;
-            logger.execution.warn(msg);
         }
 
         // LOG

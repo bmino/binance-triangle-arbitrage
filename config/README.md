@@ -30,7 +30,7 @@ Upon each version update you should copy the new syntax from `config.json.exampl
 * Description: Symbol which all triangle trades must start and end with
     
 #### `INVESTMENT.MIN` (Number)
-* Default: `0.010`
+* Default: `0.075`
 * Description: Minimum investment amount of the base currency to consider
     
 #### `INVESTMENT.MAX` (Number)
@@ -47,15 +47,8 @@ Upon each version update you should copy the new syntax from `config.json.exampl
 
 ### `SCANNING`
 
-#### `SCANNING.TIMEOUT` (Number)
-* Default: `250`
-* Description: Delay (ms) between completing calculations and starting another cycle
-* Special Values:
-    * `0` - Executes calculation cycles as soon as new depth information is received
-* [Extended Documentation](../src/resources/docs/scanning.md)
-
 #### `SCANNING.DEPTH` (Number)
-* Default: `20`
+* Default: `50`
 * Description: Order book depth to maintain locally on each ticker
 * [Extended Documentation](../src/resources/docs/depths.md)
 
@@ -106,7 +99,7 @@ Upon each version update you should copy the new syntax from `config.json.exampl
 * Example: 0.50% would be entered as 0.50
 
 #### `EXECUTION.THRESHOLD.AGE` (Number)
-* Default: `150`
+* Default: `25`
 * Description: Maximum time (ms) since the oldest depth tick involved in the position required to consider executing a position
 
 

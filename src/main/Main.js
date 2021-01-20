@@ -69,31 +69,10 @@ SpeedTest.multiPing(5)
         console.log(`Age Threshold:          ${CONFIG.EXECUTION.THRESHOLD.AGE} ms`);
         console.log();
 
-        if (CONFIG.SCANNING.TIMEOUT > 0) arbitrageCycleScheduled();
         if (CONFIG.HUD.ENABLED) setInterval(() => HUD.displayTopCalculations(recentCalculations, CONFIG.HUD.ROWS), CONFIG.HUD.REFRESH_RATE);
         if (CONFIG.LOG.STATUS_UPDATE_INTERVAL > 0) setInterval(displayStatusUpdate, CONFIG.LOG.STATUS_UPDATE_INTERVAL * 1000 * 60);
     })
     .catch(handleError);
-
-function arbitrageCycleScheduled() {
-    if (isSafeToCalculateArbitrage()) {
-        const startTime = Date.now();
-        const depthSnapshots = BinanceApi.getDepthSnapshots(MarketCache.tickers.watching);
-
-        const results = CalculationNode.analyze(
-            MarketCache.trades,
-            depthSnapshots,
-            (e) => logger.performance.warn(e),
-            ArbitrageExecution.isSafeToExecute,
-            ArbitrageExecution.executeCalculatedPosition
-        );
-
-        if (CONFIG.HUD.ENABLED) Object.assign(recentCalculations, results);
-        statusUpdate.cycleTimes.push(Util.millisecondsSince(startTime));
-    }
-
-    setTimeout(arbitrageCycleScheduled, CONFIG.SCANNING.TIMEOUT);
-}
 
 function arbitrageCycleCallback(ticker) {
     if (!isSafeToCalculateArbitrage()) return;
