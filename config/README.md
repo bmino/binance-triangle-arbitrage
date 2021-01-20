@@ -99,7 +99,7 @@ Upon each version update you should copy the new syntax from `config.json.exampl
 * Example: 0.50% would be entered as 0.50
 
 #### `EXECUTION.THRESHOLD.AGE` (Number)
-* Default: `150`
+* Default: `25`
 * Description: Maximum time (ms) since the oldest depth tick involved in the position required to consider executing a position
 
 

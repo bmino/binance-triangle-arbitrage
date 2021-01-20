@@ -25,7 +25,7 @@
         "FEE": 0.075,
         "THRESHOLD": {
             "PROFIT": 0.00,
-            "AGE": 150
+            "AGE": 25
         }
     },
 
