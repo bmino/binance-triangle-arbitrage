@@ -43,10 +43,19 @@ const CalculationNode = {
         let calculated = {
             id: `${trade.symbol.a}-${trade.symbol.b}-${trade.symbol.c}`,
             trade: trade,
-            ab: 0,
-            bc: 0,
-            ca: 0,
             depth: depthSnapshot,
+            ab: {
+                quantity: 0,
+                depth: 0
+            },
+            bc: {
+                quantity: 0,
+                depth: 0
+            },
+            ca: {
+                quantity: 0,
+                depth: 0
+            },
             a: {
                 spent: 0,
                 earned: 0,
@@ -66,35 +75,35 @@ const CalculationNode = {
 
         if (trade.ab.method === 'BUY') {
             // Buying BA
-            const dustedB = CalculationNode.orderBookConversion(investmentA, trade.symbol.a, trade.symbol.b, trade.ab.ticker, depthSnapshot.ab);
-            calculated.b.earned = calculated.ab = CalculationNode.calculateDustless(dustedB, trade.ab.dustDecimals);
-            calculated.a.spent = CalculationNode.orderBookReverseConversion(calculated.b.earned, trade.symbol.b, trade.symbol.a, trade.ab.ticker, depthSnapshot.ab);
+            const { value: dustedB } = CalculationNode.orderBookConversion(investmentA, trade.symbol.a, trade.symbol.b, trade.ab.ticker, depthSnapshot.ab);
+            calculated.b.earned = calculated.ab.quantity = CalculationNode.calculateDustless(dustedB, trade.ab.dustDecimals);
+            ({ value: calculated.a.spent, depth: calculated.ab.depth } = CalculationNode.orderBookReverseConversion(calculated.b.earned, trade.symbol.b, trade.symbol.a, trade.ab.ticker, depthSnapshot.ab));
         } else {
             // Selling AB
-            calculated.a.spent = calculated.ab = CalculationNode.calculateDustless(investmentA, trade.ab.dustDecimals);
-            calculated.b.earned = CalculationNode.orderBookConversion(calculated.a.spent, trade.symbol.a, trade.symbol.b, trade.ab.ticker, depthSnapshot.ab);
+            calculated.a.spent = calculated.ab.quantity = CalculationNode.calculateDustless(investmentA, trade.ab.dustDecimals);
+            ({ value: calculated.b.earned, depth: calculated.ab.depth } = CalculationNode.orderBookConversion(calculated.a.spent, trade.symbol.a, trade.symbol.b, trade.ab.ticker, depthSnapshot.ab));
         }
 
         if (trade.bc.method === 'BUY') {
             // Buying CB
-            const dustedC = CalculationNode.orderBookConversion(calculated.b.earned, trade.symbol.b, trade.symbol.c, trade.bc.ticker, depthSnapshot.bc);
-            calculated.c.earned = calculated.bc = CalculationNode.calculateDustless(dustedC, trade.bc.dustDecimals);
-            calculated.b.spent = CalculationNode.orderBookReverseConversion(calculated.c.earned, trade.symbol.c, trade.symbol.b, trade.bc.ticker, depthSnapshot.bc);
+            const { value: dustedC } = CalculationNode.orderBookConversion(calculated.b.earned, trade.symbol.b, trade.symbol.c, trade.bc.ticker, depthSnapshot.bc);
+            calculated.c.earned = calculated.bc.quantity = CalculationNode.calculateDustless(dustedC, trade.bc.dustDecimals);
+            ({ value: calculated.b.spent, depth: calculated.bc.depth } = CalculationNode.orderBookReverseConversion(calculated.c.earned, trade.symbol.c, trade.symbol.b, trade.bc.ticker, depthSnapshot.bc));
         } else {
             // Selling BC
-            calculated.b.spent = calculated.bc = CalculationNode.calculateDustless(calculated.b.earned, trade.bc.dustDecimals);
-            calculated.c.earned = CalculationNode.orderBookConversion(calculated.b.spent, trade.symbol.b, trade.symbol.c, trade.bc.ticker, depthSnapshot.bc);
+            calculated.b.spent = calculated.bc.quantity = CalculationNode.calculateDustless(calculated.b.earned, trade.bc.dustDecimals);
+            ({ value: calculated.c.earned, depth: calculated.bc.depth } = CalculationNode.orderBookConversion(calculated.b.spent, trade.symbol.b, trade.symbol.c, trade.bc.ticker, depthSnapshot.bc));
         }
 
         if (trade.ca.method === 'BUY') {
             // Buying AC
-            const dustedA = CalculationNode.orderBookConversion(calculated.c.earned, trade.symbol.c, trade.symbol.a, trade.ca.ticker, depthSnapshot.ca);
-            calculated.a.earned = calculated.ca = CalculationNode.calculateDustless(dustedA, trade.ca.dustDecimals);
-            calculated.c.spent = CalculationNode.orderBookReverseConversion(calculated.a.earned, trade.symbol.a, trade.symbol.c, trade.ca.ticker, depthSnapshot.ca);
+            const { value: dustedA } = CalculationNode.orderBookConversion(calculated.c.earned, trade.symbol.c, trade.symbol.a, trade.ca.ticker, depthSnapshot.ca);
+            calculated.a.earned = calculated.ca.quantity = CalculationNode.calculateDustless(dustedA, trade.ca.dustDecimals);
+            ({ value: calculated.c.spent, depth: calculated.ca.depth } = CalculationNode.orderBookReverseConversion(calculated.a.earned, trade.symbol.a, trade.symbol.c, trade.ca.ticker, depthSnapshot.ca));
         } else {
             // Selling CA
-            calculated.c.spent = calculated.ca = CalculationNode.calculateDustless(calculated.c.earned, trade.ca.dustDecimals);
-            calculated.a.earned = CalculationNode.orderBookConversion(calculated.c.spent, trade.symbol.c, trade.symbol.a, trade.ca.ticker, depthSnapshot.ca);
+            calculated.c.spent = calculated.ca.quantity = CalculationNode.calculateDustless(calculated.c.earned, trade.ca.dustDecimals);
+            ({ value: calculated.a.earned, depth: calculated.ca.depth } = CalculationNode.orderBookConversion(calculated.c.spent, trade.symbol.c, trade.symbol.a, trade.ca.ticker, depthSnapshot.ca));
         }
 
         // Calculate deltas
@@ -110,7 +119,7 @@ const CalculationNode = {
 
     recalculateTradeLeg({ base, quote, method, ticker, dustDecimals }, quantityEarned, depthSnapshot) {
         if (method === 'BUY') {
-            const dustedQuantity = CalculationNode.orderBookConversion(quantityEarned, quote, base, ticker, depthSnapshot);
+            const { value: dustedQuantity } = CalculationNode.orderBookConversion(quantityEarned, quote, base, ticker, depthSnapshot);
             return CalculationNode.calculateDustless(dustedQuantity, dustDecimals);
         } else {
             return CalculationNode.calculateDustless(quantityEarned, dustDecimals);
@@ -118,7 +127,7 @@ const CalculationNode = {
     },
 
     orderBookConversion(amountFrom, symbolFrom, symbolTo, ticker, depthSnapshot) {
-        if (amountFrom === 0) return 0;
+        if (amountFrom === 0) return { value: 0, depth: 0 };
 
         let amountTo = 0;
 
@@ -133,7 +142,10 @@ const CalculationNode = {
                     amountTo += exchangeableAmount;
                 } else {
                     // Last fill
-                    return amountTo + (amountFrom * rate);
+                    return {
+                        value: amountTo + (amountFrom * rate),
+                        depth: i+1
+                    };
                 }
             }
             throw new Error(`Bid depth (${bidRates.length}) too shallow to convert ${amountFrom} ${symbolFrom} to ${symbolTo} using ${ticker}`);
@@ -148,7 +160,10 @@ const CalculationNode = {
                     amountTo += quantity;
                 } else {
                     // Last fill
-                    return amountTo + (amountFrom / rate);
+                    return {
+                        value: amountTo + (amountFrom / rate),
+                        depth: i+1
+                    };
                 }
             }
             throw new Error(`Ask depth (${askRates.length}) too shallow to convert ${amountFrom} ${symbolFrom} to ${symbolTo} using ${ticker}`);
@@ -156,7 +171,7 @@ const CalculationNode = {
     },
 
     orderBookReverseConversion(amountFrom, symbolFrom, symbolTo, ticker, depthSnapshot) {
-        if (amountFrom === 0) return 0;
+        if (amountFrom === 0) return { value: 0, depth: 0 };
 
         let amountTo = 0;
 
@@ -171,7 +186,10 @@ const CalculationNode = {
                     amountTo += exchangeableAmount;
                 } else {
                     // Last fill
-                    return amountTo + (amountFrom * rate);
+                    return {
+                        value: amountTo + (amountFrom * rate),
+                        depth: i+1
+                    };
                 }
             }
             throw new Error(`Ask depth (${askRates.length}) too shallow to reverse convert ${amountFrom} ${symbolFrom} to ${symbolTo} using ${ticker}`);
@@ -186,7 +204,10 @@ const CalculationNode = {
                     amountTo += quantity;
                 } else {
                     // Last fill
-                    return amountTo + (amountFrom / rate);
+                    return {
+                        value: amountTo + (amountFrom / rate),
+                        depth: i+1
+                    };
                 }
             }
             throw new Error(`Bid depth (${bidRates.length}) too shallow to reverse convert ${amountFrom} ${symbolFrom} to ${symbolTo} using ${ticker}`);

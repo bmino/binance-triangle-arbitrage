@@ -160,9 +160,9 @@ const ArbitrageExecution = {
 
     parallelExecutionStrategy(calculated) {
         return Promise.all([
-            BinanceApi.marketBuyOrSell(calculated.trade.ab.method)(calculated.trade.ab.ticker, calculated.ab),
-            BinanceApi.marketBuyOrSell(calculated.trade.bc.method)(calculated.trade.bc.ticker, calculated.bc),
-            BinanceApi.marketBuyOrSell(calculated.trade.ca.method)(calculated.trade.ca.ticker, calculated.ca)
+            BinanceApi.marketBuyOrSell(calculated.trade.ab.method)(calculated.trade.ab.ticker, calculated.ab.quantity),
+            BinanceApi.marketBuyOrSell(calculated.trade.bc.method)(calculated.trade.bc.ticker, calculated.bc.quantity),
+            BinanceApi.marketBuyOrSell(calculated.trade.ca.method)(calculated.trade.ca.ticker, calculated.ca.quantity)
         ])
             .then(([resultsAB, resultsBC, resultsCA]) => {
                 let actual = {
@@ -217,11 +217,11 @@ const ArbitrageExecution = {
             fees: 0
         };
         let recalculated = {
-            bc: calculated.bc,
-            ca: calculated.ca
+            bc: calculated.bc.quantity,
+            ca: calculated.ca.quantity
         };
 
-        return BinanceApi.marketBuyOrSell(calculated.trade.ab.method)(calculated.trade.ab.ticker, calculated.ab)
+        return BinanceApi.marketBuyOrSell(calculated.trade.ab.method)(calculated.trade.ab.ticker, calculated.ab.quantity)
             .then((results) => {
                 if (results.orderId) {
                     [actual.a.spent, actual.b.earned, fees] = ArbitrageExecution.parseActualResults(calculated.trade.ab.method, results);
