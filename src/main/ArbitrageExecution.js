@@ -67,9 +67,9 @@ const ArbitrageExecution = {
                 logger.execution.debug(`Price Change:         ${((price.ca.actual - price.ca.expected) / price.ca.expected * 100).toFixed(8)}%`);
 
                 const prunedDepthSnapshot = {
-                    ab: Util.pruneSnapshot(calculated.depth.ab, CalculationNode.getOrderBookDepthRequirement(calculated.trade.ab.method, calculated.ab, calculated.depth.ab) + 2),
-                    bc: Util.pruneSnapshot(calculated.depth.bc, CalculationNode.getOrderBookDepthRequirement(calculated.trade.bc.method, calculated.bc, calculated.depth.bc) + 2),
-                    ca: Util.pruneSnapshot(calculated.depth.ca, CalculationNode.getOrderBookDepthRequirement(calculated.trade.ca.method, calculated.ca, calculated.depth.ca) + 2)
+                    ab: Util.pruneSnapshot(calculated.depth.ab, calculated.ab.depth + 2),
+                    bc: Util.pruneSnapshot(calculated.depth.bc, calculated.bc.depth + 2),
+                    ca: Util.pruneSnapshot(calculated.depth.ca, calculated.ca.depth + 2)
                 };
 
                 logger.execution.trace(`Pruned depth cache used for calculation:`);
