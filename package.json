@@ -18,9 +18,8 @@
   "dependencies": {
     "blessed": "^0.1.81",
     "node-binance-api": "^0.11.11",
-    "pino": "^6.10.0",
-    "pino-pretty": "^4.3.0",
-    "systeminformation": "^4.34.7"
+    "pino": "^6.11.1",
+    "pino-pretty": "^4.5.0"
   },
   "license": "MIT"
 }

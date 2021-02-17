@@ -1,7 +1,6 @@
 const CONFIG = require('../../config/config');
 const logger = require('./Loggers');
 const Util = require('./Util');
-const si = require('systeminformation');
 const BinanceApi = require('./BinanceApi');
 const MarketCache = require('./MarketCache');
 const HUD = require('./HUD');
@@ -110,12 +109,8 @@ function displayStatusUpdate() {
 
     statusUpdate.cycleTimes = [];
 
-    Promise.all([
-        si.currentLoad(),
-        SpeedTest.ping()
-    ])
-        .then(([load, latency]) => {
-            logger.performance.debug(`CPU Load: ${(load.avgload * 100).toFixed(0)}% [${load.cpus.map(cpu => cpu.load.toFixed(0) + '%')}]`);
+    SpeedTest.ping()
+        .then((latency) => {
             logger.performance.debug(`API Latency: ${latency} ms`);
         })
         .catch(err => logger.performance.warn(err.message));
