@@ -1,8 +1,8 @@
 # Binance Triangle Arbitrage
 
-<p align="center">
-    <img src="https://github.com/bmino/binance-triangle-arbitrage/blob/master/src/resources/mainDisplay.png">
-</p>
+<div style="text-align: center;">
+    <img src="https://github.com/bmino/binance-triangle-arbitrage/blob/master/src/resources/mainDisplay.png" alt="Main HUD display">
+</div>
 
 This app monitors the [Binance](https://www.binance.com) cryptocurrency exchange in search of triangle arbitrage opportunities.
 
