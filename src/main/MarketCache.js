@@ -59,13 +59,6 @@ const MarketCache = {
         });
     },
 
-    pruneDepthCacheAboveThreshold(depthCache, threshold) {
-        Object.values(depthCache).forEach(depth => {
-            depth.bids = Util.prune(depth.bids, threshold);
-            depth.asks = Util.prune(depth.asks, threshold);
-        });
-    },
-
     getTickersWithoutDepthCacheUpdate(ms=Infinity) {
         return MarketCache.tickers.watching.filter(ticker => {
             const { eventTime } = BinanceApi.getDepthCacheUnsorted(ticker);
