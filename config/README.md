@@ -25,9 +25,9 @@ Upon each version update you should copy the new syntax from `config.json.exampl
 
 ### `INVESTMENT`
 
-#### `INVESTMENT.[BASE]` ({}})
-* Default: `"BTC"`
-* Description: Symbol which all triangle trades must start and end with
+#### `INVESTMENT.[BASE]` (Object)
+* Default: `"BTC": {...}`
+* Description: Symbol which triangle trades must start and end with
 * [Extended Documentation](../src/resources/docs/bases.md)
     
 #### `INVESTMENT.[BASE].MIN` (Number)

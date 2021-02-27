@@ -1,8 +1,8 @@
 # Investment Bases
 
-Each trade must begin and end with the same asset. This asset is referred to as the base asset in relation to the trade.
 Every trade has one base asset and is commonly referred to as the `A` in the `A-B-C` simplification.
 You must specify at least one base to start the application, and must hold a balance of all base assets.
+
 
 ### Configuring Base Assets
 
