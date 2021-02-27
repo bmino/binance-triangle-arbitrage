@@ -34,11 +34,7 @@ SpeedTest.multiPing(5)
         console.log(msg);
         logger.performance.info(msg);
     })
-    .then(() => {
-        console.log(`Fetching exchange info ...`);
-        return BinanceApi.exchangeInfo();
-    })
-    .then(exchangeInfo => MarketCache.initialize(exchangeInfo, CONFIG.SCANNING.WHITELIST, CONFIG.INVESTMENT.BASE))
+    .then(MarketCache.initialize)
     .then(checkBalances)
     .then(checkMarket)
     .then(() => {

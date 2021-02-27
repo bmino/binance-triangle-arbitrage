@@ -14,7 +14,10 @@ const MarketCache = {
         tickers: {}
     },
 
-    initialize(exchangeInfo, whitelistSymbols, baseSymbol) {
+    async initialize() {
+        console.log(`Fetching exchange info ...`);
+        const exchangeInfo = await BinanceApi.exchangeInfo();
+
         // Mapping and Filters
         const isTRADING = (symbolObj) => symbolObj.status === 'TRADING';
         const getLOT_SIZE = (symbolObj) => symbolObj.filterType === 'LOT_SIZE';
