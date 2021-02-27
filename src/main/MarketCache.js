@@ -33,10 +33,12 @@ const MarketCache = {
         });
 
         // Get trades from symbols
-        uniqueSymbols.forEach(symbol2 => {
-            uniqueSymbols.forEach(symbol3 => {
-                const trade = MarketCache.createTrade(baseSymbol, symbol2, symbol3);
-                if (trade) MarketCache.trades.push(trade);
+        Object.keys(CONFIG.INVESTMENT).forEach(symbol1 => {
+            uniqueSymbols.forEach(symbol2 => {
+                uniqueSymbols.forEach(symbol3 => {
+                    const trade = MarketCache.createTrade(symbol1, symbol2, symbol3);
+                    if (trade) MarketCache.trades.push(trade);
+                });
             });
         });
 

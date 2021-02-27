@@ -136,16 +136,18 @@ function checkBalances() {
 
     return BinanceApi.getBalances()
         .then(balances => {
-            if (balances[CONFIG.INVESTMENT.BASE].available < CONFIG.INVESTMENT.MIN) {
-                const msg = `Only detected ${balances[CONFIG.INVESTMENT.BASE].available} ${CONFIG.INVESTMENT.BASE}, but ${CONFIG.INVESTMENT.MIN} ${CONFIG.INVESTMENT.BASE} is required to satisfy your INVESTMENT.MIN configuration`;
-                logger.execution.error(msg);
-                throw new Error(msg);
-            }
-            if (balances[CONFIG.INVESTMENT.BASE].available < CONFIG.INVESTMENT.MAX) {
-                const msg = `Only detected ${balances[CONFIG.INVESTMENT.BASE].available} ${CONFIG.INVESTMENT.BASE}, but ${CONFIG.INVESTMENT.MAX} ${CONFIG.INVESTMENT.BASE} is required to satisfy your INVESTMENT.MAX configuration`;
-                logger.execution.error(msg);
-                throw new Error(msg);
-            }
+            Object.keys(CONFIG.INVESTMENT).forEach(BASE => {
+                if (balances[BASE].available < CONFIG.INVESTMENT[BASE].MIN) {
+                    const msg = `Only detected ${balances[BASE].available} ${BASE}, but ${CONFIG.INVESTMENT[BASE].MIN} ${BASE} is required to satisfy your INVESTMENT.${BASE}.MIN configuration`;
+                    logger.execution.error(msg);
+                    throw new Error(msg);
+                }
+                if (balances[BASE].available < CONFIG.INVESTMENT[BASE].MAX) {
+                    const msg = `Only detected ${balances[BASE].available} ${BASE}, but ${CONFIG.INVESTMENT[BASE].MAX} ${BASE} is required to satisfy your INVESTMENT.${BASE}.MAX configuration`;
+                    logger.execution.error(msg);
+                    throw new Error(msg);
+                }
+            });
             if (balances['BNB'].available <= 0.001) {
                 const msg = `Only detected ${balances['BNB'].available} BNB which is not sufficient to pay for trading fees via BNB`;
                 logger.execution.error(msg);

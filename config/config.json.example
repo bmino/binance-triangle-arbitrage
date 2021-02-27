@@ -6,10 +6,11 @@
     },
 
     "INVESTMENT": {
-        "BASE": "BTC",
-        "MIN": 0.010,
-        "MAX": 0.015,
-        "STEP": 0.005
+        "BTC": {
+            "MIN": 0.010,
+            "MAX": 0.015,
+            "STEP": 0.005
+        }
     },
 
     "SCANNING": {

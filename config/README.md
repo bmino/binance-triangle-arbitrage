@@ -25,19 +25,20 @@ Upon each version update you should copy the new syntax from `config.json.exampl
 
 ### `INVESTMENT`
 
-#### `INVESTMENT.BASE` (String)
+#### `INVESTMENT.[BASE]` ({}})
 * Default: `"BTC"`
 * Description: Symbol which all triangle trades must start and end with
+* [Extended Documentation](../src/resources/docs/bases.md)
     
-#### `INVESTMENT.MIN` (Number)
+#### `INVESTMENT.[BASE].MIN` (Number)
 * Default: `0.075`
 * Description: Minimum investment amount of the base currency to consider
     
-#### `INVESTMENT.MAX` (Number)
+#### `INVESTMENT.[BASE].MAX` (Number)
 * Default: `0.015`
 * Description: Maximum investment amount of the base currency to consider
 
-#### `INVESTMENT.STEP` (Number)
+#### `INVESTMENT.[BASE].STEP` (Number)
 * Default: `0.005`
 * Description: Increments at which investment amounts are considered between the min and max
 
