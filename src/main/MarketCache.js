@@ -14,7 +14,10 @@ const MarketCache = {
         tickers: {}
     },
 
-    initialize(exchangeInfo, whitelistSymbols, baseSymbol) {
+    async initialize() {
+        console.log(`Fetching exchange info ...`);
+        const exchangeInfo = await BinanceApi.exchangeInfo();
+
         // Mapping and Filters
         const isTRADING = (symbolObj) => symbolObj.status === 'TRADING';
         const getLOT_SIZE = (symbolObj) => symbolObj.filterType === 'LOT_SIZE';
@@ -33,10 +36,12 @@ const MarketCache = {
         });
 
         // Get trades from symbols
-        uniqueSymbols.forEach(symbol2 => {
-            uniqueSymbols.forEach(symbol3 => {
-                const trade = MarketCache.createTrade(baseSymbol, symbol2, symbol3);
-                if (trade) MarketCache.trades.push(trade);
+        Object.keys(CONFIG.INVESTMENT).forEach(symbol1 => {
+            uniqueSymbols.forEach(symbol2 => {
+                uniqueSymbols.forEach(symbol3 => {
+                    const trade = MarketCache.createTrade(symbol1, symbol2, symbol3);
+                    if (trade) MarketCache.trades.push(trade);
+                });
             });
         });
 
@@ -56,13 +61,6 @@ const MarketCache = {
                 MarketCache.related.tickers[ticker].add(bc.ticker);
                 MarketCache.related.tickers[ticker].add(ca.ticker);
             });
-        });
-    },
-
-    pruneDepthCacheAboveThreshold(depthCache, threshold) {
-        Object.values(depthCache).forEach(depth => {
-            depth.bids = Util.prune(depth.bids, threshold);
-            depth.asks = Util.prune(depth.asks, threshold);
         });
     },
 

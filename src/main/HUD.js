@@ -44,14 +44,14 @@ const HUD = {
             .filter(({depth: {ab, bc, ca}}) => ab.eventTime && bc.eventTime && ca.eventTime)
             .sort((a, b) => a.percent > b.percent ? -1 : 1)
             .slice(0, rowCount)
-            .forEach(calculation => {
+            .forEach(({ trade, percent, depth }) => {
                 tableData.push([
-                    `${calculation.trade.symbol.a}-${calculation.trade.symbol.b}-${calculation.trade.symbol.c}`,
-                    `${calculation.percent.toFixed(4)}%`,
-                    `${((now - calculation.depth.ab.eventTime)/1000).toFixed(2)}`,
-                    `${((now - calculation.depth.bc.eventTime)/1000).toFixed(2)}`,
-                    `${((now - calculation.depth.ca.eventTime)/1000).toFixed(2)}`,
-                    `${((now - Math.min(calculation.depth.ab.eventTime, calculation.depth.bc.eventTime, calculation.depth.ca.eventTime))/1000).toFixed(2)}`
+                    `${trade.symbol.a}-${trade.symbol.b}-${trade.symbol.c}`,
+                    `${percent.toFixed(4)}%`,
+                    `${now - depth.ab.eventTime}`,
+                    `${now - depth.bc.eventTime}`,
+                    `${now - depth.ca.eventTime}`,
+                    `${now - Math.min(depth.ab.eventTime, depth.bc.eventTime, depth.ca.eventTime)}`
                 ]);
             });
 

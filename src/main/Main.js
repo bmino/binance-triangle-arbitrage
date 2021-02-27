@@ -1,7 +1,6 @@
 const CONFIG = require('../../config/config');
 const logger = require('./Loggers');
 const Util = require('./Util');
-const si = require('systeminformation');
 const BinanceApi = require('./BinanceApi');
 const MarketCache = require('./MarketCache');
 const HUD = require('./HUD');
@@ -35,11 +34,7 @@ SpeedTest.multiPing(5)
         console.log(msg);
         logger.performance.info(msg);
     })
-    .then(() => {
-        console.log(`Fetching exchange info ...`);
-        return BinanceApi.exchangeInfo();
-    })
-    .then(exchangeInfo => MarketCache.initialize(exchangeInfo, CONFIG.SCANNING.WHITELIST, CONFIG.INVESTMENT.BASE))
+    .then(MarketCache.initialize)
     .then(checkBalances)
     .then(checkMarket)
     .then(() => {
@@ -105,17 +100,20 @@ function displayStatusUpdate() {
         logger.performance.debug(`Tickers without recent depth cache update: [${tickersWithoutRecentDepthUpdate.sort()}]`);
     }
 
-    logger.performance.debug(`Cycles done per second:  ${(statusUpdate.cycleTimes.length / (statusUpdateIntervalMS / 1000)).toFixed(2)}`);
-    logger.performance.debug(`Clock usage for cycles:  ${(Util.sum(statusUpdate.cycleTimes) / statusUpdateIntervalMS * 100).toFixed(2)}%`);
+    const cyclesPerSecond = statusUpdate.cycleTimes.length / (statusUpdateIntervalMS / 1000);
+    logger.performance.debug(`Depth cache updates per second:  ${cyclesPerSecond.toFixed(2)}`);
+
+    const clockUsagePerCycle = Util.sum(statusUpdate.cycleTimes) / statusUpdateIntervalMS * 100;
+    if (clockUsagePerCycle > 50) {
+        logger.performance.warn(`CPU clock usage for calculations:  ${clockUsagePerCycle.toFixed(2)}%`);
+    } else {
+        logger.performance.debug(`CPU clock usage for calculations:  ${clockUsagePerCycle.toFixed(2)}%`);
+    }
 
     statusUpdate.cycleTimes = [];
 
-    Promise.all([
-        si.currentLoad(),
-        SpeedTest.ping()
-    ])
-        .then(([load, latency]) => {
-            logger.performance.debug(`CPU Load: ${(load.avgload * 100).toFixed(0)}% [${load.cpus.map(cpu => cpu.load.toFixed(0) + '%')}]`);
+    SpeedTest.ping()
+        .then((latency) => {
             logger.performance.debug(`API Latency: ${latency} ms`);
         })
         .catch(err => logger.performance.warn(err.message));
@@ -134,16 +132,18 @@ function checkBalances() {
 
     return BinanceApi.getBalances()
         .then(balances => {
-            if (balances[CONFIG.INVESTMENT.BASE].available < CONFIG.INVESTMENT.MIN) {
-                const msg = `Only detected ${balances[CONFIG.INVESTMENT.BASE].available} ${CONFIG.INVESTMENT.BASE}, but ${CONFIG.INVESTMENT.MIN} ${CONFIG.INVESTMENT.BASE} is required to satisfy your INVESTMENT.MIN configuration`;
-                logger.execution.error(msg);
-                throw new Error(msg);
-            }
-            if (balances[CONFIG.INVESTMENT.BASE].available < CONFIG.INVESTMENT.MAX) {
-                const msg = `Only detected ${balances[CONFIG.INVESTMENT.BASE].available} ${CONFIG.INVESTMENT.BASE}, but ${CONFIG.INVESTMENT.MAX} ${CONFIG.INVESTMENT.BASE} is required to satisfy your INVESTMENT.MAX configuration`;
-                logger.execution.error(msg);
-                throw new Error(msg);
-            }
+            Object.keys(CONFIG.INVESTMENT).forEach(BASE => {
+                if (balances[BASE].available < CONFIG.INVESTMENT[BASE].MIN) {
+                    const msg = `Only detected ${balances[BASE].available} ${BASE}, but ${CONFIG.INVESTMENT[BASE].MIN} ${BASE} is required to satisfy your INVESTMENT.${BASE}.MIN configuration`;
+                    logger.execution.error(msg);
+                    throw new Error(msg);
+                }
+                if (balances[BASE].available < CONFIG.INVESTMENT[BASE].MAX) {
+                    const msg = `Only detected ${balances[BASE].available} ${BASE}, but ${CONFIG.INVESTMENT[BASE].MAX} ${BASE} is required to satisfy your INVESTMENT.${BASE}.MAX configuration`;
+                    logger.execution.error(msg);
+                    throw new Error(msg);
+                }
+            });
             if (balances['BNB'].available <= 0.001) {
                 const msg = `Only detected ${balances['BNB'].available} BNB which is not sufficient to pay for trading fees via BNB`;
                 logger.execution.error(msg);

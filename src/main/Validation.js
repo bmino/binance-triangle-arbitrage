@@ -16,30 +16,47 @@ const Validation = {
         }
 
         // INVESTMENT
-        if (isNaN(CONFIG.INVESTMENT.MIN) || CONFIG.INVESTMENT.MIN <= 0) {
-            const msg = `Minimum investment quantity (INVESTMENT.MIN) must be a positive number`;
-            logger.execution.error(msg);
-            throw new Error(msg);
-        }
-        if (isNaN(CONFIG.INVESTMENT.MAX) || CONFIG.INVESTMENT.MAX <= 0) {
-            const msg = `Maximum investment quantity (INVESTMENT.MAX) must be a positive number`;
-            logger.execution.error(msg);
-            throw new Error(msg);
-        }
-        if (isNaN(CONFIG.INVESTMENT.STEP) || CONFIG.INVESTMENT.STEP <= 0) {
-            const msg = `Investment step size (INVESTMENT.STEP) must be a positive number`;
-            logger.execution.error(msg);
-            throw new Error(msg);
-        }
-        if (CONFIG.INVESTMENT.MIN > CONFIG.INVESTMENT.MAX) {
-            const msg = `Minimum investment quantity (INVESTMENT.MIN) cannot be greater than maximum investment quantity (INVESTMENT.MAX)`;
-            logger.execution.error(msg);
-            throw new Error(msg);
-        }
-        if (CONFIG.INVESTMENT.MIN !== CONFIG.INVESTMENT.MAX && (CONFIG.INVESTMENT.MIN + CONFIG.INVESTMENT.STEP) > CONFIG.INVESTMENT.MAX) {
-            const msg = `Step size (INVESTMENT.STEP) is too large for calculation optimization`;
-            logger.execution.warn(msg);
-        }
+        Object.keys(CONFIG.INVESTMENT).forEach(BASE => {
+            if (typeof BASE !== 'string') {
+                const msg = `Investment base (INVESTMENT.${BASE}) must be a string`;
+                logger.execution.error(msg);
+                throw new Error(msg);
+            }
+            if (BASE !== BASE.trim()) {
+                const msg = `Investment base (INVESTMENT.${BASE}) cannot contain whitespace`;
+                logger.execution.error(msg);
+                throw new Error(msg);
+            }
+            if (BASE !== BASE.toUpperCase()) {
+                const msg = `Investment base (INVESTMENT.${BASE}) must be uppercase`;
+                logger.execution.error(msg);
+                throw new Error(msg);
+            }
+            if (isNaN(CONFIG.INVESTMENT[BASE].MIN) || CONFIG.INVESTMENT[BASE].MIN <= 0) {
+                const msg = `Minimum investment quantity (INVESTMENT.${BASE}.MIN) must be a positive number`;
+                logger.execution.error(msg);
+                throw new Error(msg);
+            }
+            if (isNaN(CONFIG.INVESTMENT[BASE].MAX) || CONFIG.INVESTMENT[BASE].MAX <= 0) {
+                const msg = `Maximum investment quantity (INVESTMENT.${BASE}.MAX) must be a positive number`;
+                logger.execution.error(msg);
+                throw new Error(msg);
+            }
+            if (isNaN(CONFIG.INVESTMENT[BASE].STEP) || CONFIG.INVESTMENT[BASE].STEP <= 0) {
+                const msg = `Investment step size (INVESTMENT.${BASE}.STEP) must be a positive number`;
+                logger.execution.error(msg);
+                throw new Error(msg);
+            }
+            if (CONFIG.INVESTMENT[BASE].MIN > CONFIG.INVESTMENT[BASE].MAX) {
+                const msg = `Minimum investment quantity (INVESTMENT.${BASE}.MIN) cannot be greater than maximum investment quantity (INVESTMENT.${BASE}.MAX)`;
+                logger.execution.error(msg);
+                throw new Error(msg);
+            }
+            if (CONFIG.INVESTMENT[BASE].MIN !== CONFIG.INVESTMENT[BASE].MAX && (CONFIG.INVESTMENT[BASE].MIN + CONFIG.INVESTMENT[BASE].STEP) > CONFIG.INVESTMENT[BASE].MAX) {
+                const msg = `Step size (INVESTMENT.${BASE}.STEP) is too large for calculation optimization`;
+                logger.execution.warn(msg);
+            }
+        });
 
         // SCANNING
         if (!Number.isInteger(CONFIG.SCANNING.DEPTH) || CONFIG.SCANNING.DEPTH <= 0) {
@@ -69,12 +86,6 @@ const Validation = {
         }
         if (CONFIG.SCANNING.WHITELIST.some(sym => sym !== sym.toUpperCase())) {
             const msg = `Whitelist symbols must all be uppercase`;
-            logger.execution.error(msg);
-            throw new Error(msg);
-        }
-        if (CONFIG.SCANNING.WHITELIST.length > 0 && !CONFIG.SCANNING.WHITELIST.includes(CONFIG.INVESTMENT.BASE)) {
-            const msg = `Whitelist (SCANNING.WHITELIST) must include the base symbol of ${CONFIG.INVESTMENT.BASE}`;
-            logger.execution.debug(`Whitelist: [${CONFIG.SCANNING.WHITELIST}]`);
             logger.execution.error(msg);
             throw new Error(msg);
         }
