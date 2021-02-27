@@ -104,8 +104,15 @@ function displayStatusUpdate() {
         logger.performance.debug(`Tickers without recent depth cache update: [${tickersWithoutRecentDepthUpdate.sort()}]`);
     }
 
-    logger.performance.debug(`Cycles done per second:  ${(statusUpdate.cycleTimes.length / (statusUpdateIntervalMS / 1000)).toFixed(2)}`);
-    logger.performance.debug(`Clock usage for cycles:  ${(Util.sum(statusUpdate.cycleTimes) / statusUpdateIntervalMS * 100).toFixed(2)}%`);
+    const cyclesPerSecond = statusUpdate.cycleTimes.length / (statusUpdateIntervalMS / 1000);
+    logger.performance.debug(`Depth cache updates per second:  ${cyclesPerSecond.toFixed(2)}`);
+
+    const clockUsagePerCycle = Util.sum(statusUpdate.cycleTimes) / statusUpdateIntervalMS * 100;
+    if (clockUsagePerCycle > 50) {
+        logger.performance.warn(`CPU clock usage for calculations:  ${clockUsagePerCycle.toFixed(2)}%`);
+    } else {
+        logger.performance.debug(`CPU clock usage for calculations:  ${clockUsagePerCycle.toFixed(2)}%`);
+    }
 
     statusUpdate.cycleTimes = [];
 
