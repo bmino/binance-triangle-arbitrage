@@ -38,7 +38,7 @@
 
     "LOG": {
         "LEVEL": "debug",
-        "PRETTY_PRINT": true,
+        "COLORIZE": false,
         "STATUS_UPDATE_INTERVAL": 2
     },
 

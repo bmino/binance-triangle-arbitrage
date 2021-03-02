@@ -139,9 +139,9 @@ Upon each version update you should copy the new syntax from `config.json.exampl
     * `"debug"`
     * `"trace"`
 
-#### `LOG.PRETTY_PRINT` (Boolean)
-* Default: `true`
-* Description: Format the logs with pino-pretty. Read the logs via a terminal for best results
+#### `LOG.COLORIZE` (Boolean)
+* Default: `false`
+* Description: Adds color codes around keywords for a pretty display when viewed via compatible terminals
 
 #### `LOG.STATUS_UPDATE_INTERVAL` (Number)
 * Default: `2`

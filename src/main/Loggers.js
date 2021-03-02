@@ -6,7 +6,9 @@ const LOG_DIR = `${__dirname}/../../logs`;
 const PINO_OPTS = {
     level: CONFIG.LOG.LEVEL,
     timestamp: () => `,"time":"${new Date().toLocaleString()}"`,
-    prettyPrint: CONFIG.LOG.PRETTY_PRINT,
+    prettyPrint: {
+        colorize: CONFIG.LOG.COLORIZE,
+    },
     formatters: {
         level: (label, number) => {
             return { level: number }
