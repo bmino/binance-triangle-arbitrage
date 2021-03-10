@@ -154,8 +154,8 @@ const Validation = {
         }
 
         // LOG
-        if (typeof CONFIG.LOG.PRETTY_PRINT !== 'boolean') {
-            const msg = `Logging pretty print toggle (LOG.PRETTY_PRINT) must be a boolean`;
+        if (typeof CONFIG.LOG.COLORIZE !== 'boolean') {
+            const msg = `Logging color toggle (LOG.COLORIZE) must be a boolean`;
             logger.execution.error(msg);
             throw new Error(msg);
         }
